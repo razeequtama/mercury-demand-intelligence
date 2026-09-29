@@ -124,5 +124,5 @@ app.get('/api/insights', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Mercury Intelligence Engine running on port ${PORT}`);
+  console.log(`Mercury Demand Intelligence running on port ${PORT}`);
 });
