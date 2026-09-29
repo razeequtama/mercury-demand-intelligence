@@ -60,12 +60,13 @@ Mercury models a distributed commerce data pipeline. It ingests order and invent
  ## Repository Structure
 
 ```
-mercury-commerce-intelligence/
+mercury-demand-intelligence/
 ├── backend/
 │   ├── src/
 │   │   ├── db.js             # PostgreSQL connection pool
 │   │   ├── seed.js           # Database schema and mock data seeder
 │   │   └── server.js         # API and intelligence endpoints
+│   ├── schema.sql            # PostgreSQL schema
 │   └── package.json
 │
 ├── frontend/
