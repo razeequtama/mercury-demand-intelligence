@@ -4,7 +4,6 @@
 
 ![Status](https://img.shields.io/badge/Status-Production%20Ready-emerald?style=flat-square)
 ![Stack](https://img.shields.io/badge/Stack-Next.js%20%E2%80%A2%20Express%20%E2%80%A2%20PostgreSQL-indigo?style=flat-square)
-![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)
 
 ---
 
