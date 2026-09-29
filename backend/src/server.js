@@ -11,9 +11,10 @@ app.use(cors());
 
 const PORT = process.env.PORT || 5000;
 
-// 1. GET: Core Intelligence Summary (Demand forecasting & stockout risks)
+// 1. GET: Real Analytics Intelligence Pipeline (Replacing mocks with SQL aggregations)
 app.get('/api/intelligence', async (req, res) => {
   try {
+    // Aggregate total quantity ordered over the past 7 days per product to calculate true velocity
     const sqlQuery = `
       SELECT 
         p.id,
@@ -23,24 +24,32 @@ app.get('/api/intelligence', async (req, res) => {
         p.current_price,
         i.warehouse_name,
         i.stock_quantity,
-        i.reorder_threshold
+        i.reorder_threshold,
+        COALESCE(SUM(o.quantity), 0) AS units_sold_last_7_days
       FROM products p
-      JOIN inventory i ON p.id = i.product_id;
+      JOIN inventory i ON p.id = i.product_id
+      LEFT JOIN orders o ON p.id = o.product_id AND o.order_date >= NOW() - INTERVAL '7 days'
+      GROUP BY p.id, i.warehouse_name, i.stock_quantity, i.reorder_threshold;
     `;
     
     const { rows } = await query(sqlQuery);
 
     const enrichedProducts = rows.map(item => {
-      const dailyDemandRate = Math.floor(Math.random() * 20) + 5; 
-      const forecast7Day = dailyDemandRate * 7;
-      const daysUntilStockout = (item.stock_quantity / dailyDemandRate).toFixed(1);
+      const totalSold7Days = parseInt(item.units_sold_last_7_days) || 1; // fallback prevent zero division
+      const dailyDemandRate = totalSold7Days / 7;
+      const forecast7Day = Math.round(dailyDemandRate * 7);
+      
+      const daysUntilStockout = item.stock_quantity > 0 
+        ? (item.stock_quantity / dailyDemandRate).toFixed(1) 
+        : 0;
       
       let stockoutProbability = Math.round((forecast7Day / (item.stock_quantity + 1)) * 100);
       if (stockoutProbability > 100) stockoutProbability = 99;
+      if (item.stock_quantity === 0) stockoutProbability = 100;
 
       let recommendation = null;
       if (stockoutProbability > 70) {
-        recommendation = `Recommended reorder: ${forecast7Day - item.stock_quantity + 50} units`;
+        recommendation = `Recommended reorder: ${forecast7Day + item.reorder_threshold - item.stock_quantity} units`;
       }
 
       return {
@@ -90,7 +99,6 @@ app.get('/api/insights', async (req, res) => {
 
     const { rows } = await query(eventQuery);
 
-    // Decision Engine rule evaluation
     const actionableInsights = rows.map(event => {
       const priceDifference = parseFloat(event.our_price) - parseFloat(event.competitor_price);
       let businessAction = 'Monitor market position.';
@@ -120,6 +128,54 @@ app.get('/api/insights', async (req, res) => {
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ error: 'Server Error' });
+  }
+});
+
+// 3. POST: Live Event Ingestion / Simulator Endpoint (Allows users to simulate orders)
+app.post('/api/simulate-order', async (req, res) => {
+  const { productId, quantity } = req.body;
+
+  if (!productId || !quantity) {
+    return res.status(400).json({ error: 'productId and quantity are required.' });
+  }
+
+  try {
+    // Begin transaction
+    await query('BEGIN');
+
+    // Get product price
+    const prodRes = await query('SELECT current_price FROM products WHERE id = $1', [productId]);
+    if (prodRes.rows.length === 0) {
+      await query('ROLLBACK');
+      return res.status(404).json({ error: 'Product not found.' });
+    }
+
+    const price = parseFloat(prodRes.rows[0].current_price);
+    const totalAmount = price * quantity;
+
+    // Insert new order record
+    await query(
+      'INSERT INTO orders (product_id, quantity, total_amount, order_date) VALUES ($1, $2, $3, NOW())',
+      [productId, quantity, totalAmount]
+    );
+
+    // Decrement inventory stock
+    await query(
+      'UPDATE inventory SET stock_quantity = GREATEST(0, stock_quantity - $1), updated_at = NOW() WHERE product_id = $2',
+      [quantity, productId]
+    );
+
+    await query('COMMIT');
+
+    res.json({
+      success: true,
+      message: `Successfully simulated order of ${quantity} units. Inventory depleted and forecasting pipeline updated.`
+    });
+
+  } catch (err) {
+    await query('ROLLBACK');
+    console.error(err.message);
+    res.status(500).json({ error: 'Failed to process order simulation.' });
   }
 });
 

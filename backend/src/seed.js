@@ -5,18 +5,15 @@ dotenv.config();
 
 const seedDatabase = async () => {
   try {
-    console.log('Starting database seeding...');
+    console.log('Starting database seeding with high-velocity historical data...');
 
-    // 1. Drop existing tables if they exist (for clean resets during dev)
     await query(`
       DROP TABLE IF EXISTS competitor_events CASCADE;
       DROP TABLE IF EXISTS orders CASCADE;
       DROP TABLE IF EXISTS inventory CASCADE;
       DROP TABLE IF EXISTS products CASCADE;
     `);
-    console.log('Cleaned old tables.');
 
-    // 2. Recreate Tables
     await query(`
       CREATE TABLE products (
           id SERIAL PRIMARY KEY,
@@ -53,9 +50,7 @@ const seedDatabase = async () => {
           detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    console.log('Created fresh database schema.');
 
-    // 3. Insert Mock Products
     const productsRes = await query(`
       INSERT INTO products (sku, name, category, current_price, cost_price) VALUES
       ('MOU-WIR-01', 'Wireless Mouse X', 'Electronics', 49.99, 18.50),
@@ -66,15 +61,11 @@ const seedDatabase = async () => {
       RETURNING id, sku;
     `);
 
-    const products = productsRes.rows;
     const productMap = {};
-    products.forEach(p => {
+    productsRes.rows.forEach(p => {
       productMap[p.sku] = p.id;
     });
 
-    console.log(`Inserted ${products.length} mock products.`);
-
-    // 4. Insert Inventory Levels (Mapping to warehouses)
     await query(`
       INSERT INTO inventory (product_id, warehouse_name, stock_quantity, reorder_threshold) VALUES
       ($1, 'Warehouse North (WH-A)', 182, 50),
@@ -89,16 +80,35 @@ const seedDatabase = async () => {
       productMap['HUB-USC-04'],
       productMap['MAT-ERG-05']
     ]);
-    console.log('Inserted warehouse inventory quantities.');
 
-    // 5. Insert Competitor Events (Specifically flagging Product Y)
+    // Inject heavy past orders for Wireless Mouse X to drive 7-day demand up (~30 units/day -> ~210 7-day forecast vs 182 stock = high risk!)
+    await query(`
+      INSERT INTO orders (product_id, quantity, total_amount, order_date) VALUES
+      ($1, 32, 1599.68, NOW() - INTERVAL '1 day'),
+      ($1, 28, 1399.72, NOW() - INTERVAL '2 days'),
+      ($1, 35, 1749.65, NOW() - INTERVAL '3 days'),
+      ($1, 30, 1499.70, NOW() - INTERVAL '4 days'),
+      ($1, 29, 1449.71, NOW() - INTERVAL '5 days'),
+      ($1, 31, 1549.69, NOW() - INTERVAL '6 days'),
+      ($1, 33, 1649.67, NOW() - INTERVAL '7 days'),
+      
+      -- Light orders for others
+      ($2, 3, 389.97, NOW() - INTERVAL '1 day'),
+      ($3, 10, 899.90, NOW() - INTERVAL '2 days'),
+      ($4, 8, 319.92, NOW() - INTERVAL '1 day')
+    `, [
+      productMap['MOU-WIR-01'],
+      productMap['PRD-Y-02'],
+      productMap['KEY-MEC-03'],
+      productMap['HUB-USC-04']
+    ]);
+
     await query(`
       INSERT INTO competitor_events (product_id, competitor_price, event_description) VALUES
       ($1, 99.99, 'Competitor slashed price by 23%. Demand for Product Y is rapidly dropping.');
     `, [productMap['PRD-Y-02']]);
-    console.log('Inserted competitor pricing intelligence events.');
 
-    console.log('Database seeding completed successfully!');
+    console.log('Database seeded with correct high-velocity orders!');
     process.exit(0);
   } catch (err) {
     console.error('Error seeding database:', err.message);
