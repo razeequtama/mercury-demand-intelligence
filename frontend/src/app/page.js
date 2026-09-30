@@ -24,31 +24,24 @@ import {
 export default function Dashboard() {
   const [intelligence, setIntelligence] = useState([]);
   const [insights, setInsights] = useState([]);
+  const [autonomousLogs, setAutonomousLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  const [autonomousLogs, setAutonomousLogs] = useState([]);
-
-    useEffect(() => {
-      const fetchData = async () => {
-        const res = await axios.get('http://localhost:5000/api/insights');
-        setAutonomousLogs(res.data.autonomousLogs || []);
-      };
-      fetchData();
-    }, []);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
   const fetchData = async () => {
     try {
       setLoading(true);
+      // Fetch intelligence feed and insights in parallel, using the configured API_URL consistently
       const [intelRes, insightsRes] = await Promise.all([
         axios.get(`${API_URL}/intelligence`),
         axios.get(`${API_URL}/insights`)
       ]);
 
-      setIntelligence(intelRes.data.data);
-      setInsights(insightsRes.data.insights);
+      setIntelligence(intelRes.data.data || []);
+      setInsights(insightsRes.data.insights || []);
+      setAutonomousLogs(insightsRes.data.autonomousLogs || []);
       setError(null);
     } catch (err) {
       console.error("Failed to fetch Mercury data:", err);
@@ -79,7 +72,7 @@ export default function Dashboard() {
         </div>
         <button 
           onClick={fetchData}
-          className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm"
+          className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm cursor-pointer"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           Refresh Streams
@@ -129,36 +122,6 @@ export default function Dashboard() {
           </div>
           <div className="text-3xl font-bold text-emerald-400">Optimal</div>
           <p className="text-xs text-slate-500 mt-1">Inferences running in real-time</p>
-        </div>
-      </div>
-
-      {/* Decision Engine Alerts Section */}
-      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 mb-8 shadow-xl">
-        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <ShieldAlert className="w-5 h-5 text-indigo-400" />
-          Decision Engine & Competitor Intelligence Feed
-        </h2>
-        <div className="space-y-4">
-          {insights.map(insight => (
-            <div key={insight.eventId} className="bg-slate-950/60 border border-slate-800 p-5 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-950 text-indigo-300 border border-indigo-800">
-                    {insight.sku}
-                  </span>
-                  <h3 className="font-bold text-slate-200">{insight.productName}</h3>
-                </div>
-                <p className="text-sm text-slate-300 flex items-center gap-1.5">
-                  <ArrowDownRight className="w-4 h-4 text-red-400" />
-                  {insight.marketEvent}
-                </p>
-              </div>
-              <div className="bg-indigo-950/40 border border-indigo-900/50 p-3 rounded-lg max-w-md">
-                <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider block mb-0.5">Automated Action Required:</span>
-                <p className="text-xs text-indigo-200">{insight.decisionEngineAction}</p>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
 
