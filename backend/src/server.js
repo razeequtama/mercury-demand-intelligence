@@ -173,6 +173,34 @@ app.post('/api/simulate-order', async (req, res) => {
   }
 });
 
+// 5. GET: Raw Database Inspector Feed
+app.get('/api/database-inspect', async (req, res) => {
+  try {
+    const products = await query('SELECT * FROM products ORDER BY id ASC');
+    const inventory = await query(`
+      SELECT i.*, p.sku, p.name FROM inventory i 
+      JOIN products p ON i.product_id = p.id ORDER BY i.id ASC
+    `);
+    const competitorEvents = await query(`
+      SELECT ce.*, p.sku, p.name AS product_name, p.current_price AS our_price 
+      FROM competitor_events ce 
+      JOIN products p ON ce.product_id = p.id ORDER BY ce.id ASC
+    `);
+
+    res.json({
+      success: true,
+      tables: {
+        products: products.rows,
+        inventory: inventory.rows,
+        competitorEvents: competitorEvents.rows
+      }
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: 'Failed to fetch database inspection data.' });
+  }
+});
+
 // Automatically evaluate and execute autonomous actions upon server startup
 const runStartupDecisionEngine = async () => {
   try {

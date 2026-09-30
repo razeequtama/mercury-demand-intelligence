@@ -9,7 +9,8 @@ import {
   AlertTriangle, 
   RefreshCw, 
   Activity,
-  ArrowDownRight
+  Database,
+  X
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -28,12 +29,17 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Database Inspector State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [dbData, setDbData] = useState(null);
+  const [activeTab, setActiveTab] = useState('products');
+  const [inspectLoading, setInspectLoading] = useState(false);
+
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      // Fetch intelligence feed and insights in parallel, using the configured API_URL consistently
       const [intelRes, insightsRes] = await Promise.all([
         axios.get(`${API_URL}/intelligence`),
         axios.get(`${API_URL}/insights`)
@@ -51,15 +57,27 @@ export default function Dashboard() {
     }
   };
 
+  const fetchDatabaseInspect = async () => {
+    try {
+      setInspectLoading(true);
+      const res = await axios.get(`${API_URL}/database-inspect`);
+      setDbData(res.data.tables);
+      setIsModalOpen(true);
+    } catch (err) {
+      console.error("Failed to fetch database inspection feed:", err);
+    } finally {
+      setInspectLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchData();
   }, []);
 
-  // Calculate high-risk items count
   const highRiskCount = intelligence.filter(item => item.statusAlert === 'High Stockout Risk').length;
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 p-6 lg:p-10 font-sans">
+    <main className="min-h-screen bg-slate-950 text-slate-100 p-6 lg:p-10 font-sans relative">
       {/* Top Header */}
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-800 pb-6 mb-8 gap-4">
         <div>
@@ -70,13 +88,24 @@ export default function Dashboard() {
           <h1 className="text-3xl font-extrabold tracking-tight mt-1">Commerce Command Center</h1>
           <p className="text-sm text-slate-400 mt-1">Real-time demand forecasting, stockout risk scoring, and automated decision automation.</p>
         </div>
-        <button 
-          onClick={fetchData}
-          className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm cursor-pointer"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          Refresh Streams
-        </button>
+        
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={fetchDatabaseInspect}
+            className="flex items-center gap-2 bg-indigo-950/60 hover:bg-indigo-900/60 border border-indigo-700/60 text-indigo-300 px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm cursor-pointer"
+          >
+            <Database className={`w-4 h-4 ${inspectLoading ? 'animate-spin' : ''}`} />
+            Inspect Database
+          </button>
+          
+          <button 
+            onClick={fetchData}
+            className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm cursor-pointer"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh Streams
+          </button>
+        </div>
       </header>
 
       {error && (
@@ -163,7 +192,6 @@ export default function Dashboard() {
 
       {/* Inventory & Demand Forecast Table + Chart Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Inventory Table (2 cols) */}
         <div className="lg:col-span-2 bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl overflow-hidden">
           <h2 className="text-lg font-semibold mb-4">Inventory & 7-Day Demand Predictions</h2>
           <div className="overflow-x-auto">
@@ -209,7 +237,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Demand Visualization Chart (1 col) */}
         <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col">
           <h2 className="text-lg font-semibold mb-4">7-Day Demand vs Inventory</h2>
           <div className="flex-1 min-h-[280px]">
@@ -229,6 +256,73 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Database Inspector Modal */}
+      {isModalOpen && dbData && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl max-h-[85vh] flex flex-col shadow-2xl">
+            {/* Modal Header */}
+            <div className="flex justify-between items-center p-6 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <Database className="w-5 h-5 text-indigo-400" />
+                <h2 className="text-lg font-bold">PostgreSQL Raw Database Inspector</h2>
+              </div>
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="text-slate-400 hover:text-slate-100 p-1 rounded-lg transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Table Tabs */}
+            <div className="flex border-b border-slate-800 px-6 pt-3 gap-4 bg-slate-950/40">
+              {['products', 'inventory', 'competitorEvents'].map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`pb-3 text-sm font-semibold capitalize border-b-2 transition cursor-pointer ${
+                    activeTab === tab 
+                      ? 'border-indigo-500 text-indigo-400' 
+                      : 'border-transparent text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  {tab === 'competitorEvents' ? 'Competitor Events' : tab} ({dbData[tab].length})
+                </button>
+              ))}
+            </div>
+
+            {/* Modal Content Table */}
+            <div className="p-6 overflow-y-auto flex-1 font-mono text-xs">
+              <table className="w-full text-left">
+                <thead className="text-slate-400 border-b border-slate-800 uppercase text-[10px]">
+                  <tr>
+                    {Object.keys(dbData[activeTab][0] || {}).map(col => (
+                      <th key={col} className="pb-2 pr-4">{col}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/40">
+                  {dbData[activeTab].map((row, idx) => (
+                    <tr key={idx} className="hover:bg-slate-800/20">
+                      {Object.values(row).map((val, vIdx) => (
+                        <td key={vIdx} className="py-3 pr-4 text-slate-300">
+                          {val !== null ? val.toString() : <span className="text-slate-600 italic">NULL</span>}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-800 bg-slate-950/60 text-right text-xs text-slate-500">
+              Connected to PostgreSQL v.4533 (Read-Only Inspection Mode)
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
