@@ -5,7 +5,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import psycopg2
 from dotenv import load_dotenv
-from sklearn.linear_model import LinearRegression  # <-- Actual ML Model
+from sklearn.linear_model import LinearRegression 
 
 load_dotenv()
 
@@ -65,7 +65,7 @@ def predict_demand():
                 order_group['order_date'] = pd.to_datetime(order_group['order_date'])
                 order_group = order_group.sort_values('order_date')
                 
-                # --- ACTUAL MACHINE LEARNING IMPLEMENTATION ---
+                # --- MACHINE LEARNING IMPLEMENTATION ---
                 # Prepare features (X: time index sequence) and target (y: order quantity)
                 X = np.arange(len(order_group)).reshape(-1, 1)
                 y = order_group['order_qty'].values

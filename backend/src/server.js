@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import axios from 'axios';
-import { query } from './db.js';
+import { query, getClient } from './db.js';
 
 dotenv.config();
 
@@ -24,7 +24,108 @@ app.get('/api/intelligence', async (req, res) => {
   }
 });
 
-// 2. GET: Decision Engine, Competitor Intelligence & Autonomous Execution
+// 2. GET: Read-only insights feed (No side effects!)
+app.get('/api/insights', async (req, res) => {
+  try {
+    const eventQuery = `
+      SELECT
+        ce.id,
+        p.id AS product_id,
+        p.sku,
+        p.name AS product_name,
+        p.current_price AS our_price,
+        ce.competitor_price,
+        ce.event_description,
+        ce.detected_at
+      FROM competitor_events ce
+      JOIN products p ON ce.product_id = p.id;
+    `;
+
+    const { rows } = await query(eventQuery);
+    const actionableInsights = rows.map(event => {
+      const priceDifference = parseFloat(event.our_price) - parseFloat(event.competitor_price);
+      let businessAction = 'Monitor market position.';
+      let executedProcedure = 'Pending manual review or autonomous dispatch.';
+
+      if (priceDifference > 0) {
+        businessAction = `Competitor is undercutting by $${priceDifference.toFixed(2)}. ML Elasticity Model recommends automated counter-measure.`;
+        executedProcedure = `Recommended Action: Dispatched price-matching rule (-$${priceDifference.toFixed(2)}) & queued promotion.`;
+      }
+
+      return {
+        eventId: event.id,
+        sku: event.sku,
+        productName: event.product_name,
+        marketEvent: event.event_description,
+        ourPrice: event.our_price,
+        competitorPrice: event.competitor_price,
+        detectedAt: event.detected_at,
+        decisionEngineAction: businessAction,
+        autonomousProcedure: executedProcedure
+      };
+    });
+
+    const logsRes = await query(`
+      SELECT l.id, p.sku, p.name, l.action_type, l.description, l.status, l.executed_at
+      FROM automated_actions_log l
+      JOIN products p ON l.product_id = p.id
+      ORDER BY l.executed_at DESC;
+    `);
+
+    res.json({
+      success: true,
+      activeAlertsCount: actionableInsights.length,
+      insights: actionableInsights,
+      autonomousLogs: logsRes.rows
+    });
+
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: 'Server Error' });
+  }
+});
+
+// 3. POST: Explicit endpoint to trigger autonomous actions safely
+app.post('/api/insights/execute-actions', async (req, res) => {
+  try {
+    const eventQuery = `
+      SELECT ce.id, p.id AS product_id, p.current_price AS our_price, ce.competitor_price
+      FROM competitor_events ce
+      JOIN products p ON ce.product_id = p.id;
+    `;
+    const { rows } = await query(eventQuery);
+    let executedCount = 0;
+
+    for (const event of rows) {
+      const priceDifference = parseFloat(event.our_price) - parseFloat(event.competitor_price);
+      if (priceDifference > 0) {
+        const description = `Autonomous Procedure EXECUTED: Dispatched price-matching rule (-$${priceDifference.toFixed(2)}) & queued targeted promotion campaign.`;
+
+        // Idempotent check: Ensure we don't duplicate logs
+        const checkLog = await query(
+          'SELECT id FROM automated_actions_log WHERE product_id = $1 AND description = $2',
+          [event.product_id, description]
+        );
+
+        if (checkLog.rows.length === 0) {
+          await query(
+            `INSERT INTO automated_actions_log (product_id, action_type, description, status)
+             VALUES ($1, $2, $3, $4)`,
+            [event.product_id, 'PRICE_MATCH_AUTOMATION', description, 'EXECUTED']
+          );
+          executedCount++;
+        }
+      }
+    }
+
+    res.json({ success: true, message: `Successfully executed ${executedCount} autonomous actions.` });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: 'Failed to execute autonomous actions.' });
+  }
+});
+
+// 4. GET: Decision Engine, Competitor Intelligence & Autonomous Execution
 app.get('/api/insights', async (req, res) => {
   try {
     const eventQuery = `
@@ -103,7 +204,7 @@ app.get('/api/insights', async (req, res) => {
   }
 });
 
-// 3. POST: Live Event Ingestion / Simulator Endpoint
+// 5. POST: Live Event Ingestion / Simulator Endpoint
 app.post('/api/simulate-order', async (req, res) => {
   const { productId, quantity } = req.body;
 
@@ -111,29 +212,32 @@ app.post('/api/simulate-order', async (req, res) => {
     return res.status(400).json({ error: 'productId and quantity are required.' });
   }
 
+  const client = await getClient(); // Check out a dedicated client
   try {
-    await query('BEGIN');
+    await client.query('BEGIN');
 
-    const prodRes = await query('SELECT current_price FROM products WHERE id = $1', [productId]);
+    const prodRes = await client.query('SELECT current_price FROM products WHERE id = $1', [productId]);
     if (prodRes.rows.length === 0) {
-      await query('ROLLBACK');
+      await client.query('ROLLBACK');
+      client.release();
       return res.status(404).json({ error: 'Product not found.' });
     }
 
     const price = parseFloat(prodRes.rows[0].current_price);
     const totalAmount = price * quantity;
 
-    await query(
+    await client.query(
       'INSERT INTO orders (product_id, quantity, total_amount, order_date) VALUES ($1, $2, $3, NOW())',
       [productId, quantity, totalAmount]
     );
 
-    await query(
+    await client.query(
       'UPDATE inventory SET stock_quantity = GREATEST(0, stock_quantity - $1), updated_at = NOW() WHERE product_id = $2',
       [quantity, productId]
     );
 
-    await query('COMMIT');
+    await client.query('COMMIT');
+    client.release();
 
     res.json({
       success: true,
@@ -141,7 +245,8 @@ app.post('/api/simulate-order', async (req, res) => {
     });
 
   } catch (err) {
-    await query('ROLLBACK');
+    await client.query('ROLLBACK');
+    client.release();
     console.error(err.message);
     res.status(500).json({ error: 'Failed to process order simulation.' });
   }
