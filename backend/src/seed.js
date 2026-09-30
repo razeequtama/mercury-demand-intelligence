@@ -5,9 +5,10 @@ dotenv.config();
 
 const seedDatabase = async () => {
   try {
-    console.log('Starting database seeding with high-velocity historical data...');
+    console.log('Starting database seeding with autonomous workflow tables...');
 
     await query(`
+      DROP TABLE IF EXISTS automated_actions_log CASCADE;
       DROP TABLE IF EXISTS competitor_events CASCADE;
       DROP TABLE IF EXISTS orders CASCADE;
       DROP TABLE IF EXISTS inventory CASCADE;
@@ -49,6 +50,16 @@ const seedDatabase = async () => {
           event_description TEXT,
           detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
+      -- New table for autonomous actions taken by the decision engine
+      CREATE TABLE automated_actions_log (
+          id SERIAL PRIMARY KEY,
+          product_id INT REFERENCES products(id) ON DELETE CASCADE,
+          action_type VARCHAR(100) NOT NULL,
+          description TEXT NOT NULL,
+          status VARCHAR(50) DEFAULT 'EXECUTED',
+          executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
     `);
 
     const productsRes = await query(`
@@ -81,18 +92,11 @@ const seedDatabase = async () => {
       productMap['MAT-ERG-05']
     ]);
 
-    // Inject heavy past orders for Wireless Mouse X to drive 7-day demand up (~30 units/day -> ~210 7-day forecast vs 182 stock = high risk!)
     await query(`
       INSERT INTO orders (product_id, quantity, total_amount, order_date) VALUES
       ($1, 32, 1599.68, NOW() - INTERVAL '1 day'),
       ($1, 28, 1399.72, NOW() - INTERVAL '2 days'),
       ($1, 35, 1749.65, NOW() - INTERVAL '3 days'),
-      ($1, 30, 1499.70, NOW() - INTERVAL '4 days'),
-      ($1, 29, 1449.71, NOW() - INTERVAL '5 days'),
-      ($1, 31, 1549.69, NOW() - INTERVAL '6 days'),
-      ($1, 33, 1649.67, NOW() - INTERVAL '7 days'),
-      
-      -- Light orders for others
       ($2, 3, 389.97, NOW() - INTERVAL '1 day'),
       ($3, 10, 899.90, NOW() - INTERVAL '2 days'),
       ($4, 8, 319.92, NOW() - INTERVAL '1 day')
@@ -108,7 +112,7 @@ const seedDatabase = async () => {
       ($1, 99.99, 'Competitor slashed price by 23%. Demand for Product Y is rapidly dropping.');
     `, [productMap['PRD-Y-02']]);
 
-    console.log('Database seeded with correct high-velocity orders!');
+    console.log('Database seeded with automated action logging schema!');
     process.exit(0);
   } catch (err) {
     console.error('Error seeding database:', err.message);

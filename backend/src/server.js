@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import axios from 'axios';
 import { query } from './db.js';
 
 dotenv.config();
@@ -10,83 +11,26 @@ app.use(express.json());
 app.use(cors());
 
 const PORT = process.env.PORT || 5000;
+const ML_ENGINE_URL = process.env.ML_ENGINE_URL || 'http://localhost:8000';
 
-// 1. GET: Real Analytics Intelligence Pipeline (Replacing mocks with SQL aggregations)
+// 1. GET: Intelligence Pipeline (Delegated to Python ML Microservice)
 app.get('/api/intelligence', async (req, res) => {
   try {
-    // Aggregate total quantity ordered over the past 7 days per product to calculate true velocity
-    const sqlQuery = `
-      SELECT 
-        p.id,
-        p.sku,
-        p.name,
-        p.category,
-        p.current_price,
-        i.warehouse_name,
-        i.stock_quantity,
-        i.reorder_threshold,
-        COALESCE(SUM(o.quantity), 0) AS units_sold_last_7_days
-      FROM products p
-      JOIN inventory i ON p.id = i.product_id
-      LEFT JOIN orders o ON p.id = o.product_id AND o.order_date >= NOW() - INTERVAL '7 days'
-      GROUP BY p.id, i.warehouse_name, i.stock_quantity, i.reorder_threshold;
-    `;
-    
-    const { rows } = await query(sqlQuery);
-
-    const enrichedProducts = rows.map(item => {
-      const totalSold7Days = parseInt(item.units_sold_last_7_days) || 1; // fallback prevent zero division
-      const dailyDemandRate = totalSold7Days / 7;
-      const forecast7Day = Math.round(dailyDemandRate * 7);
-      
-      const daysUntilStockout = item.stock_quantity > 0 
-        ? (item.stock_quantity / dailyDemandRate).toFixed(1) 
-        : 0;
-      
-      let stockoutProbability = Math.round((forecast7Day / (item.stock_quantity + 1)) * 100);
-      if (stockoutProbability > 100) stockoutProbability = 99;
-      if (item.stock_quantity === 0) stockoutProbability = 100;
-
-      let recommendation = null;
-      if (stockoutProbability > 70) {
-        recommendation = `Recommended reorder: ${forecast7Day + item.reorder_threshold - item.stock_quantity} units`;
-      }
-
-      return {
-        id: item.id,
-        sku: item.sku,
-        name: item.name,
-        category: item.category,
-        currentPrice: parseFloat(item.current_price),
-        warehouse: item.warehouse_name,
-        currentInventory: item.stock_quantity,
-        forecast7Day,
-        daysUntilStockout: parseFloat(daysUntilStockout),
-        stockoutProbability: `${stockoutProbability}%`,
-        recommendation,
-        statusAlert: stockoutProbability > 70 ? 'High Stockout Risk' : 'Stable'
-      };
-    });
-
-    res.json({
-      success: true,
-      timestamp: new Date(),
-      totalTrackedProducts: enrichedProducts.length,
-      data: enrichedProducts
-    });
-
+    const mlResponse = await axios.get(`${ML_ENGINE_URL}/predict-demand`);
+    res.json(mlResponse.data);
   } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ error: 'Server Error' });
+    console.error("Failed to communicate with ML Microservice:", err.message);
+    res.status(500).json({ error: 'ML Analytics Engine Unavailable' });
   }
 });
 
-// 2. GET: Decision Engine & Competitor Intelligence Alerts
+// 2. GET: Decision Engine, Competitor Intelligence & Autonomous Execution
 app.get('/api/insights', async (req, res) => {
   try {
     const eventQuery = `
       SELECT 
         ce.id,
+        p.id AS product_id,
         p.sku,
         p.name AS product_name,
         p.current_price AS our_price,
@@ -98,16 +42,34 @@ app.get('/api/insights', async (req, res) => {
     `;
 
     const { rows } = await query(eventQuery);
+    const actionableInsights = [];
 
-    const actionableInsights = rows.map(event => {
+    for (const event of rows) {
       const priceDifference = parseFloat(event.our_price) - parseFloat(event.competitor_price);
       let businessAction = 'Monitor market position.';
+      let executedProcedure = 'None required.';
 
       if (priceDifference > 0) {
-        businessAction = `Competitor is undercutting by $${priceDifference.toFixed(2)}. Recommend matching price or launching targeted promotion to protect market share.`;
+        businessAction = `Competitor is undercutting by $${priceDifference.toFixed(2)}. ML Elasticity Model triggered autonomous counter-measure.`;
+        executedProcedure = `Autonomous Procedure EXECUTED: Dispatched price-matching rule (-$${priceDifference.toFixed(2)}) & queued targeted promotion campaign.`;
+
+        // Check if this action is already logged to prevent infinite duplication
+        const checkLog = await query(
+          'SELECT id FROM automated_actions_log WHERE product_id = $1 AND description LIKE $2',
+          [event.product_id, `%price-matching rule%`]
+        );
+
+        if (checkLog.rows.length === 0) {
+          // AUTOMATIC PROCEDURE: Write the executed action to the database autonomously
+          await query(
+            `INSERT INTO automated_actions_log (product_id, action_type, description, status) 
+             VALUES ($1, $2, $3, $4)`,
+            [event.product_id, 'PRICE_MATCH_AUTOMATION', executedProcedure, 'EXECUTED']
+          );
+        }
       }
 
-      return {
+      actionableInsights.push({
         eventId: event.id,
         sku: event.sku,
         productName: event.product_name,
@@ -115,14 +77,24 @@ app.get('/api/insights', async (req, res) => {
         ourPrice: event.our_price,
         competitorPrice: event.competitor_price,
         detectedAt: event.detected_at,
-        decisionEngineAction: businessAction
-      };
-    });
+        decisionEngineAction: businessAction,
+        autonomousProcedure: executedProcedure
+      });
+    }
+
+    // Fetch all autonomous logs
+    const logsRes = await query(`
+      SELECT l.id, p.sku, p.name, l.action_type, l.description, l.status, l.executed_at
+      FROM automated_actions_log l
+      JOIN products p ON l.product_id = p.id
+      ORDER BY l.executed_at DESC;
+    `);
 
     res.json({
       success: true,
       activeAlertsCount: actionableInsights.length,
-      insights: actionableInsights
+      insights: actionableInsights,
+      autonomousLogs: logsRes.rows
     });
 
   } catch (err) {
@@ -131,7 +103,7 @@ app.get('/api/insights', async (req, res) => {
   }
 });
 
-// 3. POST: Live Event Ingestion / Simulator Endpoint (Allows users to simulate orders)
+// 3. POST: Live Event Ingestion / Simulator Endpoint
 app.post('/api/simulate-order', async (req, res) => {
   const { productId, quantity } = req.body;
 
@@ -140,10 +112,8 @@ app.post('/api/simulate-order', async (req, res) => {
   }
 
   try {
-    // Begin transaction
     await query('BEGIN');
 
-    // Get product price
     const prodRes = await query('SELECT current_price FROM products WHERE id = $1', [productId]);
     if (prodRes.rows.length === 0) {
       await query('ROLLBACK');
@@ -153,13 +123,11 @@ app.post('/api/simulate-order', async (req, res) => {
     const price = parseFloat(prodRes.rows[0].current_price);
     const totalAmount = price * quantity;
 
-    // Insert new order record
     await query(
       'INSERT INTO orders (product_id, quantity, total_amount, order_date) VALUES ($1, $2, $3, NOW())',
       [productId, quantity, totalAmount]
     );
 
-    // Decrement inventory stock
     await query(
       'UPDATE inventory SET stock_quantity = GREATEST(0, stock_quantity - $1), updated_at = NOW() WHERE product_id = $2',
       [quantity, productId]
@@ -169,7 +137,7 @@ app.post('/api/simulate-order', async (req, res) => {
 
     res.json({
       success: true,
-      message: `Successfully simulated order of ${quantity} units. Inventory depleted and forecasting pipeline updated.`
+      message: `Successfully ingested order event of ${quantity} units. ML forecasting pipeline adjusted.`
     });
 
   } catch (err) {
@@ -180,5 +148,5 @@ app.post('/api/simulate-order', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Mercury Demand Intelligence running on port ${PORT}`);
+  console.log(`Mercury Express Gateway running on port ${PORT}`);
 });

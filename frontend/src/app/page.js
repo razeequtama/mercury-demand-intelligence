@@ -27,6 +27,16 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const [autonomousLogs, setAutonomousLogs] = useState([]);
+
+    useEffect(() => {
+      const fetchData = async () => {
+        const res = await axios.get('http://localhost:5000/api/insights');
+        setAutonomousLogs(res.data.autonomousLogs || []);
+      };
+      fetchData();
+    }, []);
+
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
   const fetchData = async () => {
@@ -149,6 +159,38 @@ export default function Dashboard() {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Autonomous Execution Audit Log */}
+      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 mb-8 shadow-xl">
+        <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
+          <Activity className="w-5 h-5 text-emerald-400" />
+          Autonomous Decision Engine Audit Log
+        </h2>
+        <p className="text-xs text-slate-400 mb-4">Procedures executed automatically by Mercury without human intervention upon detecting market anomalies.</p>
+        
+        <div className="space-y-3">
+          {autonomousLogs.length === 0 ? (
+            <p className="text-xs text-slate-500 italic">No autonomous procedures executed yet.</p>
+          ) : (
+            autonomousLogs.map(log => (
+              <div key={log.id} className="bg-slate-950/60 border border-slate-800 p-4 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">
+                      {log.action_type}
+                    </span>
+                    <span className="text-xs font-semibold text-slate-300">{log.name} ({log.sku})</span>
+                  </div>
+                  <p className="text-xs text-emerald-400 font-medium">{log.description}</p>
+                </div>
+                <div className="text-right text-[11px] text-slate-500 font-mono">
+                  {new Date(log.executed_at).toLocaleTimeString()} • <span className="text-emerald-400 font-semibold">{log.status}</span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

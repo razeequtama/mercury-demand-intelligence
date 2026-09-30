@@ -36,3 +36,20 @@ CREATE TABLE competitor_events (
     event_description TEXT,
     detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Competitors Registry
+CREATE TABLE competitors (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    market_tier VARCHAR(50) DEFAULT 'Direct'
+);
+
+-- Competitor Pricing & Scraped Intelligence Feed
+CREATE TABLE competitor_pricing (
+    id SERIAL PRIMARY KEY,
+    product_id INT REFERENCES products(id) ON DELETE CASCADE,
+    competitor_id INT REFERENCES competitors(id) ON DELETE CASCADE,
+    competitor_price DECIMAL(10, 2) NOT NULL,
+    price_difference_percentage DECIMAL(5, 2), -- e.g., -23.00%
+    scraped_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
