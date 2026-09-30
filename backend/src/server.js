@@ -24,11 +24,11 @@ app.get('/api/intelligence', async (req, res) => {
   }
 });
 
-// 2. GET: Read-only insights feed (No side effects!)
+// 2. GET: Strictly Read-Only Insights & Audit Log Feed (Zero Side Effects!)
 app.get('/api/insights', async (req, res) => {
   try {
     const eventQuery = `
-      SELECT
+      SELECT 
         ce.id,
         p.id AS product_id,
         p.sku,
@@ -85,7 +85,7 @@ app.get('/api/insights', async (req, res) => {
   }
 });
 
-// 3. POST: Explicit endpoint to trigger autonomous actions safely
+// 3. POST: Explicit Endpoint to Trigger Autonomous Actions Safely (Idempotent)
 app.post('/api/insights/execute-actions', async (req, res) => {
   try {
     const eventQuery = `
@@ -101,7 +101,7 @@ app.post('/api/insights/execute-actions', async (req, res) => {
       if (priceDifference > 0) {
         const description = `Autonomous Procedure EXECUTED: Dispatched price-matching rule (-$${priceDifference.toFixed(2)}) & queued targeted promotion campaign.`;
 
-        // Idempotent check: Ensure we don't duplicate logs
+        // Idempotency check: Ensure we don't duplicate logs for the same action
         const checkLog = await query(
           'SELECT id FROM automated_actions_log WHERE product_id = $1 AND description = $2',
           [event.product_id, description]
@@ -125,86 +125,7 @@ app.post('/api/insights/execute-actions', async (req, res) => {
   }
 });
 
-// 4. GET: Decision Engine, Competitor Intelligence & Autonomous Execution
-app.get('/api/insights', async (req, res) => {
-  try {
-    const eventQuery = `
-      SELECT 
-        ce.id,
-        p.id AS product_id,
-        p.sku,
-        p.name AS product_name,
-        p.current_price AS our_price,
-        ce.competitor_price,
-        ce.event_description,
-        ce.detected_at
-      FROM competitor_events ce
-      JOIN products p ON ce.product_id = p.id;
-    `;
-
-    const { rows } = await query(eventQuery);
-    const actionableInsights = [];
-
-    for (const event of rows) {
-      const priceDifference = parseFloat(event.our_price) - parseFloat(event.competitor_price);
-      let businessAction = 'Monitor market position.';
-      let executedProcedure = 'None required.';
-
-      if (priceDifference > 0) {
-        businessAction = `Competitor is undercutting by $${priceDifference.toFixed(2)}. ML Elasticity Model triggered autonomous counter-measure.`;
-        executedProcedure = `Autonomous Procedure EXECUTED: Dispatched price-matching rule (-$${priceDifference.toFixed(2)}) & queued targeted promotion campaign.`;
-
-        // Check if this action is already logged to prevent infinite duplication
-        const checkLog = await query(
-          'SELECT id FROM automated_actions_log WHERE product_id = $1 AND description LIKE $2',
-          [event.product_id, `%price-matching rule%`]
-        );
-
-        if (checkLog.rows.length === 0) {
-          // AUTOMATIC PROCEDURE: Write the executed action to the database autonomously
-          await query(
-            `INSERT INTO automated_actions_log (product_id, action_type, description, status) 
-             VALUES ($1, $2, $3, $4)`,
-            [event.product_id, 'PRICE_MATCH_AUTOMATION', executedProcedure, 'EXECUTED']
-          );
-        }
-      }
-
-      actionableInsights.push({
-        eventId: event.id,
-        sku: event.sku,
-        productName: event.product_name,
-        marketEvent: event.event_description,
-        ourPrice: event.our_price,
-        competitorPrice: event.competitor_price,
-        detectedAt: event.detected_at,
-        decisionEngineAction: businessAction,
-        autonomousProcedure: executedProcedure
-      });
-    }
-
-    // Fetch all autonomous logs
-    const logsRes = await query(`
-      SELECT l.id, p.sku, p.name, l.action_type, l.description, l.status, l.executed_at
-      FROM automated_actions_log l
-      JOIN products p ON l.product_id = p.id
-      ORDER BY l.executed_at DESC;
-    `);
-
-    res.json({
-      success: true,
-      activeAlertsCount: actionableInsights.length,
-      insights: actionableInsights,
-      autonomousLogs: logsRes.rows
-    });
-
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ error: 'Server Error' });
-  }
-});
-
-// 5. POST: Live Event Ingestion / Simulator Endpoint
+// 4. POST: Live Event Ingestion / Simulator Endpoint
 app.post('/api/simulate-order', async (req, res) => {
   const { productId, quantity } = req.body;
 
@@ -212,7 +133,7 @@ app.post('/api/simulate-order', async (req, res) => {
     return res.status(400).json({ error: 'productId and quantity are required.' });
   }
 
-  const client = await getClient(); // Check out a dedicated client
+  const client = await getClient();
   try {
     await client.query('BEGIN');
 
