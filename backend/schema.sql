@@ -1,3 +1,9 @@
+DROP TABLE IF EXISTS automated_actions_log CASCADE;
+DROP TABLE IF EXISTS competitor_events CASCADE;
+DROP TABLE IF EXISTS orders CASCADE;
+DROP TABLE IF EXISTS inventory CASCADE;
+DROP TABLE IF EXISTS products CASCADE;
+
 -- Products Table
 CREATE TABLE products (
     id SERIAL PRIMARY KEY,
