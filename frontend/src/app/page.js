@@ -118,10 +118,14 @@ export default function Dashboard() {
         <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-5 shadow-lg">
           <div className="flex justify-between items-center text-slate-400 mb-2">
             <span className="text-xs font-semibold uppercase tracking-wider">Engine Status</span>
-            <TrendingUp className="w-5 h-5 text-emerald-400" />
+            <TrendingUp className={`w-5 h-5 ${error ? 'text-red-400' : 'text-emerald-400'}`} />
           </div>
-          <div className="text-3xl font-bold text-emerald-400">Optimal</div>
-          <p className="text-xs text-slate-500 mt-1">Inferences running in real-time</p>
+          <div className={`text-2xl font-bold ${error ? 'text-red-400' : 'text-emerald-400'}`}>
+            {error ? 'Degraded' : 'Optimal'}
+          </div>
+          <p className="text-xs text-slate-500 mt-1">
+            {error ? 'Services reporting failure' : 'Inferences running in real-time'}
+          </p>
         </div>
       </div>
 
