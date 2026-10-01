@@ -14,7 +14,8 @@ import {
   Layers,
   X,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  HelpCircle
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -28,20 +29,23 @@ import {
 
 export default function Dashboard() {
 
-  // Welcome message
+  // Welcome / Guide Modal State
   const [showWelcome, setShowWelcome] = useState(false);
-  // Guide
-  const [showGuide, setShowGuide] = useState(false);
+  const [isFirstVisit, setIsFirstVisit] = useState(true);
 
   useEffect(() => {
     const hasVisited = localStorage.getItem('mercury_welcomed');
     if (!hasVisited) {
+      setIsFirstVisit(true);
       setShowWelcome(true);
+    } else {
+      setIsFirstVisit(false);
     }
   }, []);
 
   const handleCloseWelcome = () => {
     localStorage.setItem('mercury_welcomed', 'true');
+    setIsFirstVisit(false);
     setShowWelcome(false);
   };
 
@@ -83,7 +87,6 @@ export default function Dashboard() {
       setAutonomousLogs(insightsRes.data.autonomousLogs || []);
       setError(null);
 
-      // Set default selected product for sandbox if available
       if (intelRes.data.data && intelRes.data.data.length > 0 && !selectedProductId) {
         setSelectedProductId(intelRes.data.data[0].id);
       }
@@ -108,7 +111,6 @@ export default function Dashboard() {
     }
   };
 
-  // Run simulation whenever levers change
   const runSimulation = async (prodId, price, multiplier, stock) => {
     if (!prodId) return;
     try {
@@ -162,7 +164,6 @@ export default function Dashboard() {
         </div>
         
         <div className="flex flex-wrap items-center gap-3">
-          {/* View Switcher Tabs */}
           <div className="bg-slate-900 p-1 rounded-xl border border-slate-800 flex items-center">
             <button
               onClick={() => setCurrentView('dashboard')}
@@ -199,63 +200,109 @@ export default function Dashboard() {
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </button>
+
+          <button 
+            onClick={() => {
+              setIsFirstVisit(false);
+              setShowWelcome(true);
+            }}
+            className="w-10 h-10 flex items-center justify-center bg-slate-900 hover:bg-slate-800 border border-slate-700 text-indigo-400 hover:text-indigo-300 rounded-lg transition shadow-sm cursor-pointer"
+            title="How to use guide"
+          >
+            <HelpCircle className="w-5 h-5" />
+          </button>
         </div>
       </header>
 
-      {/* Welcome */}
+      {/* Unified Welcome & Step-by-Step Usage Guide Modal */}
       {showWelcome && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl text-slate-100">
-            <div className="flex items-center space-x-3 mb-4">
-              <img src="/mercury.svg" alt="Logo" className="w-12 h-12 shrink-0" />
-              <h3 className="text-2xl font-bold leading-none">Hi! Thank you for visiting this project!</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+          {/* Scrollable Modal Container */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 lg:p-8 shadow-2xl text-slate-100 flex flex-col scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-950">
+            
+            {/* Conditional Welcome Header (Only on First Visit) */}
+            {isFirstVisit && (
+              <div className="mb-6 pb-6 border-b border-slate-800 shrink-0">
+                <div className="flex items-center space-x-3 mb-3">
+                  <img src="/mercury.svg" alt="Logo" className="w-10 h-10 shrink-0" />
+                  <h3 className="text-2xl font-bold leading-tight">Hi! Thank you for visiting this project!</h3>
+                </div>
+                <p className="text-slate-300 text-base leading-relaxed">
+                  Welcome to <strong className="text-indigo-400">Mercury: </strong> a real-time inventory and demand forecasting engine powered by a Python Scikit-Learn regression pipeline, Node.js gateway, and a full-stack React interface.
+                </p>
+              </div>
+            )}
+
+            {/* Modal Title for Guide Mode */}
+            {!isFirstVisit && (
+              <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-800 shrink-0">
+                <div className="flex items-center gap-2">
+                  <HelpCircle className="w-6 h-6 text-indigo-400" />
+                  <h3 className="text-2xl font-bold">Mercury User Guide & Glossary</h3>
+                </div>
+                <button 
+                  onClick={() => setShowWelcome(false)}
+                  className="text-slate-400 hover:text-slate-100 p-1.5 rounded-lg transition cursor-pointer"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+            )}
+
+            {/* Step-by-Step Usage Guide Content */}
+            <div className="space-y-5 text-sm text-slate-300 mb-8 flex-1">
+              <h4 className="text-sm font-semibold uppercase tracking-wider text-indigo-400 mb-3">Step-by-Step Usage Walkthrough</h4>
+              
+              <div className="space-y-4">
+                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                  <span className="font-bold text-slate-100 block mb-1">1. Explore Live Operations Dashboard</span>
+                  Monitor real-time inventory counts, automated 7-day demand forecasts, and high stockout risk alerts directly from the main view and charts.
+                </div>
+
+                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                  <span className="font-bold text-slate-100 block mb-1">2. Switch to the What-If Sandbox</span>
+                  Click the <strong>What-If Sandbox</strong> tab in the top header to stress-test your pricing strategy and simulate market adjustments.
+                </div>
+
+                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                  <span className="font-bold text-slate-100 block mb-1">3. Configure Simulation Levers</span>
+                  <ul className="list-disc pl-5 mt-2 space-y-1.5 text-slate-300">
+                    <li><strong>Target SKU Dropdown:</strong> Select a specific product (Stock Keeping Unit) to inspect and test.</li>
+                    <li><strong>Competitor Price Slider:</strong> Drag to simulate competitor undercuts or price hikes and observe automated profit margin protection rules.</li>
+                    <li><strong>Demand Multiplier:</strong> Scale baseline demand (from 0.5x to 3.0x) to simulate holiday surges or demand shocks.</li>
+                    <li><strong>Inventory Buffer Override:</strong> Manually override stock levels to test critical stockout countdown thresholds.</li>
+                  </ul>
+                </div>
+
+                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                  <span className="font-bold text-slate-100 block mb-1">4. Inspect Raw Database Records</span>
+                  Click the <strong>Inspect DB</strong> button in the header at any time to inspect live PostgreSQL tables (`products`, `inventory`, `competitorEvents`) in real time.
+                </div>
+              </div>
             </div>
-            <p className="text-slate-300 text-base leading-relaxed mb-4">
-              Welcome to <strong className="text-indigo-400">Mercury: </strong>a real-time inventory and demand forecasting engine powered by a Python Scikit-Learn regression pipeline and a full-stack React interface.
-            </p>
-            <div className="bg-slate-950 p-4 rounded-xl border border-slate-800/80 text-sm text-slate-300 space-y-2 mb-6">
-              <div><strong className="text-slate-100">How it works:</strong> Select a SKU from the dropdown, tweak the competitor price or demand sliders, and watch the ML engine instantly recalculate stockout risks and reorder thresholds!</div>
+
+            {/* Action Button */}
+            <div className="shrink-0 pt-2">
+              {isFirstVisit ? (
+                <button 
+                  onClick={handleCloseWelcome}
+                  className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-indigo-600/20 text-base cursor-pointer"
+                >
+                  Have fun exploring!
+                </button>
+              ) : (
+                <button 
+                  onClick={() => setShowWelcome(false)}
+                  className="w-full py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl transition-colors text-base cursor-pointer"
+                >
+                  Close Guide
+                </button>
+              )}
             </div>
-            <button 
-              onClick={handleCloseWelcome}
-              className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-indigo-600/20 text-base"
-            >
-              Have fun!
-            </button>
+
           </div>
         </div>
       )}
-
-      {/* Guide */}
-      <div className="mb-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-slate-200">Inventory Command Center</h2>
-          <button 
-            onClick={() => setShowGuide(!showGuide)}
-            className="text-sm text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 px-3.5 py-2 rounded-lg border border-indigo-500/20 transition-colors flex items-center space-x-1.5"
-          >
-            <span>{showGuide ? "Hide Guide ✕" : "ℹ️ How to read this dashboard"}</span>
-          </button>
-        </div>
-
-        {/* Collapsible Guide Card */}
-        {showGuide && (
-          <div className="mt-3 p-5 bg-slate-900/90 border border-slate-800 rounded-xl grid grid-cols-1 md:grid-cols-3 gap-5 text-sm text-slate-300 animate-fadeIn">
-            <div>
-              <strong className="text-indigo-400 block mb-1.5 text-base">📊 7-Day Forecast</strong>
-              Predicted sales volume derived from your Python linear regression model running on historical orders.
-            </div>
-            <div>
-              <strong className="text-indigo-400 block mb-1.5 text-base">⚠️ Stockout Risk</strong>
-              The percentage threshold comparing upcoming demand to your available warehouse stock. High risk triggers auto-reorders.
-            </div>
-            <div>
-              <strong className="text-indigo-400 block mb-1.5 text-base">🎛️ Simulation Sandbox</strong>
-              Tweak competitor prices or demand multipliers below to watch the ML engine recalculate revenue and stockout dates in real time.
-            </div>
-          </div>
-        )}
-      </div>
 
       {error && (
         <div className="bg-red-950/50 border border-red-800 text-red-200 p-4 rounded-xl mb-8 flex items-center gap-3">
@@ -412,7 +459,6 @@ export default function Dashboard() {
       ) : (
         /* WHAT-IF SCENARIO SANDBOX VIEW */
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column: Controls (1 col) */}
           <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
             <div>
               <h2 className="text-xl font-bold flex items-center gap-2 mb-1">
@@ -422,7 +468,6 @@ export default function Dashboard() {
               <p className="text-sm text-slate-400">Inject simulated market shifts to test autonomous decision resilience.</p>
             </div>
 
-            {/* Product Selector */}
             <div>
               <label className="block text-sm font-semibold text-slate-300 uppercase tracking-wider mb-2">Target SKU</label>
               <select
@@ -453,7 +498,6 @@ export default function Dashboard() {
               </select>
             </div>
 
-            {/* Slider 1: Competitor Price */}
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
@@ -482,7 +526,6 @@ export default function Dashboard() {
               />
             </div>
 
-            {/* Slider 2: Demand Multiplier */}
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Demand Surge Multiplier</label>
@@ -502,7 +545,6 @@ export default function Dashboard() {
               />
             </div>
 
-            {/* Slider 3: Stock Buffer Override */}
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Inventory Buffer Override</label>
@@ -523,7 +565,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Right Column: Live Intelligence Outputs (2 cols) */}
           <div className="lg:col-span-2 space-y-6">
             {simLoading ? (
               <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-12 text-center text-slate-400 text-base">
@@ -532,7 +573,6 @@ export default function Dashboard() {
               </div>
             ) : simulationResult ? (
               <>
-                {/* Decision Engine Preview Banner */}
                 <div className={`border rounded-2xl p-6 shadow-xl ${
                   simulationResult.actionSeverity === 'WARNING_MARGIN_BREACH' 
                     ? 'bg-amber-950/40 border-amber-800/80 text-amber-200' 
@@ -553,7 +593,6 @@ export default function Dashboard() {
                   <p className="text-base font-medium leading-relaxed">{simulationResult.engineRecommendation}</p>
                 </div>
 
-                {/* Metric Output Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                   <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-lg">
                     <div className="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-1">Simulated 7-Day Demand</div>
@@ -636,7 +675,6 @@ export default function Dashboard() {
             </div>
 
             <div className="p-4 border-t border-slate-800 bg-slate-950/60 text-right text-sm text-slate-400">
-              Connected to PostgreSQL v.4533 (Read-Only Inspection Mode)
             </div>
           </div>
         </div>
