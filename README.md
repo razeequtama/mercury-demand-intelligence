@@ -10,7 +10,6 @@
 ## Architectural Overview
 
 Mercury models a distributed commerce data pipeline. It ingests order and inventory data, evaluates stock levels across multiple warehouses, processes pricing signals, runs demand forecasting, and turns the resulting analytics into actionable operational insights.
-![alt text](docs/Architectural_Overview.png)
 
 ---
 
