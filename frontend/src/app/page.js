@@ -27,6 +27,24 @@ import {
 } from 'recharts';
 
 export default function Dashboard() {
+
+  // Welcome message
+  const [showWelcome, setShowWelcome] = useState(false);
+  // Guide
+  const [showGuide, setShowGuide] = useState(false);
+
+  useEffect(() => {
+    const hasVisited = localStorage.getItem('mercury_welcomed');
+    if (!hasVisited) {
+      setShowWelcome(true);
+    }
+  }, []);
+
+  const handleCloseWelcome = () => {
+    localStorage.setItem('mercury_welcomed', 'true');
+    setShowWelcome(false);
+  };
+
   const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard' | 'sandbox'
   
   // Dashboard State
@@ -183,6 +201,37 @@ export default function Dashboard() {
           </button>
         </div>
       </header>
+
+            {/* {Guide} */}
+      <div className="mb-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-lg font-semibold text-slate-200">Inventory Command Center</h2>
+          <button 
+            onClick={() => setShowGuide(!showGuide)}
+            className="text-xs text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 px-3 py-1.5 rounded-lg border border-indigo-500/20 transition-colors flex items-center space-x-1.5"
+          >
+            <span>{showGuide ? "Hide Guide ✕" : "ℹ️ How to read this dashboard"}</span>
+          </button>
+        </div>
+
+        {/* Collapsible Guide Card */}
+        {showGuide && (
+          <div className="mt-3 p-4 bg-slate-900/90 border border-slate-800 rounded-xl grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-300 animate-fadeIn">
+            <div>
+              <strong className="text-indigo-400 block mb-1">📊 7-Day Forecast</strong>
+              Predicted sales volume derived from your Python linear regression model running on historical orders.
+            </div>
+            <div>
+              <strong className="text-indigo-400 block mb-1">⚠️ Stockout Risk</strong>
+              The percentage threshold comparing upcoming demand to your available warehouse stock. High risk triggers auto-reorders.
+            </div>
+            <div>
+              <strong className="text-indigo-400 block mb-1">🎛️ Simulation Sandbox</strong>
+              Tweak competitor prices or demand multipliers below to watch the ML engine recalculate revenue and stockout dates in real time.
+            </div>
+          </div>
+        )}
+      </div>
 
       {error && (
         <div className="bg-red-950/50 border border-red-800 text-red-200 p-4 rounded-xl mb-8 flex items-center gap-3">
@@ -569,6 +618,31 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Welcome */}
+      {showWelcome && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl text-slate-100">
+            <div className="flex items-center space-x-3 mb-4">
+              <span className="p-2 bg-indigo-500/20 text-indigo-400 rounded-xl font-bold">🚀</span>
+              <h3 className="text-xl font-bold">Hi! Thank you for visiting this project!</h3>
+            </div>
+            <p className="text-slate-300 text-sm leading-relaxed mb-4">
+              Welcome to <strong className="text-indigo-400">Mercury: </strong>a real-time inventory and demand forecasting engine powered by a Python Scikit-Learn regression pipeline and a full-stack React interface.
+            </p>
+            <div className="bg-slate-950 p-3 rounded-xl border border-slate-800/80 text-xs text-slate-400 space-y-2 mb-6">
+              <div><strong className="text-slate-300">How it works:</strong> Select a SKU from the dropdown, tweak the competitor price or demand sliders, and watch the ML engine instantly recalculate stockout risks and reorder thresholds!</div>
+            </div>
+            <button 
+              onClick={handleCloseWelcome}
+              className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-indigo-600/20"
+            >
+              Have fun!
+            </button>
+          </div>
+        </div>
+      )}
+
     </main>
   );
 }
