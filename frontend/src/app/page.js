@@ -154,8 +154,8 @@ export default function Dashboard() {
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-800 pb-6 mb-8 gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span className="text-sm uppercase tracking-widest text-emerald-400 font-semibold">Mercury Demand Intelligence</span>
+            <img src="/mercury.svg" alt="Logo" className="w-8 h-8" />
+            <span className="text-sm uppercase tracking-widest text-amber-400 font-semibold">Mercury Demand Intelligence</span>
           </div>
           <h1 className="text-3xl font-extrabold tracking-tight mt-1">Commerce Command Center</h1>
           <p className="text-base text-slate-400 mt-1">Real-time demand forecasting, stockout risk scoring, and autonomous decision simulation.</p>
@@ -201,6 +201,30 @@ export default function Dashboard() {
           </button>
         </div>
       </header>
+
+      {/* Welcome */}
+      {showWelcome && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl text-slate-100">
+            <div className="flex items-center space-x-3 mb-4">
+              <img src="/mercury.svg" alt="Logo" className="w-12 h-12 shrink-0" />
+              <h3 className="text-2xl font-bold leading-none">Hi! Thank you for visiting this project!</h3>
+            </div>
+            <p className="text-slate-300 text-base leading-relaxed mb-4">
+              Welcome to <strong className="text-indigo-400">Mercury: </strong>a real-time inventory and demand forecasting engine powered by a Python Scikit-Learn regression pipeline and a full-stack React interface.
+            </p>
+            <div className="bg-slate-950 p-4 rounded-xl border border-slate-800/80 text-sm text-slate-300 space-y-2 mb-6">
+              <div><strong className="text-slate-100">How it works:</strong> Select a SKU from the dropdown, tweak the competitor price or demand sliders, and watch the ML engine instantly recalculate stockout risks and reorder thresholds!</div>
+            </div>
+            <button 
+              onClick={handleCloseWelcome}
+              className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-indigo-600/20 text-base"
+            >
+              Have fun!
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Guide */}
       <div className="mb-6">
@@ -614,30 +638,6 @@ export default function Dashboard() {
             <div className="p-4 border-t border-slate-800 bg-slate-950/60 text-right text-sm text-slate-400">
               Connected to PostgreSQL v.4533 (Read-Only Inspection Mode)
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Welcome */}
-      {showWelcome && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl text-slate-100">
-            <div className="flex items-center space-x-3 mb-4">
-              <span className="p-2.5 bg-indigo-500/20 text-indigo-400 rounded-xl font-bold text-lg">🚀</span>
-              <h3 className="text-2xl font-bold">Hi! Thank you for visiting this project!</h3>
-            </div>
-            <p className="text-slate-300 text-base leading-relaxed mb-4">
-              Welcome to <strong className="text-indigo-400">Mercury: </strong>a real-time inventory and demand forecasting engine powered by a Python Scikit-Learn regression pipeline and a full-stack React interface.
-            </p>
-            <div className="bg-slate-950 p-4 rounded-xl border border-slate-800/80 text-sm text-slate-300 space-y-2 mb-6">
-              <div><strong className="text-slate-100">How it works:</strong> Select a SKU from the dropdown, tweak the competitor price or demand sliders, and watch the ML engine instantly recalculate stockout risks and reorder thresholds!</div>
-            </div>
-            <button 
-              onClick={handleCloseWelcome}
-              className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-indigo-600/20 text-base"
-            >
-              Have fun!
-            </button>
           </div>
         </div>
       )}

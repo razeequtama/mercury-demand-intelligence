@@ -14,6 +14,9 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: 'Mercury | Real-Time Demand, Pricing & Intelligence Platform',
   description: 'Real-time demand forecasting, stockout risk scoring, and automated decision control center.',
+  icons: {
+    icon: '/mercury.svg',
+  },
 };
 
 export default function RootLayout({ children }) {
