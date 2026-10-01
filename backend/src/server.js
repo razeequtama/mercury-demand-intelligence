@@ -201,6 +201,100 @@ app.get('/api/database-inspect', async (req, res) => {
   }
 });
 
+// 6. POST: What-If Scenario Sandbox Simulation Engine
+app.post('/api/sandbox/simulate', async (req, res) => {
+  const { productId, simulatedCompetitorPrice, demandMultiplier, stockOverride } = req.body;
+
+  if (!productId) {
+    return res.status(400).json({ error: 'productId is required for simulation.' });
+  }
+
+  try {
+    const productQuery = `
+      SELECT p.id, p.sku, p.name, p.current_price, p.cost_price, 
+             i.stock_quantity, i.reorder_threshold,
+             ce.competitor_price
+      FROM products p
+      LEFT JOIN inventory i ON p.id = i.product_id
+      LEFT JOIN competitor_events ce ON p.id = ce.product_id
+      WHERE p.id = $1;
+    `;
+    const { rows } = await query(productQuery, [productId]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Product not found in database.' });
+    }
+
+    const base = rows[0];
+    const ourPrice = parseFloat(base.current_price); // FIXED baseline store price
+    const costPrice = parseFloat(base.cost_price || (ourPrice * 0.6));
+    const baseStock = stockOverride !== undefined ? parseInt(stockOverride) : parseInt(base.stock_quantity || 100);
+    
+    const compPrice = simulatedCompetitorPrice !== undefined 
+      ? parseFloat(simulatedCompetitorPrice) 
+      : parseFloat(base.competitor_price || ourPrice);
+
+    const baseWeeklyDemand = Math.round(baseStock * 0.35); 
+    const multiplier = demandMultiplier !== undefined ? parseFloat(demandMultiplier) : 1.0;
+    const simulatedWeeklyDemand = Math.round(baseWeeklyDemand * multiplier);
+
+    const dailyBurnRate = simulatedWeeklyDemand / 7;
+    const daysUntilStockout = dailyBurnRate > 0 ? Math.max(0, Math.floor(baseStock / dailyBurnRate)) : 999;
+    
+    let stockoutRiskScore = 'Low Risk';
+    if (daysUntilStockout <= 3) stockoutRiskScore = 'Critical Stockout (100%)';
+    else if (daysUntilStockout <= 7) stockoutRiskScore = 'High Stockout Risk (85%)';
+    else if (daysUntilStockout <= 14) stockoutRiskScore = 'Moderate Risk (45%)';
+
+    // Decide if we match or hold price
+    const shouldMatch = compPrice < ourPrice;
+    const simulatedOurPrice = shouldMatch ? compPrice : ourPrice; 
+    const simulatedGrossProfit = simulatedOurPrice - costPrice;
+    const marginPercentage = (simulatedGrossProfit / simulatedOurPrice) * 100;
+
+    let engineRecommendation = 'Maintain current pricing structure. Market position stable.';
+    let actionSeverity = 'OPTIMAL';
+
+    if (shouldMatch) {
+      const priceCut = ourPrice - compPrice;
+      if (marginPercentage < 15) {
+        engineRecommendation = `EXCEED PRICE MATCH — Simulated competitor undercut ($${priceCut.toFixed(2)}) drives margin down to ${marginPercentage.toFixed(1)}% (below 15% safety floor). Recommend targeted product bundling instead of direct price matching.`;
+        actionSeverity = 'WARNING_MARGIN_BREACH';
+      } else {
+        engineRecommendation = `AUTONOMOUS MATCH — Competitor undercuts by $${priceCut.toFixed(2)}. Safe margin preserved (${marginPercentage.toFixed(1)}%). Price-match rule execution authorized.`;
+        actionSeverity = 'EXECUTABLE_MATCH';
+      }
+    }
+
+    if (daysUntilStockout <= 5) {
+      engineRecommendation += ` EMERGENCY: Stock depletion projected in ${daysUntilStockout} days. Automated warehouse reorder triggered.`;
+      actionSeverity = 'CRITICAL_STOCKOUT';
+    }
+
+    res.json({
+      success: true,
+      simulation: {
+        sku: base.sku,
+        productName: base.name,
+        baselineStock: baseStock,
+        simulatedDemand: simulatedWeeklyDemand,
+        daysUntilStockout,
+        stockoutRiskScore,
+        baseOurPrice: ourPrice, // Always pass the static warehouse price
+        simulatedOurPrice,
+        simulatedCompetitorPrice: compPrice,
+        projectedMarginPercent: parseFloat(marginPercentage.toFixed(1)),
+        actionSeverity,
+        engineRecommendation
+      }
+    });
+
+  } catch (err) {
+    console.error('Simulation engine error:', err.message);
+    res.status(500).json({ error: 'Failed to execute What-If sandbox simulation.' });
+  }
+});
+
 // Automatically evaluate and execute autonomous actions upon server startup
 const runStartupDecisionEngine = async () => {
   try {
