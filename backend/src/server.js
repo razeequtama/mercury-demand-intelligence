@@ -13,14 +13,30 @@ app.use(cors());
 const PORT = process.env.PORT || 5000;
 const ML_ENGINE_URL = process.env.ML_ENGINE_URL || 'http://localhost:8000';
 
+// Helper validator for positive integers (IDs, quantities)
+const isValidPositiveInt = (val) => {
+  const num = Number(val);
+  return Number.isInteger(num) && num > 0;
+};
+
+// Helper validator for non-negative numbers (prices, multipliers, overrides)
+const isValidNonNegativeNumber = (val) => {
+  const num = Number(val);
+  return !isNaN(num) && num >= 0;
+};
+
 // 1. GET: Intelligence Pipeline (Delegated to Python ML Microservice)
 app.get('/api/intelligence', async (req, res) => {
   try {
-    const mlResponse = await axios.get(`${ML_ENGINE_URL}/predict-demand`);
+    const mlResponse = await axios.get(`${ML_ENGINE_URL}/predict-demand`, { timeout: 10000 });
     res.json(mlResponse.data);
   } catch (err) {
     console.error("Failed to communicate with ML Microservice:", err.message);
-    res.status(500).json({ error: 'ML Analytics Engine Unavailable' });
+    res.status(500).json({ 
+      success: false, 
+      error: 'ML Analytics Engine Unavailable',
+      details: err.message 
+    });
   }
 });
 
@@ -43,7 +59,24 @@ app.get('/api/insights', async (req, res) => {
 
     const { rows } = await query(eventQuery);
     const actionableInsights = rows.map(event => {
-      const priceDifference = parseFloat(event.our_price) - parseFloat(event.competitor_price);
+      const ourPrice = parseFloat(event.our_price);
+      const competitorPrice = parseFloat(event.competitor_price);
+      
+      if (isNaN(ourPrice) || isNaN(competitorPrice)) {
+        return {
+          eventId: event.id,
+          sku: event.sku,
+          productName: event.product_name,
+          marketEvent: event.event_description,
+          ourPrice: event.our_price,
+          competitorPrice: event.competitor_price,
+          detectedAt: event.detected_at,
+          decisionEngineAction: 'Monitor market position.',
+          autonomousProcedure: 'Pending manual review or autonomous dispatch.'
+        };
+      }
+
+      const priceDifference = ourPrice - competitorPrice;
       let businessAction = 'Monitor market position.';
       let executedProcedure = 'Pending manual review or autonomous dispatch.';
 
@@ -80,8 +113,8 @@ app.get('/api/insights', async (req, res) => {
     });
 
   } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ error: 'Server Error' });
+    console.error("Error fetching insights:", err.message);
+    res.status(500).json({ success: false, error: 'Server Error while fetching insights.' });
   }
 });
 
@@ -97,7 +130,12 @@ app.post('/api/insights/execute-actions', async (req, res) => {
     let executedCount = 0;
 
     for (const event of rows) {
-      const priceDifference = parseFloat(event.our_price) - parseFloat(event.competitor_price);
+      const ourPrice = parseFloat(event.our_price);
+      const competitorPrice = parseFloat(event.competitor_price);
+
+      if (isNaN(ourPrice) || isNaN(competitorPrice)) continue;
+
+      const priceDifference = ourPrice - competitorPrice;
       if (priceDifference > 0) {
         const description = `Autonomous Procedure EXECUTED: Dispatched price-matching rule (-$${priceDifference.toFixed(2)}) & queued targeted promotion campaign.`;
 
@@ -120,41 +158,59 @@ app.post('/api/insights/execute-actions', async (req, res) => {
 
     res.json({ success: true, message: `Successfully executed ${executedCount} autonomous actions.` });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ error: 'Failed to execute autonomous actions.' });
+    console.error("Error executing autonomous actions:", err.message);
+    res.status(500).json({ success: false, error: 'Failed to execute autonomous actions.' });
   }
 });
 
-// 4. POST: Live Event Ingestion / Simulator Endpoint
+// 4. POST: Live Event Ingestion / Simulator Endpoint with Strict Validation
 app.post('/api/simulate-order', async (req, res) => {
   const { productId, quantity } = req.body;
 
+  // Strict Input Validation & Sanitization
   if (!productId || !quantity) {
-    return res.status(400).json({ error: 'productId and quantity are required.' });
+    return res.status(400).json({ success: false, error: 'productId and quantity are required.' });
   }
+
+  if (!isValidPositiveInt(productId)) {
+    return res.status(400).json({ success: false, error: 'Invalid productId. Must be a positive integer.' });
+  }
+
+  if (!isValidPositiveInt(quantity)) {
+    return res.status(400).json({ success: false, error: 'Invalid quantity. Must be a positive integer greater than 0.' });
+  }
+
+  const sanitizedProductId = parseInt(productId, 10);
+  const sanitizedQuantity = parseInt(quantity, 10);
 
   const client = await getClient();
   try {
     await client.query('BEGIN');
 
-    const prodRes = await client.query('SELECT current_price FROM products WHERE id = $1', [productId]);
+    const prodRes = await client.query('SELECT current_price FROM products WHERE id = $1', [sanitizedProductId]);
     if (prodRes.rows.length === 0) {
       await client.query('ROLLBACK');
       client.release();
-      return res.status(404).json({ error: 'Product not found.' });
+      return res.status(404).json({ success: false, error: 'Product not found.' });
     }
 
     const price = parseFloat(prodRes.rows[0].current_price);
-    const totalAmount = price * quantity;
+    if (isNaN(price) || price < 0) {
+      await client.query('ROLLBACK');
+      client.release();
+      return res.status(422).json({ success: false, error: 'Invalid product pricing stored in database.' });
+    }
+
+    const totalAmount = price * sanitizedQuantity;
 
     await client.query(
       'INSERT INTO orders (product_id, quantity, total_amount, order_date) VALUES ($1, $2, $3, NOW())',
-      [productId, quantity, totalAmount]
+      [sanitizedProductId, sanitizedQuantity, totalAmount]
     );
 
     await client.query(
       'UPDATE inventory SET stock_quantity = GREATEST(0, stock_quantity - $1), updated_at = NOW() WHERE product_id = $2',
-      [quantity, productId]
+      [sanitizedQuantity, sanitizedProductId]
     );
 
     await client.query('COMMIT');
@@ -162,14 +218,14 @@ app.post('/api/simulate-order', async (req, res) => {
 
     res.json({
       success: true,
-      message: `Successfully ingested order event of ${quantity} units. ML forecasting pipeline adjusted.`
+      message: `Successfully ingested order event of ${sanitizedQuantity} units. ML forecasting pipeline adjusted.`
     });
 
   } catch (err) {
     await client.query('ROLLBACK');
     client.release();
-    console.error(err.message);
-    res.status(500).json({ error: 'Failed to process order simulation.' });
+    console.error("Order simulation transaction failed:", err.message);
+    res.status(500).json({ success: false, error: 'Failed to process order simulation due to server error.' });
   }
 });
 
@@ -196,31 +252,59 @@ app.get('/api/database-inspect', async (req, res) => {
       }
     });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ error: 'Failed to fetch database inspection data.' });
+    console.error("Database inspection query failed:", err.message);
+    res.status(500).json({ success: false, error: 'Failed to fetch database inspection data.' });
   }
 });
 
-// 6. POST: What-If Scenario Sandbox Simulation Engine (Delegated to Python ML Microservice)
+// 6. POST: What-If Scenario Sandbox Simulation Engine with Strict Validation
 app.post('/api/sandbox/simulate', async (req, res) => {
   const { productId, simulatedCompetitorPrice, demandMultiplier, stockOverride } = req.body;
 
   if (!productId) {
-    return res.status(400).json({ error: 'productId is required for simulation.' });
+    return res.status(400).json({ success: false, error: 'productId is required for simulation.' });
+  }
+
+  if (!isValidPositiveInt(productId)) {
+    return res.status(400).json({ success: false, error: 'Invalid productId. Must be a positive integer.' });
+  }
+
+  const sanitizedProductId = parseInt(productId, 10);
+  const payload = { productId: sanitizedProductId };
+
+  // Validate optional sandbox simulation parameters if provided
+  if (simulatedCompetitorPrice !== undefined && simulatedCompetitorPrice !== null) {
+    if (!isValidNonNegativeNumber(simulatedCompetitorPrice)) {
+      return res.status(400).json({ success: false, error: 'Invalid simulatedCompetitorPrice. Must be a non-negative number.' });
+    }
+    payload.simCompetitorPrice = parseFloat(simulatedCompetitorPrice);
+  }
+
+  if (demandMultiplier !== undefined && demandMultiplier !== null) {
+    if (!isValidNonNegativeNumber(demandMultiplier)) {
+      return res.status(400).json({ success: false, error: 'Invalid demandMultiplier. Must be a non-negative number.' });
+    }
+    payload.demandMultiplier = parseFloat(demandMultiplier);
+  }
+
+  if (stockOverride !== undefined && stockOverride !== null) {
+    const stockNum = Number(stockOverride);
+    if (!Number.isInteger(stockNum) || stockNum < 0) {
+      return res.status(400).json({ success: false, error: 'Invalid stockOverride. Must be a non-negative integer.' });
+    }
+    payload.stockOverride = stockNum;
   }
 
   try {
-    const mlResponse = await axios.post(`${ML_ENGINE_URL}/simulate-sandbox`, {
-      productId,
-      simCompetitorPrice: simulatedCompetitorPrice,
-      demandMultiplier,
-      stockOverride
-    });
-
+    const mlResponse = await axios.post(`${ML_ENGINE_URL}/simulate-sandbox`, payload, { timeout: 10000 });
     res.json(mlResponse.data);
   } catch (err) {
     console.error("Failed to communicate with ML Sandbox Microservice:", err.message);
-    res.status(500).json({ error: 'ML Analytics Engine Unavailable for Sandbox Simulation' });
+    res.status(500).json({ 
+      success: false, 
+      error: 'ML Analytics Engine Unavailable for Sandbox Simulation',
+      details: err.message
+    });
   }
 });
 
@@ -238,7 +322,11 @@ const runStartupDecisionEngine = async () => {
     const { rows: competitorRows } = await query(eventQuery);
 
     for (const event of competitorRows) {
-      const priceDifference = parseFloat(event.our_price) - parseFloat(event.competitor_price);
+      const ourPrice = parseFloat(event.our_price);
+      const competitorPrice = parseFloat(event.competitor_price);
+      if (isNaN(ourPrice) || isNaN(competitorPrice)) continue;
+
+      const priceDifference = ourPrice - competitorPrice;
       if (priceDifference > 0) {
         const description = `Autonomous Procedure EXECUTED: Dispatched price-matching rule (-$${priceDifference.toFixed(2)}) & queued targeted promotion campaign.`;
 
