@@ -34,7 +34,7 @@ CREATE TABLE orders (
     order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Competitor Intelligence & Market Events
+-- Competitor Intelligence & Market Events Feed
 CREATE TABLE competitor_events (
     id SERIAL PRIMARY KEY,
     product_id INT REFERENCES products(id) ON DELETE CASCADE,
@@ -43,19 +43,12 @@ CREATE TABLE competitor_events (
     detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Competitors Registry
-CREATE TABLE competitors (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    market_tier VARCHAR(50) DEFAULT 'Direct'
-);
-
--- Competitor Pricing & Scraped Intelligence Feed
-CREATE TABLE competitor_pricing (
+-- Autonomous Actions Log (Decision Engine Audit Trail)
+CREATE TABLE automated_actions_log (
     id SERIAL PRIMARY KEY,
     product_id INT REFERENCES products(id) ON DELETE CASCADE,
-    competitor_id INT REFERENCES competitors(id) ON DELETE CASCADE,
-    competitor_price DECIMAL(10, 2) NOT NULL,
-    price_difference_percentage DECIMAL(5, 2), -- e.g., -23.00%
-    scraped_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    action_type VARCHAR(100) NOT NULL,
+    description TEXT NOT NULL,
+    status VARCHAR(50) DEFAULT 'EXECUTED',
+    executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
