@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import axios from 'axios';
 import { query, getClient } from './db.js';
+import { runDecisionEngine } from './services/decisionEngine.js';
 
 dotenv.config();
 
@@ -121,41 +122,7 @@ app.get('/api/insights', async (req, res) => {
 // 3. POST: Explicit Endpoint to Trigger Autonomous Actions Safely (Idempotent)
 app.post('/api/insights/execute-actions', async (req, res) => {
   try {
-    const eventQuery = `
-      SELECT ce.id, p.id AS product_id, p.current_price AS our_price, ce.competitor_price
-      FROM competitor_events ce
-      JOIN products p ON ce.product_id = p.id;
-    `;
-    const { rows } = await query(eventQuery);
-    let executedCount = 0;
-
-    for (const event of rows) {
-      const ourPrice = parseFloat(event.our_price);
-      const competitorPrice = parseFloat(event.competitor_price);
-
-      if (isNaN(ourPrice) || isNaN(competitorPrice)) continue;
-
-      const priceDifference = ourPrice - competitorPrice;
-      if (priceDifference > 0) {
-        const description = `Autonomous Procedure EXECUTED: Dispatched price-matching rule (-$${priceDifference.toFixed(2)}) & queued targeted promotion campaign.`;
-
-        // Idempotency check: Ensure we don't duplicate logs for the same action
-        const checkLog = await query(
-          'SELECT id FROM automated_actions_log WHERE product_id = $1 AND description = $2',
-          [event.product_id, description]
-        );
-
-        if (checkLog.rows.length === 0) {
-          await query(
-            `INSERT INTO automated_actions_log (product_id, action_type, description, status)
-             VALUES ($1, $2, $3, $4)`,
-            [event.product_id, 'PRICE_MATCH_AUTOMATION', description, 'EXECUTED']
-          );
-          executedCount++;
-        }
-      }
-    }
-
+    const executedCount = await runDecisionEngine();
     res.json({ success: true, message: `Successfully executed ${executedCount} autonomous actions.` });
   } catch (err) {
     console.error("Error executing autonomous actions:", err.message);
@@ -167,7 +134,6 @@ app.post('/api/insights/execute-actions', async (req, res) => {
 app.post('/api/simulate-order', async (req, res) => {
   const { productId, quantity } = req.body;
 
-  // Strict Input Validation & Sanitization
   if (!productId || !quantity) {
     return res.status(400).json({ success: false, error: 'productId and quantity are required.' });
   }
@@ -272,7 +238,6 @@ app.post('/api/sandbox/simulate', async (req, res) => {
   const sanitizedProductId = parseInt(productId, 10);
   const payload = { productId: sanitizedProductId };
 
-  // Validate optional sandbox simulation parameters if provided
   if (simulatedCompetitorPrice !== undefined && simulatedCompetitorPrice !== null) {
     if (!isValidNonNegativeNumber(simulatedCompetitorPrice)) {
       return res.status(400).json({ success: false, error: 'Invalid simulatedCompetitorPrice. Must be a non-negative number.' });
@@ -308,80 +273,11 @@ app.post('/api/sandbox/simulate', async (req, res) => {
   }
 });
 
-// Automatically evaluate and execute autonomous actions upon server startup
-const runStartupDecisionEngine = async () => {
+app.listen(PORT, async () => {
+  console.log(`Mercury Express Gateway running on port ${PORT}`);
   try {
-    let executedCount = 0;
-
-    // 1. Evaluate Competitor Undercuts
-    const eventQuery = `
-      SELECT ce.id, p.id AS product_id, p.current_price AS our_price, ce.competitor_price
-      FROM competitor_events ce
-      JOIN products p ON ce.product_id = p.id;
-    `;
-    const { rows: competitorRows } = await query(eventQuery);
-
-    for (const event of competitorRows) {
-      const ourPrice = parseFloat(event.our_price);
-      const competitorPrice = parseFloat(event.competitor_price);
-      if (isNaN(ourPrice) || isNaN(competitorPrice)) continue;
-
-      const priceDifference = ourPrice - competitorPrice;
-      if (priceDifference > 0) {
-        const description = `Autonomous Procedure EXECUTED: Dispatched price-matching rule (-$${priceDifference.toFixed(2)}) & queued targeted promotion campaign.`;
-
-        const checkLog = await query(
-          'SELECT id FROM automated_actions_log WHERE product_id = $1 AND description = $2',
-          [event.product_id, description]
-        );
-
-        if (checkLog.rows.length === 0) {
-          await query(
-            `INSERT INTO automated_actions_log (product_id, action_type, description, status)
-             VALUES ($1, $2, $3, $4)`,
-            [event.product_id, 'PRICE_MATCH_AUTOMATION', description, 'EXECUTED']
-          );
-          executedCount++;
-        }
-      }
-    }
-
-    // 2. Evaluate Critical Zero-Stock / Emergency Stockout Risks
-    const stockQuery = `
-      SELECT i.product_id, i.stock_quantity, i.reorder_threshold, p.name
-      FROM inventory i
-      JOIN products p ON i.product_id = p.id
-      WHERE i.stock_quantity <= 0;
-    `;
-    const { rows: stockRows } = await query(stockQuery);
-
-    for (const stock of stockRows) {
-      const description = `Autonomous Procedure EXECUTED: Dispatched emergency replenishment reorder for zero-stock SKU (${stock.name}).`;
-
-      const checkLog = await query(
-        'SELECT id FROM automated_actions_log WHERE product_id = $1 AND description = $2',
-        [stock.product_id, description]
-      );
-
-      if (checkLog.rows.length === 0) {
-        await query(
-          `INSERT INTO automated_actions_log (product_id, action_type, description, status)
-           VALUES ($1, $2, $3, $4)`,
-          [stock.product_id, 'CRITICAL_STOCKOUT_EMERGENCY', description, 'EXECUTED']
-        );
-        executedCount++;
-      }
-    }
-
-    if (executedCount > 0) {
-      console.log(`[Autonomous Engine] Evaluated system state: Executed ${executedCount} automated actions.`);
-    }
+    await runDecisionEngine();
   } catch (err) {
     console.error('Failed to run startup decision engine:', err.message);
   }
-};
-
-app.listen(PORT, async () => {
-  console.log(`Mercury Express Gateway running on port ${PORT}`);
-  await runStartupDecisionEngine();
 });
