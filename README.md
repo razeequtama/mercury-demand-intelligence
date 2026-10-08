@@ -198,6 +198,16 @@ The result panel updates with simulated demand, estimated stockout timing/risk, 
 
 ---
 
+## Internationalization (English and Indonesian)
+
+The Next.js interface supports English (`en`) and Indonesian (`id`) through a small React context and local JSON dictionaries; it does not add a localization package dependency. Use the flag buttons in the header to switch languages immediately. The preference is saved in a first-party cookie and restored on the next visit, including in the initial server-rendered document language.
+
+Translation resources live in `frontend/src/i18n/messages/en.json` and `frontend/src/i18n/messages/id.json`. `LanguageProvider` exposes the active locale and a `t('section.key')` helper to client components. Add matching keys to both dictionaries when adding user-facing interface labels. The document's `lang` attribute follows the selected locale.
+
+The current dictionaries cover the dashboard, sandbox, database-inspector labels, welcome guide, and gateway connection error. Values returned by the backend—such as model-generated recommendation and audit-log descriptions—remain in the language supplied by the service.
+
+---
+
 ## Getting started
 
 ### Prerequisites

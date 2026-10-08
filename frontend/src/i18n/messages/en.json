@@ -1,0 +1,92 @@
+{
+  "common": {
+    "product": "Product",
+    "stock": "Stock",
+    "units": "units",
+    "close": "Close",
+    "english": "English",
+    "indonesian": "Indonesian",
+    "language": "Language"
+  },
+  "header": {
+    "brand": "Mercury Demand Intelligence",
+    "title": "Commerce Command Center",
+    "subtitle": "Real-time demand forecasting, stockout risk scoring, and autonomous decision simulation.",
+    "liveOperations": "Live Operations",
+    "sandbox": "What-If Sandbox",
+    "inspectDatabase": "Inspect DB",
+    "refresh": "Refresh",
+    "switchToLight": "Switch to Light Mercury",
+    "switchToDark": "Switch to Dark Mercury",
+    "userGuide": "How to use guide"
+  },
+  "dashboard": {
+    "trackedSkus": "Tracked SKUs",
+    "warehouses": "Across multiple active warehouses",
+    "highStockoutRisk": "High Stockout Risk",
+    "riskThreshold": "Risk index exceeds the 70% threshold",
+    "activeMarketAlerts": "Active Market Alerts",
+    "competitorShifts": "Competitor & pricing shifts detected",
+    "engineStatus": "Engine Status",
+    "degraded": "Degraded",
+    "optimal": "Optimal",
+    "servicesFailed": "Services reporting failure",
+    "inferencesRunning": "Inferences running in real time",
+    "auditLog": "Autonomous Decision Engine Audit Log",
+    "auditDescription": "Actions recorded by Mercury after market anomalies are detected.",
+    "noActions": "No autonomous procedures executed yet.",
+    "inventoryForecasts": "Inventory & 7-Day Demand Predictions",
+    "forecast": "7-Day Forecast",
+    "stockoutRisk": "Stockout Risk Index",
+    "action": "Action",
+    "stable": "Stock Stable",
+    "chartTitle": "7-Day Demand vs Inventory",
+    "currentStock": "Current Stock",
+    "sevenDayDemand": "7-Day Demand"
+  },
+  "sandbox": {
+    "scenarioLevers": "Scenario Controls",
+    "description": "Inject simulated market shifts to test decision-engine responses.",
+    "targetSku": "Target SKU",
+    "competitorPrice": "Simulated Competitor Price",
+    "ourPrice": "Our Price",
+    "demandMultiplier": "Demand Surge Multiplier",
+    "inventoryOverride": "Inventory Override",
+    "runningInference": "Running sandbox inference...",
+    "recommendationPreview": "Decision Engine Recommendation Preview",
+    "simulatedDemand": "Simulated 7-Day Demand",
+    "scaledMultiplier": "Scaled by {multiplier}x multiplier",
+    "stockoutTimeline": "Stockout Timeline",
+    "projectedMargin": "Projected Gross Margin",
+    "priceMatchTarget": "Price match target"
+  },
+  "inspector": {
+    "title": "PostgreSQL Database Inspector",
+    "products": "Products",
+    "inventory": "Inventory",
+    "competitorEvents": "Competitor Events",
+    "nullValue": "NULL"
+  },
+  "welcome": {
+    "welcomeTitle": "Welcome to Mercury",
+    "welcomeDescription": "Explore a demand and inventory forecasting demo powered by a Python Scikit-Learn pipeline, a Node.js gateway, and a React interface.",
+    "guideTitle": "Mercury User Guide",
+    "walkthrough": "Step-by-Step Guide",
+    "stepDashboardTitle": "1. Explore the Live Operations Dashboard",
+    "stepDashboardDescription": "Monitor inventory, seven-day demand forecasts, and stockout risk indicators.",
+    "stepSandboxTitle": "2. Open the What-If Sandbox",
+    "stepSandboxDescription": "Stress-test pricing strategies and simulate market changes.",
+    "stepControlsTitle": "3. Adjust the Scenario Controls",
+    "targetSkuDescription": "Choose a product (SKU) to inspect and test.",
+    "competitorDescription": "Simulate competitor prices and preview margin-protection decisions.",
+    "demandDescription": "Scale demand from 0.5x to 3.0x to model a surge or demand shock.",
+    "inventoryDescription": "Override stock levels to explore stockout timing and risk.",
+    "stepInspectorTitle": "4. Inspect Database Records",
+    "stepInspectorDescription": "Use Inspect DB to browse product, inventory, and competitor-event records.",
+    "getStarted": "Start exploring",
+    "closeGuide": "Close guide"
+  },
+  "errors": {
+    "backendUnavailable": "Could not connect to the Mercury backend. Make sure the Node.js API is running on port 5000."
+  }
+}

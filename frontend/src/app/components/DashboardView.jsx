@@ -2,9 +2,11 @@
 
 import { Package, AlertTriangle, Activity, TrendingUp } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { useLanguage } from '../../i18n/LanguageProvider';
 
 export default function DashboardView({ intelligence, insights, autonomousLogs, loading, error, theme }) {
   const isDark = theme === 'dark';
+  const { locale, t } = useLanguage();
   const highRiskCount = intelligence.filter(item => item.statusAlert === 'High Stockout Risk').length;
 
   return (
@@ -15,51 +17,51 @@ export default function DashboardView({ intelligence, insights, autonomousLogs, 
           isDark ? 'bg-[#201510]/80 border-[#36261d]' : 'bg-white/80 border-[#e8ded1]'
         }`}>
           <div className={`flex justify-between items-center mb-2 ${isDark ? 'text-[#b8a394]' : 'text-[#7a6452]'}`}>
-            <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider">Tracked SKUs</span>
+            <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider">{t('dashboard.trackedSkus')}</span>
             <Package className={`w-5 h-5 ${isDark ? 'text-amber-400' : 'text-amber-700'}`} />
           </div>
           <div className={`text-2xl sm:text-3xl font-bold ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
             {loading ? '—' : intelligence.length}
           </div>
-          <p className={`text-xs sm:text-sm mt-1 ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>Across multiple active warehouses</p>
+          <p className={`text-xs sm:text-sm mt-1 ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>{t('dashboard.warehouses')}</p>
         </div>
 
         <div className={`border rounded-2xl p-4 sm:p-5 shadow-lg ${
           isDark ? 'bg-[#201510]/80 border-[#36261d]' : 'bg-white/80 border-[#e8ded1]'
         }`}>
           <div className={`flex justify-between items-center mb-2 ${isDark ? 'text-[#b8a394]' : 'text-[#7a6452]'}`}>
-            <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider">High Stockout Risk</span>
+            <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider">{t('dashboard.highStockoutRisk')}</span>
             <AlertTriangle className="w-5 h-5 text-amber-500" />
           </div>
           <div className="text-2xl sm:text-3xl font-bold text-amber-500">{loading ? '—' : highRiskCount}</div>
-          <p className={`text-xs sm:text-sm mt-1 ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>Probability exceeds 70% threshold</p>
+          <p className={`text-xs sm:text-sm mt-1 ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>{t('dashboard.riskThreshold')}</p>
         </div>
 
         <div className={`border rounded-2xl p-4 sm:p-5 shadow-lg ${
           isDark ? 'bg-[#201510]/80 border-[#36261d]' : 'bg-white/80 border-[#e8ded1]'
         }`}>
           <div className={`flex justify-between items-center mb-2 ${isDark ? 'text-[#b8a394]' : 'text-[#7a6452]'}`}>
-            <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider">Active Market Alerts</span>
+            <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider">{t('dashboard.activeMarketAlerts')}</span>
             <Activity className={`w-5 h-5 ${isDark ? 'text-amber-400' : 'text-amber-600'}`} />
           </div>
           <div className={`text-2xl sm:text-3xl font-bold ${isDark ? 'text-amber-400' : 'text-amber-600'}`}>
             {loading ? '—' : insights.length}
           </div>
-          <p className={`text-xs sm:text-sm mt-1 ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>Competitor & pricing shifts detected</p>
+          <p className={`text-xs sm:text-sm mt-1 ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>{t('dashboard.competitorShifts')}</p>
         </div>
 
         <div className={`border rounded-2xl p-4 sm:p-5 shadow-lg ${
           isDark ? 'bg-[#201510]/80 border-[#36261d]' : 'bg-white/80 border-[#e8ded1]'
         }`}>
           <div className={`flex justify-between items-center mb-2 ${isDark ? 'text-[#b8a394]' : 'text-[#7a6452]'}`}>
-            <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider">Engine Status</span>
+            <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider">{t('dashboard.engineStatus')}</span>
             <TrendingUp className={`w-5 h-5 ${error ? 'text-red-500' : 'text-emerald-500'}`} />
           </div>
           <div className={`text-xl sm:text-2xl font-bold ${error ? 'text-red-500' : 'text-emerald-600'}`}>
-            {error ? 'Degraded' : 'Optimal'}
+            {error ? t('dashboard.degraded') : t('dashboard.optimal')}
           </div>
           <p className={`text-xs sm:text-sm mt-1 ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>
-            {error ? 'Services reporting failure' : 'Inferences running in real-time'}
+            {error ? t('dashboard.servicesFailed') : t('dashboard.inferencesRunning')}
           </p>
         </div>
       </div>
@@ -70,15 +72,15 @@ export default function DashboardView({ intelligence, insights, autonomousLogs, 
       }`}>
         <h2 className={`text-lg sm:text-xl font-semibold mb-2 flex items-center gap-2 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
           <Activity className="w-5 h-5 text-emerald-500 shrink-0" />
-          <span>Autonomous Decision Engine Audit Log</span>
+          <span>{t('dashboard.auditLog')}</span>
         </h2>
         <p className={`text-xs sm:text-sm mb-4 ${isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'}`}>
-          Procedures executed automatically by Mercury without human intervention upon detecting market anomalies.
+          {t('dashboard.auditDescription')}
         </p>
         
         <div className="space-y-3">
           {autonomousLogs.length === 0 ? (
-            <p className={`text-sm italic ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>No autonomous procedures executed yet.</p>
+            <p className={`text-sm italic ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>{t('dashboard.noActions')}</p>
           ) : (
             autonomousLogs.map(log => (
               <div key={log.id} className={`border p-3.5 sm:p-4 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 ${
@@ -98,7 +100,7 @@ export default function DashboardView({ intelligence, insights, autonomousLogs, 
                   <p className={`text-xs sm:text-sm font-medium ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>{log.description}</p>
                 </div>
                 <div className={`text-left sm:text-right text-xs font-mono w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 ${isDark ? 'border-[#36261d] text-[#b8a394]' : 'border-[#e8ded1] text-[#7a6452]'}`}>
-                  {new Date(log.executed_at).toLocaleTimeString()} • <span className={`font-semibold ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>{log.status}</span>
+                  {new Date(log.executed_at).toLocaleTimeString(locale)} • <span className={`font-semibold ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>{log.status}</span>
                 </div>
               </div>
             ))
@@ -112,17 +114,17 @@ export default function DashboardView({ intelligence, insights, autonomousLogs, 
           isDark ? 'bg-[#201510]/80 border-[#36261d]' : 'bg-white/80 border-[#e8ded1]'
         }`}>
           <h2 className={`text-lg sm:text-xl font-semibold mb-4 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
-            Inventory & 7-Day Demand Predictions
+            {t('dashboard.inventoryForecasts')}
           </h2>
           <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
             <table className="w-full text-left text-sm min-w-[600px]">
               <thead className={`border-b uppercase text-xs ${isDark ? 'border-[#36261d] text-[#b8a394]' : 'border-[#e8ded1] text-[#7a6452]'}`}>
                 <tr>
-                  <th className="pb-3 font-semibold">Product</th>
-                  <th className="pb-3 font-semibold">Stock</th>
-                  <th className="pb-3 font-semibold">7-Day Forecast</th>
-                  <th className="pb-3 font-semibold">Stockout Risk</th>
-                  <th className="pb-3 font-semibold">Action</th>
+                  <th className="pb-3 font-semibold">{t('common.product')}</th>
+                  <th className="pb-3 font-semibold">{t('common.stock')}</th>
+                  <th className="pb-3 font-semibold">{t('dashboard.forecast')}</th>
+                  <th className="pb-3 font-semibold">{t('dashboard.stockoutRisk')}</th>
+                  <th className="pb-3 font-semibold">{t('dashboard.action')}</th>
                 </tr>
               </thead>
               <tbody className={`divide-y text-sm ${isDark ? 'divide-[#36261d]/60' : 'divide-[#e8ded1]/60'}`}>
@@ -133,7 +135,7 @@ export default function DashboardView({ intelligence, insights, autonomousLogs, 
                       <div className={`text-xs sm:text-sm ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>{item.sku} • {item.warehouse}</div>
                     </td>
                     <td className="py-4 font-mono font-semibold">{item.currentInventory}</td>
-                    <td className={`py-4 font-mono font-semibold ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>{item.forecast7Day} units</td>
+                    <td className={`py-4 font-mono font-semibold ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>{item.forecast7Day} {t('common.units')}</td>
                     <td className="py-4">
                       <span className={`px-2.5 py-1 rounded-full text-xs font-bold border inline-block ${
                         parseInt(item.stockoutProbability) > 70 
@@ -147,7 +149,7 @@ export default function DashboardView({ intelligence, insights, autonomousLogs, 
                       {item.recommendation ? (
                         <span className={`font-medium ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>{item.recommendation}</span>
                       ) : (
-                        <span className={isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}>Stock Stable</span>
+                        <span className={isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}>{t('dashboard.stable')}</span>
                       )}
                     </td>
                   </tr>
@@ -161,7 +163,7 @@ export default function DashboardView({ intelligence, insights, autonomousLogs, 
           isDark ? 'bg-[#201510]/80 border-[#36261d]' : 'bg-white/80 border-[#e8ded1]'
         }`}>
           <h2 className={`text-lg sm:text-xl font-semibold mb-4 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
-            7-Day Demand vs Inventory
+            {t('dashboard.chartTitle')}
           </h2>
           <div className="flex-1 min-h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -178,8 +180,8 @@ export default function DashboardView({ intelligence, insights, autonomousLogs, 
                   }}
                   labelStyle={{ color: isDark ? '#fff8f0' : '#241a14', fontWeight: 'bold' }}
                 />
-                <Bar dataKey="currentInventory" name="Current Stock" fill={isDark ? '#d97706' : '#c2410c'} radius={[4, 4, 0, 0]} />
-                <Bar dataKey="forecast7Day" name="7-Day Demand" fill={isDark ? '#f59e0b' : '#ea580c'} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="currentInventory" name={t('dashboard.currentStock')} fill={isDark ? '#d97706' : '#c2410c'} radius={[4, 4, 0, 0]} />
+                <Bar dataKey="forecast7Day" name={t('dashboard.sevenDayDemand')} fill={isDark ? '#f59e0b' : '#ea580c'} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

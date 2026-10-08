@@ -1,6 +1,7 @@
 'use client';
 
 import { Sliders, RefreshCw, AlertCircle, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { useLanguage } from '../../i18n/LanguageProvider';
 
 export default function SandboxView({
   intelligence,
@@ -18,6 +19,7 @@ export default function SandboxView({
   theme
 }) {
   const isDark = theme === 'dark';
+  const { t } = useLanguage();
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
@@ -27,16 +29,16 @@ export default function SandboxView({
         <div>
           <h2 className={`text-lg sm:text-xl font-bold flex items-center gap-2 mb-1 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
             <Sliders className={`w-5 h-5 ${isDark ? 'text-amber-400' : 'text-amber-700'}`} />
-            <span>Scenario Levers</span>
+            <span>{t('sandbox.scenarioLevers')}</span>
           </h2>
           <p className={`text-xs sm:text-sm ${isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'}`}>
-            Inject simulated market shifts to test autonomous decision resilience.
+            {t('sandbox.description')}
           </p>
         </div>
 
         <div>
           <label className={`block text-xs sm:text-sm font-semibold uppercase tracking-wider mb-2 ${isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'}`}>
-            Target SKU
+            {t('sandbox.targetSku')}
           </label>
           <select
             value={selectedProductId}
@@ -73,9 +75,9 @@ export default function SandboxView({
         <div>
           <div className="flex justify-between items-center mb-2">
             <label className={`text-xs sm:text-sm font-semibold uppercase tracking-wider ${isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'}`}>
-              Simulated Competitor Price 
+              {t('sandbox.competitorPrice')}
               <span className={`font-normal ml-1 sm:ml-2 block sm:inline ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>
-                (Our Price: ${
+                ({t('sandbox.ourPrice')}: ${
                   simulationResult?.baseOurPrice || 
                   intelligence.find(item => item.id === selectedProductId)?.currentPrice || 
                   '—'
@@ -101,7 +103,7 @@ export default function SandboxView({
         <div>
           <div className="flex justify-between items-center mb-2">
             <label className={`text-xs sm:text-sm font-semibold uppercase tracking-wider ${isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'}`}>
-              Demand Surge Multiplier
+              {t('sandbox.demandMultiplier')}
             </label>
             <span className={`text-base font-mono font-bold ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>{demandMultiplier}x</span>
           </div>
@@ -122,7 +124,7 @@ export default function SandboxView({
         <div>
           <div className="flex justify-between items-center mb-2">
             <label className={`text-xs sm:text-sm font-semibold uppercase tracking-wider ${isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'}`}>
-              Inventory Buffer Override
+              {t('sandbox.inventoryOverride')}
             </label>
             <span className={`text-base font-mono font-bold ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>{stockOverride} units</span>
           </div>
@@ -147,7 +149,7 @@ export default function SandboxView({
             isDark ? 'bg-[#201510]/80 border-[#36261d] text-[#b8a394]' : 'bg-white/80 border-[#e8ded1] text-[#6b5646]'
           }`}>
             <RefreshCw className={`w-8 h-8 animate-spin mx-auto mb-3 ${isDark ? 'text-amber-400' : 'text-amber-700'}`} />
-            Running live inference sandbox calculation...
+            {t('sandbox.runningInference')}
           </div>
         ) : simulationResult ? (
           <>
@@ -166,7 +168,7 @@ export default function SandboxView({
                 ) : (
                   <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
                 )}
-                <span>Autonomous Decision Engine Recommendation Preview</span>
+                <span>{t('sandbox.recommendationPreview')}</span>
               </div>
               <p className="text-sm sm:text-base font-medium leading-relaxed">{simulationResult.engineRecommendation}</p>
             </div>
@@ -176,13 +178,13 @@ export default function SandboxView({
                 isDark ? 'bg-[#201510]/80 border-[#36261d]' : 'bg-white/80 border-[#e8ded1]'
               }`}>
                 <div className={`text-xs sm:text-sm font-semibold uppercase tracking-wider mb-1 ${isDark ? 'text-[#b8a394]' : 'text-[#7a6452]'}`}>
-                  Simulated 7-Day Demand
+                  {t('sandbox.simulatedDemand')}
                 </div>
                 <div className={`text-2xl sm:text-3xl font-mono font-bold ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>
-                  {simulationResult.simulatedDemand} units
+                  {simulationResult.simulatedDemand} {t('common.units')}
                 </div>
                 <div className={`text-xs sm:text-sm mt-1 ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>
-                  Scaled by {demandMultiplier}x multiplier
+                  {t('sandbox.scaledMultiplier', { multiplier: demandMultiplier })}
                 </div>
               </div>
 
@@ -190,7 +192,7 @@ export default function SandboxView({
                 isDark ? 'bg-[#201510]/80 border-[#36261d]' : 'bg-white/80 border-[#e8ded1]'
               }`}>
                 <div className={`text-xs sm:text-sm font-semibold uppercase tracking-wider mb-1 ${isDark ? 'text-[#b8a394]' : 'text-[#7a6452]'}`}>
-                  Stockout Timeline
+                  {t('sandbox.stockoutTimeline')}
                 </div>
                 <div className="text-2xl sm:text-3xl font-mono font-bold text-amber-500">{simulationResult.daysUntilStockout} Days</div>
                 <div className={`text-xs sm:text-sm mt-1 ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>{simulationResult.stockoutRiskScore}</div>
@@ -200,10 +202,10 @@ export default function SandboxView({
                 isDark ? 'bg-[#201510]/80 border-[#36261d]' : 'bg-white/80 border-[#e8ded1]'
               }`}>
                 <div className={`text-xs sm:text-sm font-semibold uppercase tracking-wider mb-1 ${isDark ? 'text-[#b8a394]' : 'text-[#7a6452]'}`}>
-                  Projected Gross Margin
+                  {t('sandbox.projectedMargin')}
                 </div>
                 <div className="text-2xl sm:text-3xl font-mono font-bold text-emerald-500">{simulationResult.projectedMarginPercent}%</div>
-                <div className={`text-xs sm:text-sm mt-1 ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>Price match target: ${simulationResult.simulatedOurPrice}</div>
+                <div className={`text-xs sm:text-sm mt-1 ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>{t('sandbox.priceMatchTarget')}: ${simulationResult.simulatedOurPrice}</div>
               </div>
             </div>
           </>

@@ -1,0 +1,92 @@
+{
+  "common": {
+    "product": "Produk",
+    "stock": "Stok",
+    "units": "unit",
+    "close": "Tutup",
+    "english": "Bahasa Inggris",
+    "indonesian": "Bahasa Indonesia",
+    "language": "Bahasa"
+  },
+  "header": {
+    "brand": "Mercury Demand Intelligence",
+    "title": "Pusat Kendali Perdagangan",
+    "subtitle": "Peramalan permintaan real-time, penilaian risiko kehabisan stok, dan simulasi keputusan otomatis.",
+    "liveOperations": "Operasional Langsung",
+    "sandbox": "Simulasi Skenario",
+    "inspectDatabase": "Lihat Database",
+    "refresh": "Muat Ulang",
+    "switchToLight": "Beralih ke tema terang",
+    "switchToDark": "Beralih ke tema gelap",
+    "userGuide": "Panduan penggunaan"
+  },
+  "dashboard": {
+    "trackedSkus": "SKU Terpantau",
+    "warehouses": "Di beberapa gudang aktif",
+    "highStockoutRisk": "Risiko Kehabisan Stok Tinggi",
+    "riskThreshold": "Indeks risiko melampaui ambang 70%",
+    "activeMarketAlerts": "Peringatan Pasar Aktif",
+    "competitorShifts": "Perubahan harga dan pesaing terdeteksi",
+    "engineStatus": "Status Mesin",
+    "degraded": "Terganggu",
+    "optimal": "Optimal",
+    "servicesFailed": "Layanan melaporkan kegagalan",
+    "inferencesRunning": "Inferensi berjalan secara real-time",
+    "auditLog": "Log Audit Mesin Keputusan Otomatis",
+    "auditDescription": "Tindakan yang dicatat Mercury setelah anomali pasar terdeteksi.",
+    "noActions": "Belum ada tindakan otomatis yang dijalankan.",
+    "inventoryForecasts": "Prediksi Persediaan & Permintaan 7 Hari",
+    "forecast": "Prediksi 7 Hari",
+    "stockoutRisk": "Indeks Risiko Kehabisan Stok",
+    "action": "Tindakan",
+    "stable": "Stok Stabil",
+    "chartTitle": "Permintaan 7 Hari vs Persediaan",
+    "currentStock": "Stok Saat Ini",
+    "sevenDayDemand": "Permintaan 7 Hari"
+  },
+  "sandbox": {
+    "scenarioLevers": "Kontrol Skenario",
+    "description": "Simulasikan perubahan pasar untuk menguji respons mesin keputusan.",
+    "targetSku": "SKU Target",
+    "competitorPrice": "Harga Pesaing Simulasi",
+    "ourPrice": "Harga Kita",
+    "demandMultiplier": "Pengali Lonjakan Permintaan",
+    "inventoryOverride": "Penyesuaian Stok",
+    "runningInference": "Menjalankan inferensi simulasi...",
+    "recommendationPreview": "Pratinjau Rekomendasi Mesin Keputusan",
+    "simulatedDemand": "Permintaan Simulasi 7 Hari",
+    "scaledMultiplier": "Dikalikan dengan pengali {multiplier}x",
+    "stockoutTimeline": "Perkiraan Waktu Kehabisan Stok",
+    "projectedMargin": "Proyeksi Margin Kotor",
+    "priceMatchTarget": "Target harga yang disesuaikan"
+  },
+  "inspector": {
+    "title": "Inspektur Database PostgreSQL",
+    "products": "Produk",
+    "inventory": "Persediaan",
+    "competitorEvents": "Peristiwa Pesaing",
+    "nullValue": "KOSONG"
+  },
+  "welcome": {
+    "welcomeTitle": "Selamat datang di Mercury",
+    "welcomeDescription": "Jelajahi demo peramalan permintaan dan persediaan yang didukung pipeline Python Scikit-Learn, gateway Node.js, dan antarmuka React.",
+    "guideTitle": "Panduan Pengguna Mercury",
+    "walkthrough": "Panduan Langkah demi Langkah",
+    "stepDashboardTitle": "1. Jelajahi Dasbor Operasional Langsung",
+    "stepDashboardDescription": "Pantau persediaan, prediksi permintaan tujuh hari, dan indikator risiko kehabisan stok.",
+    "stepSandboxTitle": "2. Buka Simulasi Skenario",
+    "stepSandboxDescription": "Uji strategi harga dan simulasikan perubahan pasar.",
+    "stepControlsTitle": "3. Sesuaikan Kontrol Skenario",
+    "targetSkuDescription": "Pilih produk (SKU) untuk diperiksa dan diuji.",
+    "competitorDescription": "Simulasikan harga pesaing dan pratinjau keputusan perlindungan margin.",
+    "demandDescription": "Atur permintaan dari 0,5x hingga 3,0x untuk memodelkan lonjakan atau perubahan permintaan.",
+    "inventoryDescription": "Sesuaikan tingkat stok untuk melihat perkiraan waktu dan risiko kehabisan stok.",
+    "stepInspectorTitle": "4. Periksa Data Database",
+    "stepInspectorDescription": "Gunakan Lihat Database untuk menelusuri data produk, persediaan, dan peristiwa pesaing.",
+    "getStarted": "Mulai menjelajah",
+    "closeGuide": "Tutup panduan"
+  },
+  "errors": {
+    "backendUnavailable": "Tidak dapat terhubung ke backend Mercury. Pastikan API Node.js berjalan di port 5000."
+  }
+}

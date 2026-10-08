@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import { Database, X } from 'lucide-react';
+import { useLanguage } from '../../i18n/LanguageProvider';
 
 export default function DatabaseInspectorModal({ isModalOpen, setIsModalOpen, dbData, theme }) {
   const [activeTab, setActiveTab] = useState('products');
+  const { t } = useLanguage();
   if (!isModalOpen || !dbData) return null;
   const isDark = theme === 'dark';
 
@@ -18,7 +20,7 @@ export default function DatabaseInspectorModal({ isModalOpen, setIsModalOpen, db
         <div className={`flex justify-between items-center p-4 sm:p-6 border-b ${isDark ? 'border-[#3d2a20]' : 'border-[#e5d8cc]'}`}>
           <div className="flex items-center gap-2">
             <Database className={`w-5 h-5 ${isDark ? 'text-amber-400' : 'text-amber-700'}`} />
-            <h2 className="text-base sm:text-xl font-bold">PostgreSQL Raw Database Inspector</h2>
+            <h2 className="text-base sm:text-xl font-bold">{t('inspector.title')}</h2>
           </div>
           <button 
             onClick={() => setIsModalOpen(false)}
@@ -41,7 +43,7 @@ export default function DatabaseInspectorModal({ isModalOpen, setIsModalOpen, db
                   : (isDark ? 'border-transparent text-[#b8a394] hover:text-[#fff8f0]' : 'border-transparent text-[#7a6452] hover:text-[#241a14]')
               }`}
             >
-              {tab === 'competitorEvents' ? 'Competitor Events' : tab} ({dbData[tab]?.length || 0})
+              {t(`inspector.${tab}`)} ({dbData[tab]?.length || 0})
             </button>
           ))}
         </div>
@@ -61,7 +63,7 @@ export default function DatabaseInspectorModal({ isModalOpen, setIsModalOpen, db
                   <tr key={idx} className={`transition ${isDark ? 'hover:bg-[#2b1e17]/20' : 'hover:bg-[#fcf8f3]'}`}>
                     {Object.values(row).map((val, vIdx) => (
                       <td key={vIdx} className={`py-3.5 pr-4 ${isDark ? 'text-[#d4c2b4]' : 'text-[#4e3b2e]'}`}>
-                        {val !== null ? val.toString() : <span className={isDark ? 'text-[#7a6452] italic' : 'text-[#a38f80] italic'}>NULL</span>}
+                        {val !== null ? val.toString() : <span className={isDark ? 'text-[#7a6452] italic' : 'text-[#a38f80] italic'}>{t('inspector.nullValue')}</span>}
                       </td>
                     ))}
                   </tr>

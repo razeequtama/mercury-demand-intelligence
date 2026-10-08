@@ -8,8 +8,10 @@ import WelcomeModal from './components/WelcomeModal';
 import DatabaseInspectorModal from './components/DatabaseInspectorModal';
 import DashboardView from './components/DashboardView';
 import SandboxView from './components/SandboxView';
+import { useLanguage } from '../i18n/LanguageProvider';
 
 export default function Dashboard() {
+  const { t } = useLanguage();
   const [theme, setTheme] = useState('dark');
 
   useEffect(() => {
@@ -80,7 +82,7 @@ export default function Dashboard() {
       }
     } catch (err) {
       console.error("Failed to fetch Mercury data:", err);
-      setError("Could not connect to Mercury Backend Engine. Ensure your Node.js server is running on port 5000.");
+      setError('errors.backendUnavailable');
     } finally {
       setLoading(false);
     }
@@ -169,7 +171,7 @@ export default function Dashboard() {
           isDark ? 'bg-red-950/40 border-red-900 text-red-200' : 'bg-red-50 border-red-200 text-red-800'
         }`}>
           <ShieldAlert className="w-6 h-6 text-red-500 shrink-0" />
-          <p className="text-sm sm:text-base">{error}</p>
+          <p className="text-sm sm:text-base">{t(error)}</p>
         </div>
       )}
 
