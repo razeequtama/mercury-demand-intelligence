@@ -26,22 +26,61 @@ const isValidNonNegativeNumber = (val) => {
   return !isNaN(num) && num >= 0;
 };
 
-// 1. GET: Intelligence Pipeline (Delegated to Python ML Microservice)
-app.get('/api/intelligence', async (req, res) => {
+// 0. GET: Lightweight Health Check Endpoint
+app.get('/api/health', async (req, res) => {
   try {
-    const mlResponse = await axios.get(`${ML_ENGINE_URL}/predict-demand`, { timeout: 10000 });
-    res.json(mlResponse.data);
+    const start = Date.now();
+    await query('SELECT 1');
+    const dbLatency = Date.now() - start;
+
+    res.status(200).json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      database: {
+        status: 'connected',
+        latencyMs: dbLatency
+      }
+    });
   } catch (err) {
-    console.error("Failed to communicate with ML Microservice:", err.message);
-    res.status(500).json({ 
-      success: false, 
-      error: 'ML Analytics Engine Unavailable',
-      details: err.message 
+    console.error('Health check failed:', err.message);
+
+    res.status(503).json({
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      database: {
+        status: 'disconnected',
+        error: err.message
+      }
     });
   }
 });
 
-// 2. GET: Strictly Read-Only Insights & Audit Log Feed (Zero Side Effects!)
+// 1. GET: Intelligence Pipeline (Delegated to Python ML Microservice)
+app.get('/api/intelligence', async (req, res) => {
+  try {
+    const mlResponse = await axios.get(
+      `${ML_ENGINE_URL}/predict-demand`,
+      { timeout: 10000 }
+    );
+
+    res.json(mlResponse.data);
+  } catch (err) {
+    console.error(
+      'Failed to communicate with ML Microservice:',
+      err.message
+    );
+
+    res.status(500).json({
+      success: false,
+      error: 'ML Analytics Engine Unavailable',
+      details: err.message
+    });
+  }
+});
+
+// 2. GET: Strictly Read-Only Insights & Audit Log Feed
 app.get('/api/insights', async (req, res) => {
   try {
     const eventQuery = `
@@ -59,10 +98,11 @@ app.get('/api/insights', async (req, res) => {
     `;
 
     const { rows } = await query(eventQuery);
-    const actionableInsights = rows.map(event => {
+
+    const actionableInsights = rows.map((event) => {
       const ourPrice = parseFloat(event.our_price);
       const competitorPrice = parseFloat(event.competitor_price);
-      
+
       if (isNaN(ourPrice) || isNaN(competitorPrice)) {
         return {
           eventId: event.id,
@@ -73,17 +113,25 @@ app.get('/api/insights', async (req, res) => {
           competitorPrice: event.competitor_price,
           detectedAt: event.detected_at,
           decisionEngineAction: 'Monitor market position.',
-          autonomousProcedure: 'Pending manual review or autonomous dispatch.'
+          autonomousProcedure:
+            'Pending manual review or autonomous execution.'
         };
       }
 
       const priceDifference = ourPrice - competitorPrice;
+
       let businessAction = 'Monitor market position.';
-      let executedProcedure = 'Pending manual review or autonomous dispatch.';
+      let recommendedProcedure =
+        'Pending manual review or autonomous execution.';
 
       if (priceDifference > 0) {
-        businessAction = `Competitor is undercutting by $${priceDifference.toFixed(2)}. ML Elasticity Model recommends automated counter-measure.`;
-        executedProcedure = `Recommended Action: Dispatched price-matching rule (-$${priceDifference.toFixed(2)}) & queued promotion.`;
+        businessAction =
+          `Competitor is undercutting by $${priceDifference.toFixed(2)}. ` +
+          'ML Elasticity Model recommends an automated counter-measure.';
+
+        recommendedProcedure =
+          `Recommended Action: Price-matching rule (-$${priceDifference.toFixed(2)}) ` +
+          'and promotion queued for execution.';
       }
 
       return {
@@ -95,12 +143,19 @@ app.get('/api/insights', async (req, res) => {
         competitorPrice: event.competitor_price,
         detectedAt: event.detected_at,
         decisionEngineAction: businessAction,
-        autonomousProcedure: executedProcedure
+        autonomousProcedure: recommendedProcedure
       };
     });
 
     const logsRes = await query(`
-      SELECT l.id, p.sku, p.name, l.action_type, l.description, l.status, l.executed_at
+      SELECT
+        l.id,
+        p.sku,
+        p.name,
+        l.action_type,
+        l.description,
+        l.status,
+        l.executed_at
       FROM automated_actions_log l
       JOIN products p ON l.product_id = p.id
       ORDER BY l.executed_at DESC;
@@ -112,10 +167,13 @@ app.get('/api/insights', async (req, res) => {
       insights: actionableInsights,
       autonomousLogs: logsRes.rows
     });
-
   } catch (err) {
-    console.error("Error fetching insights:", err.message);
-    res.status(500).json({ success: false, error: 'Server Error while fetching insights.' });
+    console.error('Error fetching insights:', err.message);
+
+    res.status(500).json({
+      success: false,
+      error: 'Server Error while fetching insights.'
+    });
   }
 });
 
@@ -123,10 +181,21 @@ app.get('/api/insights', async (req, res) => {
 app.post('/api/insights/execute-actions', async (req, res) => {
   try {
     const executedCount = await runDecisionEngine();
-    res.json({ success: true, message: `Successfully executed ${executedCount} autonomous actions.` });
+
+    res.json({
+      success: true,
+      message: `Successfully executed ${executedCount} autonomous actions.`
+    });
   } catch (err) {
-    console.error("Error executing autonomous actions:", err.message);
-    res.status(500).json({ success: false, error: 'Failed to execute autonomous actions.' });
+    console.error(
+      'Error executing autonomous actions:',
+      err.message
+    );
+
+    res.status(500).json({
+      success: false,
+      error: 'Failed to execute autonomous actions.'
+    });
   }
 });
 
@@ -134,79 +203,141 @@ app.post('/api/insights/execute-actions', async (req, res) => {
 app.post('/api/simulate-order', async (req, res) => {
   const { productId, quantity } = req.body;
 
-  if (!productId || !quantity) {
-    return res.status(400).json({ success: false, error: 'productId and quantity are required.' });
+  if (productId === undefined || quantity === undefined) {
+    return res.status(400).json({
+      success: false,
+      error: 'productId and quantity are required.'
+    });
   }
 
   if (!isValidPositiveInt(productId)) {
-    return res.status(400).json({ success: false, error: 'Invalid productId. Must be a positive integer.' });
+    return res.status(400).json({
+      success: false,
+      error: 'Invalid productId. Must be a positive integer.'
+    });
   }
 
   if (!isValidPositiveInt(quantity)) {
-    return res.status(400).json({ success: false, error: 'Invalid quantity. Must be a positive integer greater than 0.' });
+    return res.status(400).json({
+      success: false,
+      error: 'Invalid quantity. Must be a positive integer greater than 0.'
+    });
   }
 
   const sanitizedProductId = parseInt(productId, 10);
   const sanitizedQuantity = parseInt(quantity, 10);
 
   const client = await getClient();
+
   try {
     await client.query('BEGIN');
 
-    const prodRes = await client.query('SELECT current_price FROM products WHERE id = $1', [sanitizedProductId]);
+    const prodRes = await client.query(
+      'SELECT current_price FROM products WHERE id = $1',
+      [sanitizedProductId]
+    );
+
     if (prodRes.rows.length === 0) {
       await client.query('ROLLBACK');
-      client.release();
-      return res.status(404).json({ success: false, error: 'Product not found.' });
+
+      return res.status(404).json({
+        success: false,
+        error: 'Product not found.'
+      });
     }
 
     const price = parseFloat(prodRes.rows[0].current_price);
+
     if (isNaN(price) || price < 0) {
       await client.query('ROLLBACK');
-      client.release();
-      return res.status(422).json({ success: false, error: 'Invalid product pricing stored in database.' });
+
+      return res.status(422).json({
+        success: false,
+        error: 'Invalid product pricing stored in database.'
+      });
     }
 
     const totalAmount = price * sanitizedQuantity;
 
     await client.query(
-      'INSERT INTO orders (product_id, quantity, total_amount, order_date) VALUES ($1, $2, $3, NOW())',
+      `
+        INSERT INTO orders
+          (product_id, quantity, total_amount, order_date)
+        VALUES
+          ($1, $2, $3, NOW())
+      `,
       [sanitizedProductId, sanitizedQuantity, totalAmount]
     );
 
     await client.query(
-      'UPDATE inventory SET stock_quantity = GREATEST(0, stock_quantity - $1), updated_at = NOW() WHERE product_id = $2',
+      `
+        UPDATE inventory
+        SET
+          stock_quantity = GREATEST(0, stock_quantity - $1),
+          updated_at = NOW()
+        WHERE product_id = $2
+      `,
       [sanitizedQuantity, sanitizedProductId]
     );
 
     await client.query('COMMIT');
-    client.release();
 
     res.json({
       success: true,
-      message: `Successfully ingested order event of ${sanitizedQuantity} units. ML forecasting pipeline adjusted.`
+      message:
+        `Successfully ingested order event of ${sanitizedQuantity} units. ` +
+        'ML forecasting pipeline adjusted.'
     });
-
   } catch (err) {
-    await client.query('ROLLBACK');
+    try {
+      await client.query('ROLLBACK');
+    } catch (rollbackErr) {
+      console.error(
+        'Order simulation rollback failed:',
+        rollbackErr.message
+      );
+    }
+
+    console.error(
+      'Order simulation transaction failed:',
+      err.message
+    );
+
+    res.status(500).json({
+      success: false,
+      error: 'Failed to process order simulation due to server error.'
+    });
+  } finally {
     client.release();
-    console.error("Order simulation transaction failed:", err.message);
-    res.status(500).json({ success: false, error: 'Failed to process order simulation due to server error.' });
   }
 });
 
 // 5. GET: Raw Database Inspector Feed
 app.get('/api/database-inspect', async (req, res) => {
   try {
-    const products = await query('SELECT * FROM products ORDER BY id ASC');
+    const products = await query(
+      'SELECT * FROM products ORDER BY id ASC'
+    );
+
     const inventory = await query(`
-      SELECT i.*, p.sku, p.name FROM inventory i 
-      JOIN products p ON i.product_id = p.id ORDER BY i.id ASC
+      SELECT
+        i.*,
+        p.sku,
+        p.name
+      FROM inventory i
+      JOIN products p ON i.product_id = p.id
+      ORDER BY i.id ASC
     `);
+
     const competitorEvents = await query(`
-      SELECT ce.*, p.sku, p.name AS product_name, p.current_price AS our_price 
-      FROM competitor_events ce 
-      JOIN products p ON ce.product_id = p.id ORDER BY ce.id ASC
+      SELECT
+        ce.*,
+        p.sku,
+        p.name AS product_name,
+        p.current_price AS our_price
+      FROM competitor_events ce
+      JOIN products p ON ce.product_id = p.id
+      ORDER BY ce.id ASC
     `);
 
     res.json({
@@ -218,55 +349,112 @@ app.get('/api/database-inspect', async (req, res) => {
       }
     });
   } catch (err) {
-    console.error("Database inspection query failed:", err.message);
-    res.status(500).json({ success: false, error: 'Failed to fetch database inspection data.' });
+    console.error(
+      'Database inspection query failed:',
+      err.message
+    );
+
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch database inspection data.'
+    });
   }
 });
 
 // 6. POST: What-If Scenario Sandbox Simulation Engine with Strict Validation
 app.post('/api/sandbox/simulate', async (req, res) => {
-  const { productId, simulatedCompetitorPrice, demandMultiplier, stockOverride } = req.body;
+  const {
+    productId,
+    simulatedCompetitorPrice,
+    demandMultiplier,
+    stockOverride
+  } = req.body;
 
-  if (!productId) {
-    return res.status(400).json({ success: false, error: 'productId is required for simulation.' });
+  if (productId === undefined || productId === null) {
+    return res.status(400).json({
+      success: false,
+      error: 'productId is required for simulation.'
+    });
   }
 
   if (!isValidPositiveInt(productId)) {
-    return res.status(400).json({ success: false, error: 'Invalid productId. Must be a positive integer.' });
+    return res.status(400).json({
+      success: false,
+      error: 'Invalid productId. Must be a positive integer.'
+    });
   }
 
   const sanitizedProductId = parseInt(productId, 10);
-  const payload = { productId: sanitizedProductId };
 
-  if (simulatedCompetitorPrice !== undefined && simulatedCompetitorPrice !== null) {
+  const payload = {
+    productId: sanitizedProductId
+  };
+
+  if (
+    simulatedCompetitorPrice !== undefined &&
+    simulatedCompetitorPrice !== null
+  ) {
     if (!isValidNonNegativeNumber(simulatedCompetitorPrice)) {
-      return res.status(400).json({ success: false, error: 'Invalid simulatedCompetitorPrice. Must be a non-negative number.' });
+      return res.status(400).json({
+        success: false,
+        error:
+          'Invalid simulatedCompetitorPrice. Must be a non-negative number.'
+      });
     }
-    payload.simCompetitorPrice = parseFloat(simulatedCompetitorPrice);
+
+    payload.simCompetitorPrice = parseFloat(
+      simulatedCompetitorPrice
+    );
   }
 
-  if (demandMultiplier !== undefined && demandMultiplier !== null) {
+  if (
+    demandMultiplier !== undefined &&
+    demandMultiplier !== null
+  ) {
     if (!isValidNonNegativeNumber(demandMultiplier)) {
-      return res.status(400).json({ success: false, error: 'Invalid demandMultiplier. Must be a non-negative number.' });
+      return res.status(400).json({
+        success: false,
+        error:
+          'Invalid demandMultiplier. Must be a non-negative number.'
+      });
     }
+
     payload.demandMultiplier = parseFloat(demandMultiplier);
   }
 
-  if (stockOverride !== undefined && stockOverride !== null) {
+  if (
+    stockOverride !== undefined &&
+    stockOverride !== null
+  ) {
     const stockNum = Number(stockOverride);
+
     if (!Number.isInteger(stockNum) || stockNum < 0) {
-      return res.status(400).json({ success: false, error: 'Invalid stockOverride. Must be a non-negative integer.' });
+      return res.status(400).json({
+        success: false,
+        error:
+          'Invalid stockOverride. Must be a non-negative integer.'
+      });
     }
+
     payload.stockOverride = stockNum;
   }
 
   try {
-    const mlResponse = await axios.post(`${ML_ENGINE_URL}/simulate-sandbox`, payload, { timeout: 10000 });
+    const mlResponse = await axios.post(
+      `${ML_ENGINE_URL}/simulate-sandbox`,
+      payload,
+      { timeout: 10000 }
+    );
+
     res.json(mlResponse.data);
   } catch (err) {
-    console.error("Failed to communicate with ML Sandbox Microservice:", err.message);
-    res.status(500).json({ 
-      success: false, 
+    console.error(
+      'Failed to communicate with ML Sandbox Microservice:',
+      err.message
+    );
+
+    res.status(500).json({
+      success: false,
       error: 'ML Analytics Engine Unavailable for Sandbox Simulation',
       details: err.message
     });
@@ -274,10 +462,16 @@ app.post('/api/sandbox/simulate', async (req, res) => {
 });
 
 app.listen(PORT, async () => {
-  console.log(`Mercury Express Gateway running on port ${PORT}`);
+  console.log(
+    `Mercury Express Gateway running on port ${PORT}`
+  );
+
   try {
     await runDecisionEngine();
   } catch (err) {
-    console.error('Failed to run startup decision engine:', err.message);
+    console.error(
+      'Failed to run startup decision engine:',
+      err.message
+    );
   }
 });
