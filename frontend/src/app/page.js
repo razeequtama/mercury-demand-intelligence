@@ -183,6 +183,8 @@ export default function Dashboard() {
           loading={loading}
           error={error}
           theme={theme}
+          fetchData={fetchData}
+          API_URL={API_URL}
         />
       ) : (
         <SandboxView

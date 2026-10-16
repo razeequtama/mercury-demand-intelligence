@@ -340,12 +340,43 @@ app.get('/api/database-inspect', async (req, res) => {
       ORDER BY ce.id ASC
     `);
 
+    const orders = await query(`
+      SELECT
+        o.id,
+        p.sku,
+        p.name AS product_name,
+        o.quantity,
+        o.total_amount,
+        o.order_date
+      FROM orders o
+      JOIN products p ON o.product_id = p.id
+      ORDER BY o.order_date DESC
+      LIMIT 50
+    `);
+
+    const automatedActionsLog = await query(`
+      SELECT
+        l.id,
+        p.sku,
+        p.name AS product_name,
+        l.action_type,
+        l.description,
+        l.status,
+        l.executed_at
+      FROM automated_actions_log l
+      JOIN products p ON l.product_id = p.id
+      ORDER BY l.executed_at DESC
+      LIMIT 50
+    `);
+
     res.json({
       success: true,
       tables: {
         products: products.rows,
         inventory: inventory.rows,
-        competitorEvents: competitorEvents.rows
+        competitorEvents: competitorEvents.rows,
+        orders: orders.rows,
+        automatedActionsLog: automatedActionsLog.rows
       }
     });
   } catch (err) {

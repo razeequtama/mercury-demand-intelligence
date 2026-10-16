@@ -118,7 +118,7 @@ const seedDatabase = async () => {
     console.log('Database seeded successfully with zero-stock edge case and multi-competitor events!');
     process.exit(0);
   } catch (err) {
-    console.error('Error seeding database:', err.message);
+    console.error('Error seeding database:', err.message || err);
     process.exit(1);
   }
 };

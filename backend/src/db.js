@@ -13,5 +13,9 @@ pool.on('connect', () => {
   console.log('Connected to the PostgreSQL database.');
 });
 
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle PostgreSQL client:', err);
+});
+
 export const query = (text, params) => pool.query(text, params);
 export const getClient = () => pool.connect();

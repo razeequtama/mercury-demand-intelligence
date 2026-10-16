@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef, useEffect } from 'react';
 import { Sliders, RefreshCw, AlertCircle, ShieldAlert, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '../../i18n/LanguageProvider';
 
@@ -20,6 +21,27 @@ export default function SandboxView({
 }) {
   const isDark = theme === 'dark';
   const { t } = useLanguage();
+  const isMounted = useRef(false);
+  const runSimulationRef = useRef(runSimulation);
+  useEffect(() => {
+    runSimulationRef.current = runSimulation;
+  }, [runSimulation]);
+
+  // 250ms Debounced Simulation Dispatcher to prevent slider flood
+  useEffect(() => {
+    if (!isMounted.current) {
+      isMounted.current = true;
+      return;
+    }
+
+    if (!selectedProductId) return;
+
+    const debounceTimer = setTimeout(() => {
+      runSimulationRef.current(selectedProductId, simCompetitorPrice, demandMultiplier, stockOverride);
+    }, 250);
+
+    return () => clearTimeout(debounceTimer);
+  }, [selectedProductId, simCompetitorPrice, demandMultiplier, stockOverride]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
@@ -54,8 +76,6 @@ export default function SandboxView({
                 setSimCompetitorPrice(defaultCompPrice);
                 setStockOverride(defaultStock);
                 setDemandMultiplier(1.0);
-                
-                runSimulation(newId, defaultCompPrice, 1.0, defaultStock);
               }
             }}
             className={`w-full border rounded-xl px-4 py-3.5 sm:py-3 text-sm focus:outline-none cursor-pointer min-h-[48px] ${
@@ -92,10 +112,7 @@ export default function SandboxView({
             max="250" 
             step="1"
             value={simCompetitorPrice}
-            onChange={(e) => {
-              setSimCompetitorPrice(e.target.value);
-              runSimulation(selectedProductId, e.target.value, demandMultiplier, stockOverride);
-            }}
+            onChange={(e) => setSimCompetitorPrice(e.target.value)}
             className={`w-full cursor-pointer py-3 h-3 ${isDark ? 'accent-amber-500 bg-[#18110e]' : 'accent-amber-700 bg-[#faf6f0]'}`}
           />
         </div>
@@ -113,10 +130,7 @@ export default function SandboxView({
             max="3.0" 
             step="0.1"
             value={demandMultiplier}
-            onChange={(e) => {
-              setDemandMultiplier(e.target.value);
-              runSimulation(selectedProductId, simCompetitorPrice, e.target.value, stockOverride);
-            }}
+            onChange={(e) => setDemandMultiplier(e.target.value)}
             className={`w-full cursor-pointer py-3 h-3 ${isDark ? 'accent-amber-500 bg-[#18110e]' : 'accent-amber-700 bg-[#faf6f0]'}`}
           />
         </div>
@@ -134,10 +148,7 @@ export default function SandboxView({
             max="500" 
             step="5"
             value={stockOverride}
-            onChange={(e) => {
-              setStockOverride(e.target.value);
-              runSimulation(selectedProductId, simCompetitorPrice, demandMultiplier, e.target.value);
-            }}
+            onChange={(e) => setStockOverride(e.target.value)}
             className={`w-full cursor-pointer py-3 h-3 ${isDark ? 'accent-amber-500 bg-[#18110e]' : 'accent-amber-700 bg-[#faf6f0]'}`}
           />
         </div>

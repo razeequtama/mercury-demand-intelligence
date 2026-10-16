@@ -33,7 +33,7 @@ export default function DatabaseInspectorModal({ isModalOpen, setIsModalOpen, db
         <div className={`flex overflow-x-auto border-b px-4 sm:px-6 pt-3 gap-3 sm:gap-4 scrollbar-none ${
           isDark ? 'border-[#3d2a20] bg-[#18110e]/40' : 'border-[#e5d8cc] bg-[#faf6f0]/40'
         }`}>
-          {['products', 'inventory', 'competitorEvents'].map(tab => (
+          {['products', 'inventory', 'competitorEvents', 'orders', 'automatedActionsLog'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}

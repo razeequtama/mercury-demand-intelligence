@@ -1,0 +1,20 @@
+{
+  "name": "mercury-demand-intelligence",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mercury - Demand, Pricing & Inventory Intelligence Platform",
+  "scripts": {
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:ml": "uvicorn main:app --app-dir ml-engine --reload --port 8000",
+    "dev": "npx --yes concurrently -n \"GATEWAY,FRONTEND,ML-ENGINE\" -c \"blue,green,magenta\" \"npm run dev:backend\" \"npm run dev:frontend\" \"npm run dev:ml\"",
+    "db:seed": "npm --prefix backend run db:seed",
+    "test:backend": "npm --prefix backend test",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
+

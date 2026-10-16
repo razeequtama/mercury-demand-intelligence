@@ -1,13 +1,86 @@
 'use client';
 
-import { Package, AlertTriangle, Activity, TrendingUp } from 'lucide-react';
+import { useState } from 'react';
+import axios from 'axios';
+import { 
+  Package, 
+  AlertTriangle, 
+  Activity, 
+  TrendingUp, 
+  Zap, 
+  ShoppingCart, 
+  Send, 
+  CheckCircle2, 
+  AlertCircle 
+} from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { useLanguage } from '../../i18n/LanguageProvider';
 
-export default function DashboardView({ intelligence, insights, autonomousLogs, loading, error, theme }) {
+export default function DashboardView({ 
+  intelligence, 
+  insights, 
+  autonomousLogs, 
+  loading, 
+  error, 
+  theme, 
+  fetchData, 
+  API_URL 
+}) {
   const isDark = theme === 'dark';
   const { locale, t } = useLanguage();
   const highRiskCount = intelligence.filter(item => item.statusAlert === 'High Stockout Risk').length;
+
+  // State for Decision Engine Execution
+  const [executingRules, setExecutingRules] = useState(false);
+  const [rulesMessage, setRulesMessage] = useState(null);
+
+  // State for Order Ingestion Simulator
+  const [orderProductId, setOrderProductId] = useState('');
+  const [orderQuantity, setOrderQuantity] = useState(5);
+  const [orderSubmitting, setOrderSubmitting] = useState(false);
+  const [orderFeedback, setOrderFeedback] = useState(null);
+
+  const handleExecuteRules = async () => {
+    if (!API_URL) return;
+    try {
+      setExecutingRules(true);
+      setRulesMessage(null);
+      const res = await axios.post(`${API_URL}/insights/execute-actions`);
+      setRulesMessage(res.data.message || 'Rules evaluated successfully.');
+      if (fetchData) await fetchData();
+      setTimeout(() => setRulesMessage(null), 4000);
+    } catch (err) {
+      console.error('Failed to execute rules:', err);
+      setRulesMessage(err.response?.data?.error || 'Failed to execute rules.');
+      setTimeout(() => setRulesMessage(null), 4000);
+    } finally {
+      setExecutingRules(false);
+    }
+  };
+
+  const handleSimulateOrder = async (e) => {
+    e.preventDefault();
+    const prodId = orderProductId || (intelligence[0] ? intelligence[0].id : null);
+    if (!prodId || !API_URL) return;
+
+    try {
+      setOrderSubmitting(true);
+      setOrderFeedback(null);
+      const res = await axios.post(`${API_URL}/simulate-order`, {
+        productId: parseInt(prodId, 10),
+        quantity: parseInt(orderQuantity, 10)
+      });
+      setOrderFeedback({ type: 'success', text: res.data.message || t('dashboard.orderSuccess') });
+      if (fetchData) await fetchData();
+      setTimeout(() => setOrderFeedback(null), 4000);
+    } catch (err) {
+      console.error('Failed to simulate order:', err);
+      setOrderFeedback({ type: 'error', text: err.response?.data?.error || 'Simulation failed.' });
+      setTimeout(() => setOrderFeedback(null), 4000);
+    } finally {
+      setOrderSubmitting(false);
+    }
+  };
 
   return (
     <>
@@ -66,19 +139,221 @@ export default function DashboardView({ intelligence, insights, autonomousLogs, 
         </div>
       </div>
 
+      {/* Interactive Controls Row: Market Alerts & Order Simulator */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8 mb-6 sm:mb-8">
+        {/* Market & Competitor Alerts */}
+        <div className={`lg:col-span-2 border rounded-2xl p-4 sm:p-6 shadow-xl ${
+          isDark ? 'bg-[#201510]/80 border-[#36261d]' : 'bg-white/80 border-[#e8ded1]'
+        }`}>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className={`text-lg sm:text-xl font-semibold flex items-center gap-2 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
+              <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
+              <span>{t('dashboard.marketAlertsTitle')}</span>
+            </h2>
+            <span className={`text-xs font-mono font-bold px-2.5 py-0.5 rounded-full border ${
+              isDark ? 'bg-amber-950/60 text-amber-400 border-amber-800' : 'bg-amber-100 text-amber-800 border-amber-300'
+            }`}>
+              {insights.length} {t('dashboard.activeMarketAlerts')}
+            </span>
+          </div>
+          <p className={`text-xs sm:text-sm mb-4 ${isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'}`}>
+            {t('dashboard.marketAlertsDesc')}
+          </p>
+
+          <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
+            {insights.length === 0 ? (
+              <p className={`text-sm italic ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>
+                No competitor anomalies currently detected.
+              </p>
+            ) : (
+              insights.map(item => {
+                const diff = (parseFloat(item.ourPrice) - parseFloat(item.competitorPrice)).toFixed(2);
+                return (
+                  <div key={item.eventId} className={`border p-3.5 rounded-xl transition ${
+                    isDark ? 'bg-[#18110e]/70 border-[#36261d]' : 'bg-[#faf6f0]/70 border-[#e8ded1]'
+                  }`}>
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-sm font-bold ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
+                          {item.productName}
+                        </span>
+                        <span className={`text-xs font-mono ${isDark ? 'text-[#b8a394]' : 'text-[#7a6452]'}`}>
+                          ({item.sku})
+                        </span>
+                      </div>
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded border ${
+                        parseFloat(diff) > 0 
+                          ? (isDark ? 'bg-red-950/80 text-red-300 border-red-800' : 'bg-red-100 text-red-800 border-red-300')
+                          : (isDark ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800' : 'bg-emerald-100 text-emerald-800 border-emerald-300')
+                      }`}>
+                        {parseFloat(diff) > 0 ? `Undercut: -$${diff}` : 'Competitive'}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-4 text-xs font-mono mb-2">
+                      <span className={isDark ? 'text-[#d4c2b4]' : 'text-[#594537]'}>
+                        Our Price: <strong className="text-amber-500">${parseFloat(item.ourPrice).toFixed(2)}</strong>
+                      </span>
+                      <span className={isDark ? 'text-[#d4c2b4]' : 'text-[#594537]'}>
+                        Competitor: <strong className="text-red-400">${parseFloat(item.competitorPrice).toFixed(2)}</strong>
+                      </span>
+                    </div>
+
+                    <p className={`text-xs mb-1.5 ${isDark ? 'text-[#c2afa3]' : 'text-[#5c4738]'}`}>
+                      {item.marketEvent}
+                    </p>
+
+                    <div className={`text-xs font-medium pt-1.5 border-t ${
+                      isDark ? 'border-[#36261d]/80 text-amber-400' : 'border-[#e8ded1]/80 text-amber-800'
+                    }`}>
+                      {item.decisionEngineAction}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* Transactional Order Ingestion Simulator */}
+        <div className={`border rounded-2xl p-4 sm:p-6 shadow-xl flex flex-col justify-between ${
+          isDark ? 'bg-[#201510]/80 border-[#36261d]' : 'bg-white/80 border-[#e8ded1]'
+        }`}>
+          <div>
+            <h2 className={`text-lg sm:text-xl font-semibold flex items-center gap-2 mb-2 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
+              <ShoppingCart className={`w-5 h-5 ${isDark ? 'text-amber-400' : 'text-amber-700'}`} />
+              <span>{t('dashboard.simulateOrderTitle')}</span>
+            </h2>
+            <p className={`text-xs sm:text-sm mb-4 ${isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'}`}>
+              {t('dashboard.simulateOrderDesc')}
+            </p>
+
+            <form onSubmit={handleSimulateOrder} className="space-y-3.5">
+              <div>
+                <label className={`block text-xs font-semibold uppercase tracking-wider mb-1 ${isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'}`}>
+                  {t('common.product')}
+                </label>
+                <select
+                  value={orderProductId || (intelligence[0]?.id || '')}
+                  onChange={(e) => setOrderProductId(e.target.value)}
+                  className={`w-full border rounded-xl px-3 py-2 text-sm focus:outline-none cursor-pointer ${
+                    isDark 
+                      ? 'bg-[#18110e] border-[#36261d] text-[#fff8f0] focus:border-amber-500' 
+                      : 'bg-[#faf6f0] border-[#e8ded1] text-[#241a14] focus:border-amber-700'
+                  }`}
+                >
+                  {intelligence.map(item => (
+                    <option key={item.id} value={item.id}>
+                      {item.name} ({item.sku}) - {item.currentInventory} in stock
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className={`block text-xs font-semibold uppercase tracking-wider mb-1 ${isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'}`}>
+                  {t('dashboard.quantity')}
+                </label>
+                <div className="flex gap-2">
+                  {[5, 15, 30].map(qty => (
+                    <button
+                      key={qty}
+                      type="button"
+                      onClick={() => setOrderQuantity(qty)}
+                      className={`flex-1 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer ${
+                        orderQuantity === qty
+                          ? isDark
+                            ? 'bg-amber-600 text-white border-amber-500'
+                            : 'bg-amber-700 text-white border-amber-600'
+                          : isDark
+                            ? 'bg-[#18110e] border-[#36261d] text-[#b8a394] hover:text-[#fff8f0]'
+                            : 'bg-[#faf6f0] border-[#e8ded1] text-[#6b5646] hover:text-[#241a14]'
+                      }`}
+                    >
+                      +{qty}
+                    </button>
+                  ))}
+                  <input
+                    type="number"
+                    min="1"
+                    max="500"
+                    value={orderQuantity}
+                    onChange={(e) => setOrderQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                    className={`w-20 text-center border rounded-lg px-2 py-1.5 text-xs font-mono font-bold focus:outline-none ${
+                      isDark 
+                        ? 'bg-[#18110e] border-[#36261d] text-[#fff8f0] focus:border-amber-500' 
+                        : 'bg-[#faf6f0] border-[#e8ded1] text-[#241a14] focus:border-amber-700'
+                    }`}
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={orderSubmitting || intelligence.length === 0}
+                className={`w-full py-2.5 px-4 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition cursor-pointer shadow-md ${
+                  isDark
+                    ? 'bg-[#d97706] hover:bg-[#b45309] text-white'
+                    : 'bg-[#c2410c] hover:bg-[#9a3412] text-white'
+                }`}
+              >
+                <Send className={`w-4 h-4 ${orderSubmitting ? 'animate-spin' : ''}`} />
+                <span>{orderSubmitting ? t('dashboard.ordering') : t('dashboard.placeOrder')}</span>
+              </button>
+            </form>
+          </div>
+
+          {orderFeedback && (
+            <div className={`mt-3 p-2.5 rounded-lg text-xs flex items-center gap-2 border ${
+              orderFeedback.type === 'success'
+                ? isDark ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300' : 'bg-emerald-50 border-emerald-300 text-emerald-800'
+                : isDark ? 'bg-red-950/60 border-red-800 text-red-300' : 'bg-red-50 border-red-300 text-red-800'
+            }`}>
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span>{orderFeedback.text}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Autonomous Execution Audit Log */}
       <div className={`border rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8 shadow-xl ${
         isDark ? 'bg-[#201510]/80 border-[#36261d]' : 'bg-white/80 border-[#e8ded1]'
       }`}>
-        <h2 className={`text-lg sm:text-xl font-semibold mb-2 flex items-center gap-2 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
-          <Activity className="w-5 h-5 text-emerald-500 shrink-0" />
-          <span>{t('dashboard.auditLog')}</span>
-        </h2>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+          <h2 className={`text-lg sm:text-xl font-semibold flex items-center gap-2 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
+            <Activity className="w-5 h-5 text-emerald-500 shrink-0" />
+            <span>{t('dashboard.auditLog')}</span>
+          </h2>
+
+          <div className="flex items-center gap-3">
+            {rulesMessage && (
+              <span className={`text-xs font-medium px-2.5 py-1 rounded-md border ${
+                isDark ? 'bg-emerald-950/70 border-emerald-800 text-emerald-300' : 'bg-emerald-100 border-emerald-300 text-emerald-800'
+              }`}>
+                {rulesMessage}
+              </span>
+            )}
+            <button
+              onClick={handleExecuteRules}
+              disabled={executingRules}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer shadow-sm ${
+                isDark
+                  ? 'bg-emerald-950/60 border-emerald-800 text-emerald-300 hover:bg-emerald-900/60'
+                  : 'bg-emerald-50 border-emerald-300 text-emerald-800 hover:bg-emerald-100'
+              }`}
+            >
+              <Zap className={`w-3.5 h-3.5 ${executingRules ? 'animate-bounce' : 'text-emerald-500'}`} />
+              <span>{executingRules ? t('dashboard.executing') : t('dashboard.executeRules')}</span>
+            </button>
+          </div>
+        </div>
+
         <p className={`text-xs sm:text-sm mb-4 ${isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'}`}>
           {t('dashboard.auditDescription')}
         </p>
         
-        <div className="space-y-3">
+        <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">
           {autonomousLogs.length === 0 ? (
             <p className={`text-sm italic ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>{t('dashboard.noActions')}</p>
           ) : (
@@ -94,7 +369,7 @@ export default function DashboardView({ intelligence, insights, autonomousLogs, 
                       {log.action_type}
                     </span>
                     <span className={`text-sm font-semibold ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
-                      {log.name} ({log.sku})
+                      {log.name || log.product_name} ({log.sku})
                     </span>
                   </div>
                   <p className={`text-xs sm:text-sm font-medium ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>{log.description}</p>
