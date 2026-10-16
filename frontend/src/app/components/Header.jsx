@@ -42,24 +42,24 @@ export default function Header({
     >
 
       <div className="shrink-0">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5 sm:gap-3">
           <img
             src="/mercury.svg"
-            alt="Logo"
-            className="w-7 h-7 sm:w-8 sm:h-8"
+            alt="Mercury Logo"
+            className="w-9 h-9 sm:w-11 sm:h-11 shrink-0"
           />
 
           <span
-            className={`text-xs sm:text-sm uppercase tracking-widest font-semibold ${
-              isDark ? 'text-amber-500' : 'text-amber-700'
+            className={`font-rocker text-2xl sm:text-3xl font-bold tracking-wider leading-none ${
+              isDark ? 'text-amber-400' : 'text-amber-700'
             }`}
           >
-            {t('header.brand')}
+            MERCURY
           </span>
         </div>
 
         <h1
-          className={`text-2xl sm:text-3xl font-extrabold tracking-tight mt-1 ${
+          className={`text-2xl sm:text-3xl font-extrabold tracking-tight mt-1.5 ${
             isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'
           }`}
         >

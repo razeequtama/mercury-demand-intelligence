@@ -9,7 +9,7 @@
     "language": "Language"
   },
   "header": {
-    "brand": "Mercury Demand Intelligence",
+    "brand": "MERCURY",
     "title": "Commerce Command Center",
     "subtitle": "Real-time demand forecasting, stockout risk scoring, and autonomous decision simulation.",
     "liveOperations": "Live Operations",
@@ -34,6 +34,11 @@
     "inferencesRunning": "Inferences running in real time",
     "marketAlertsTitle": "Active Market & Competitor Alerts",
     "marketAlertsDesc": "Real-time competitor undercuts detected across product catalogs.",
+    "noCompetitorAnomalies": "No competitor anomalies currently detected.",
+    "undercut": "Undercut",
+    "competitive": "Competitive",
+    "ourPrice": "Our Price",
+    "competitor": "Competitor",
     "auditLog": "Autonomous Decision Engine Audit Log",
     "auditDescription": "Actions recorded by Mercury after market anomalies are detected.",
     "executeRules": "Execute Rules",
@@ -80,7 +85,9 @@
     "nullValue": "NULL"
   },
   "welcome": {
-    "welcomeTitle": "Welcome to Mercury",
+    "welcomePrefix": "Welcome to",
+    "welcomeTitle": "Welcome to MERCURY",
+    "userGuideSuffix": "User Guide",
     "welcomeDescription": "Explore a demand and inventory forecasting demo powered by a Python Scikit-Learn pipeline, a Node.js gateway, and a React interface.",
     "guideTitle": "Mercury User Guide",
     "walkthrough": "Step-by-Step Guide",

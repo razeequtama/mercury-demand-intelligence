@@ -9,7 +9,7 @@
     "language": "Bahasa"
   },
   "header": {
-    "brand": "Mercury Demand Intelligence",
+    "brand": "MERCURY",
     "title": "Pusat Kendali Perdagangan",
     "subtitle": "Peramalan permintaan real-time, penilaian risiko kehabisan stok, dan simulasi keputusan otomatis.",
     "liveOperations": "Operasional Langsung",
@@ -34,6 +34,11 @@
     "inferencesRunning": "Inferensi berjalan secara real-time",
     "marketAlertsTitle": "Peringatan Pasar & Pesaing Aktif",
     "marketAlertsDesc": "Pemotongan harga pesaing waktu nyata yang terdeteksi di katalog produk.",
+    "noCompetitorAnomalies": "Tidak ada anomali pesaing yang terdeteksi saat ini.",
+    "undercut": "Potongan Harga",
+    "competitive": "Kompetitif",
+    "ourPrice": "Harga Kita",
+    "competitor": "Pesaing",
     "auditLog": "Log Audit Mesin Keputusan Otomatis",
     "auditDescription": "Tindakan yang dicatat Mercury setelah anomali pasar terdeteksi.",
     "executeRules": "Jalankan Aturan",
@@ -80,7 +85,9 @@
     "nullValue": "KOSONG"
   },
   "welcome": {
-    "welcomeTitle": "Selamat datang di Mercury",
+    "welcomePrefix": "Selamat datang di",
+    "welcomeTitle": "Selamat datang di MERCURY",
+    "userGuideSuffix": "Panduan Pengguna",
     "welcomeDescription": "Jelajahi demo peramalan permintaan dan persediaan yang didukung pipeline Python Scikit-Learn, gateway Node.js, dan antarmuka React.",
     "guideTitle": "Panduan Pengguna Mercury",
     "walkthrough": "Panduan Langkah demi Langkah",

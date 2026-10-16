@@ -15,6 +15,15 @@ import {
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { useLanguage } from '../../i18n/LanguageProvider';
+import {
+  formatMarketEvent,
+  formatDecisionEngineAction,
+  formatAuditActionType,
+  formatAuditDescription,
+  formatAuditStatus,
+  formatRulesMessage,
+  formatRecommendation
+} from '../../i18n/formatters';
 
 export default function DashboardView({ 
   intelligence, 
@@ -163,7 +172,7 @@ export default function DashboardView({
           <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
             {insights.length === 0 ? (
               <p className={`text-sm italic ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>
-                No competitor anomalies currently detected.
+                {t('dashboard.noCompetitorAnomalies')}
               </p>
             ) : (
               insights.map(item => {
@@ -186,27 +195,27 @@ export default function DashboardView({
                           ? (isDark ? 'bg-red-950/80 text-red-300 border-red-800' : 'bg-red-100 text-red-800 border-red-300')
                           : (isDark ? 'bg-emerald-950/80 text-emerald-300 border-emerald-800' : 'bg-emerald-100 text-emerald-800 border-emerald-300')
                       }`}>
-                        {parseFloat(diff) > 0 ? `Undercut: -$${diff}` : 'Competitive'}
+                        {parseFloat(diff) > 0 ? `${t('dashboard.undercut')}: -$${diff}` : t('dashboard.competitive')}
                       </span>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-4 text-xs font-mono mb-2">
                       <span className={isDark ? 'text-[#d4c2b4]' : 'text-[#594537]'}>
-                        Our Price: <strong className="text-amber-500">${parseFloat(item.ourPrice).toFixed(2)}</strong>
+                        {t('dashboard.ourPrice')}: <strong className="text-amber-500">${parseFloat(item.ourPrice).toFixed(2)}</strong>
                       </span>
                       <span className={isDark ? 'text-[#d4c2b4]' : 'text-[#594537]'}>
-                        Competitor: <strong className="text-red-400">${parseFloat(item.competitorPrice).toFixed(2)}</strong>
+                        {t('dashboard.competitor')}: <strong className="text-red-400">${parseFloat(item.competitorPrice).toFixed(2)}</strong>
                       </span>
                     </div>
 
                     <p className={`text-xs mb-1.5 ${isDark ? 'text-[#c2afa3]' : 'text-[#5c4738]'}`}>
-                      {item.marketEvent}
+                      {formatMarketEvent(item.marketEvent, locale)}
                     </p>
 
                     <div className={`text-xs font-medium pt-1.5 border-t ${
                       isDark ? 'border-[#36261d]/80 text-amber-400' : 'border-[#e8ded1]/80 text-amber-800'
                     }`}>
-                      {item.decisionEngineAction}
+                      {formatDecisionEngineAction(item.decisionEngineAction, locale)}
                     </div>
                   </div>
                 );
@@ -331,7 +340,7 @@ export default function DashboardView({
               <span className={`text-xs font-medium px-2.5 py-1 rounded-md border ${
                 isDark ? 'bg-emerald-950/70 border-emerald-800 text-emerald-300' : 'bg-emerald-100 border-emerald-300 text-emerald-800'
               }`}>
-                {rulesMessage}
+                {formatRulesMessage(rulesMessage, locale)}
               </span>
             )}
             <button
@@ -366,16 +375,20 @@ export default function DashboardView({
                     <span className={`px-2.5 py-0.5 rounded text-xs font-bold border ${
                       isDark ? 'bg-emerald-950 text-emerald-300 border-emerald-800' : 'bg-emerald-100 text-emerald-800 border-emerald-300'
                     }`}>
-                      {log.action_type}
+                      {formatAuditActionType(log.action_type, locale)}
                     </span>
                     <span className={`text-sm font-semibold ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
                       {log.name || log.product_name} ({log.sku})
                     </span>
                   </div>
-                  <p className={`text-xs sm:text-sm font-medium ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>{log.description}</p>
+                  <p className={`text-xs sm:text-sm font-medium ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
+                    {formatAuditDescription(log.description, locale)}
+                  </p>
                 </div>
                 <div className={`text-left sm:text-right text-xs font-mono w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 ${isDark ? 'border-[#36261d] text-[#b8a394]' : 'border-[#e8ded1] text-[#7a6452]'}`}>
-                  {new Date(log.executed_at).toLocaleTimeString(locale)} • <span className={`font-semibold ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>{log.status}</span>
+                  {new Date(log.executed_at).toLocaleTimeString(locale)} • <span className={`font-semibold ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
+                    {formatAuditStatus(log.status, locale)}
+                  </span>
                 </div>
               </div>
             ))
@@ -422,7 +435,7 @@ export default function DashboardView({
                     </td>
                     <td className="py-4 text-xs sm:text-sm">
                       {item.recommendation ? (
-                        <span className={`font-medium ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>{item.recommendation}</span>
+                        <span className={`font-medium ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>{formatRecommendation(item.recommendation, locale)}</span>
                       ) : (
                         <span className={isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}>{t('dashboard.stable')}</span>
                       )}

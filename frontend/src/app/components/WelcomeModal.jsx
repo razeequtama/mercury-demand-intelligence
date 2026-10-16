@@ -18,9 +18,14 @@ export default function WelcomeModal({ showWelcome, isFirstVisit, handleCloseWel
         
         {isFirstVisit && (
           <div className={`mb-5 pb-5 border-b shrink-0 ${isDark ? 'border-[#3d2a20]' : 'border-[#e5d8cc]'}`}>
-            <div className="flex items-center space-x-3 mb-3">
-              <img src="/mercury.svg" alt="Logo" className="w-8 h-8 sm:w-10 sm:h-10 shrink-0" />
-              <h3 className="text-xl sm:text-2xl font-bold leading-tight">{t('welcome.welcomeTitle')}</h3>
+            <div className="flex items-center gap-3 sm:gap-3.5 mb-3">
+              <img src="/mercury.svg" alt="Mercury Logo" className="w-10 h-10 sm:w-12 sm:h-12 shrink-0" />
+              <h3 className="text-2xl sm:text-3xl font-bold leading-tight flex items-center flex-wrap gap-x-2">
+                <span>{t('welcome.welcomePrefix')}</span>
+                <span className={`font-rocker font-bold tracking-wider ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>
+                  MERCURY
+                </span>
+              </h3>
             </div>
             <p className={`text-sm sm:text-base leading-relaxed ${isDark ? 'text-[#d4c2b4]' : 'text-[#594537]'}`}>
               {t('welcome.welcomeDescription')}
@@ -30,9 +35,12 @@ export default function WelcomeModal({ showWelcome, isFirstVisit, handleCloseWel
 
         {!isFirstVisit && (
           <div className={`flex justify-between items-center mb-5 pb-4 border-b shrink-0 ${isDark ? 'border-[#3d2a20]' : 'border-[#e5d8cc]'}`}>
-            <div className="flex items-center gap-2">
-              <HelpCircle className={`w-6 h-6 ${isDark ? 'text-amber-400' : 'text-amber-700'}`} />
-              <h3 className="text-xl sm:text-2xl font-bold">{t('welcome.guideTitle')}</h3>
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <img src="/mercury.svg" alt="Mercury Logo" className="w-7 h-7 sm:w-8 sm:h-8 shrink-0" />
+              <h3 className="text-xl sm:text-2xl font-bold flex items-center flex-wrap gap-x-1.5">
+                <span className={`font-rocker font-bold tracking-wider ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>MERCURY</span>
+                <span>{t('welcome.userGuideSuffix')}</span>
+              </h3>
             </div>
             <button 
               onClick={() => setShowWelcome(false)}
