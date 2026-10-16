@@ -75,20 +75,25 @@ export default function Header({
         </p>
       </div>
 
-      <div className="flex flex-col items-stretch lg:items-end gap-3 w-full lg:w-auto lg:ml-auto">
+      <div className="flex flex-col items-stretch lg:items-end gap-2.5 w-full lg:w-auto lg:ml-auto">
+        {/* Navigation View Switcher (Core Mode Tabs) */}
         <div
-          className={`self-end flex items-center p-1 rounded-xl border ${surface}`}
+          role="tablist"
+          aria-label={t('header.title')}
+          className={`self-end inline-flex items-center p-1 rounded-xl border shadow-xs ${surface}`}
         >
           <button
+            role="tab"
+            aria-selected={currentView === 'dashboard'}
             onClick={() => setCurrentView('dashboard')}
-            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition cursor-pointer ${
+            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition cursor-pointer ${
               currentView === 'dashboard'
                 ? isDark
                   ? 'bg-[#d97706] text-white shadow-sm'
                   : 'bg-[#c2410c] text-white shadow-sm'
                 : isDark
-                  ? 'text-[#b8a394] hover:text-[#fff8f0] hover:bg-white/[0.03]'
-                  : 'text-[#6b5646] hover:text-[#241a14] hover:bg-black/[0.03]'
+                  ? 'text-[#b8a394] hover:text-[#fff8f0] hover:bg-white/[0.04]'
+                  : 'text-[#6b5646] hover:text-[#241a14] hover:bg-black/[0.04]'
             }`}
           >
             <Layers className="w-4 h-4 shrink-0" />
@@ -96,15 +101,17 @@ export default function Header({
           </button>
 
           <button
+            role="tab"
+            aria-selected={currentView === 'sandbox'}
             onClick={() => setCurrentView('sandbox')}
-            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition cursor-pointer ${
+            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition cursor-pointer ${
               currentView === 'sandbox'
                 ? isDark
                   ? 'bg-[#d97706] text-white shadow-sm'
                   : 'bg-[#c2410c] text-white shadow-sm'
                 : isDark
-                  ? 'text-[#b8a394] hover:text-[#fff8f0] hover:bg-white/[0.03]'
-                  : 'text-[#6b5646] hover:text-[#241a14] hover:bg-black/[0.03]'
+                  ? 'text-[#b8a394] hover:text-[#fff8f0] hover:bg-white/[0.04]'
+                  : 'text-[#6b5646] hover:text-[#241a14] hover:bg-black/[0.04]'
             }`}
           >
             <Sliders className="w-4 h-4 shrink-0" />
@@ -112,100 +119,115 @@ export default function Header({
           </button>
         </div>
 
-        <div
-          className={`self-end flex items-center rounded-xl border p-1 ${surface}`}
-        >
-          {/* Database */}
-          <button
-            onClick={fetchDatabaseInspect}
-            className={`flex items-center gap-2 px-3.5 py-2.5 rounded-lg text-sm font-medium transition cursor-pointer ${
-              isDark
-                ? 'text-amber-300 hover:bg-white/[0.04]'
-                : 'text-amber-800 hover:bg-black/[0.03]'
-            }`}
+        {/* Secondary Toolbars: Grouped by Purpose */}
+        <div className="self-end flex flex-wrap items-center justify-end gap-2.5">
+          {/* Group A: Data & Diagnostics (Database Inspector & Sync) */}
+          <div
+            aria-label="Database and sync actions"
+            className={`inline-flex items-center p-1 rounded-xl border shadow-xs ${surface}`}
           >
-            <Database
-              className={`w-4 h-4 ${
-                inspectLoading ? 'animate-spin' : ''
+            <button
+              onClick={fetchDatabaseInspect}
+              className={`flex items-center gap-2 h-8 px-3 rounded-lg text-xs sm:text-sm font-medium transition cursor-pointer ${
+                isDark
+                  ? 'text-amber-300 hover:text-amber-200 hover:bg-white/[0.05]'
+                  : 'text-amber-800 hover:text-amber-950 hover:bg-black/[0.04]'
+              }`}
+              title={t('header.inspectDatabase')}
+            >
+              <Database
+                className={`w-3.5 h-3.5 shrink-0 ${
+                  inspectLoading ? 'animate-spin' : ''
+                }`}
+              />
+              <span>{t('header.inspectDatabase')}</span>
+            </button>
+
+            <div
+              className={`w-px h-4 mx-0.5 ${
+                isDark ? 'bg-[#36261d]' : 'bg-[#e8ded1]'
               }`}
             />
-            <span>{t('header.inspectDatabase')}</span>
-          </button>
 
-          {/* Divider */}
+            <button
+              onClick={fetchData}
+              disabled={loading}
+              className={`flex items-center gap-2 h-8 px-3 rounded-lg text-xs sm:text-sm font-medium transition cursor-pointer ${
+                isDark
+                  ? 'text-[#f5ebd9] hover:text-white hover:bg-white/[0.05]'
+                  : 'text-[#3d2c22] hover:text-black hover:bg-black/[0.04]'
+              }`}
+              title={t('header.refresh')}
+            >
+              <RefreshCw
+                className={`w-3.5 h-3.5 shrink-0 ${
+                  loading ? 'animate-spin text-amber-500' : ''
+                }`}
+              />
+              <span>{t('header.refresh')}</span>
+            </button>
+          </div>
+
+          {/* Group B: System Preferences & Documentation (Theme, Language, Help) */}
           <div
-            className={`w-px h-5 mx-1 ${
-              isDark ? 'bg-[#36261d]' : 'bg-[#e8ded1]'
-            }`}
-          />
-
-          {/* Refresh */}
-          <button
-            onClick={fetchData}
-            className={`flex items-center gap-2 px-3.5 py-2.5 rounded-lg text-sm font-medium transition cursor-pointer ${
-              isDark
-                ? 'text-[#f5ebd9] hover:bg-white/[0.04]'
-                : 'text-[#3d2c22] hover:bg-black/[0.03]'
-            }`}
+            aria-label="User preferences and help"
+            className={`inline-flex items-center p-1 rounded-xl border shadow-xs gap-0.5 ${surface}`}
           >
-            <RefreshCw
-              className={`w-4 h-4 ${
-                loading ? 'animate-spin' : ''
+            {/* Theme */}
+            <button
+              onClick={toggleTheme}
+              className={`h-8 w-8 flex items-center justify-center rounded-lg transition cursor-pointer ${
+                isDark
+                  ? 'text-amber-400 hover:text-amber-300 hover:bg-white/[0.05]'
+                  : 'text-amber-700 hover:text-amber-900 hover:bg-black/[0.04]'
+              }`}
+              title={
+                isDark
+                  ? t('header.switchToLight')
+                  : t('header.switchToDark')
+              }
+              aria-label={
+                isDark
+                  ? t('header.switchToLight')
+                  : t('header.switchToDark')
+              }
+            >
+              {isDark ? (
+                <Sun className="w-4 h-4 shrink-0" />
+              ) : (
+                <Moon className="w-4 h-4 shrink-0" />
+              )}
+            </button>
+
+            <div
+              className={`w-px h-4 mx-0.5 ${
+                isDark ? 'bg-[#36261d]' : 'bg-[#e8ded1]'
               }`}
             />
-            <span>{t('header.refresh')}</span>
-          </button>
 
-          {/* Divider */}
-          <div
-            className={`w-px h-5 mx-1 ${
-              isDark ? 'bg-[#36261d]' : 'bg-[#e8ded1]'
-            }`}
-          />
+            {/* Language Switcher */}
+            <LanguageSwitcher theme={theme} />
 
-          {/* Theme */}
-          <button
-            onClick={toggleTheme}
-            className={`w-10 h-10 flex items-center justify-center rounded-lg transition cursor-pointer ${
-              isDark
-                ? 'text-amber-400 hover:bg-white/[0.04]'
-                : 'text-amber-700 hover:bg-black/[0.03]'
-            }`}
-            title={
-              isDark
-                ? t('header.switchToLight')
-                : t('header.switchToDark')
-            }
-          >
-            {isDark ? (
-              <Sun className="w-[18px] h-[18px]" />
-            ) : (
-              <Moon className="w-[18px] h-[18px]" />
-            )}
-          </button>
+            <div
+              className={`w-px h-4 mx-0.5 ${
+                isDark ? 'bg-[#36261d]' : 'bg-[#e8ded1]'
+              }`}
+            />
 
-          {/* Language */}
-          <LanguageSwitcher theme={theme} />
-
-          {/* Divider */}
-          <div
-            className={`w-px h-5 mx-1 ${
-              isDark ? 'bg-[#36261d]' : 'bg-[#e8ded1]'
-            }`}
-          />
-
-          {/* Help */}
-          <button
-            onClick={() => setShowWelcome(true)}
-            className={`w-10 h-10 flex items-center justify-center rounded-lg transition cursor-pointer ${
-              isDark
-                ? 'text-amber-400 hover:bg-white/[0.04] hover:text-amber-300'
-                : 'text-amber-700 hover:bg-black/[0.03] hover:text-amber-900'
-            }`}
-            title={t('header.userGuide')}
-          >
-            <HelpCircle className="w-[18px] h-[18px]" />
-          </button>
+            {/* Help */}
+            <button
+              onClick={() => setShowWelcome(true)}
+              className={`h-8 w-8 flex items-center justify-center rounded-lg transition cursor-pointer ${
+                isDark
+                  ? 'text-amber-400 hover:text-amber-300 hover:bg-white/[0.05]'
+                  : 'text-amber-700 hover:text-amber-900 hover:bg-black/[0.04]'
+              }`}
+              title={t('header.userGuide')}
+              aria-label={t('header.userGuide')}
+            >
+              <HelpCircle className="w-4 h-4 shrink-0" />
+            </button>
+          </div>
         </div>
       </div>
     </header>

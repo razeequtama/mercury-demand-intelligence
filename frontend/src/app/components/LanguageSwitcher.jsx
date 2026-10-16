@@ -59,7 +59,7 @@ export default function LanguageSwitcher({ theme }) {
         onClick={() => setLocale('en')}
         aria-pressed={locale === 'en'}
         aria-label={`${t('common.english')} (EN)`}
-        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-semibold transition cursor-pointer ${
+        className={`flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
           locale === 'en'
             ? isDark
               ? 'bg-[#d97706] text-white shadow-sm'
@@ -80,7 +80,7 @@ export default function LanguageSwitcher({ theme }) {
         onClick={() => setLocale('id')}
         aria-pressed={locale === 'id'}
         aria-label={`${t('common.indonesian')} (ID)`}
-        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-semibold transition cursor-pointer ${
+        className={`flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
           locale === 'id'
             ? isDark
               ? 'bg-[#d97706] text-white shadow-sm'
