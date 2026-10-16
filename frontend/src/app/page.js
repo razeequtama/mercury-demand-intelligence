@@ -171,7 +171,7 @@ export default function Dashboard() {
           isDark ? 'bg-red-950/40 border-red-900 text-red-200' : 'bg-red-50 border-red-200 text-red-800'
         }`}>
           <ShieldAlert className="w-6 h-6 text-red-500 shrink-0" />
-          <p className="text-sm sm:text-base">{t(error)}</p>
+          <p className="text-base sm:text-lg font-medium">{t(error)}</p>
         </div>
       )}
 

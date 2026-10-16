@@ -27,7 +27,7 @@ export default function WelcomeModal({ showWelcome, isFirstVisit, handleCloseWel
                 </span>
               </h3>
             </div>
-            <p className={`text-sm sm:text-base leading-relaxed ${isDark ? 'text-[#d4c2b4]' : 'text-[#594537]'}`}>
+            <p className={`text-base sm:text-lg leading-relaxed ${isDark ? 'text-[#d4c2b4]' : 'text-[#594537]'}`}>
               {t('welcome.welcomeDescription')}
             </p>
           </div>
@@ -51,23 +51,23 @@ export default function WelcomeModal({ showWelcome, isFirstVisit, handleCloseWel
           </div>
         )}
 
-        <div className={`space-y-4 text-sm mb-6 flex-1 ${isDark ? 'text-[#d4c2b4]' : 'text-[#594537]'}`}>
-          <h4 className={`text-sm font-semibold uppercase tracking-wider mb-3 ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>{t('welcome.walkthrough')}</h4>
+        <div className={`space-y-4 text-base mb-6 flex-1 ${isDark ? 'text-[#d4c2b4]' : 'text-[#594537]'}`}>
+          <h4 className={`text-sm sm:text-base font-bold uppercase tracking-wider mb-3 ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>{t('welcome.walkthrough')}</h4>
           
           <div className="space-y-3 sm:space-y-4">
-            <div className={`p-4 rounded-xl border ${isDark ? 'bg-[#18110e] border-[#36261d]' : 'bg-[#f7f2ec] border-[#e8ded1]'}`}>
-              <span className={`font-bold block mb-1 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>{t('welcome.stepDashboardTitle')}</span>
-              {t('welcome.stepDashboardDescription')}
+            <div className={`p-4 sm:p-5 rounded-xl border ${isDark ? 'bg-[#18110e] border-[#36261d]' : 'bg-[#f7f2ec] border-[#e8ded1]'}`}>
+              <span className={`text-base sm:text-lg font-bold block mb-1.5 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>{t('welcome.stepDashboardTitle')}</span>
+              <p className="text-sm sm:text-base leading-relaxed">{t('welcome.stepDashboardDescription')}</p>
             </div>
 
-            <div className={`p-4 rounded-xl border ${isDark ? 'bg-[#18110e] border-[#36261d]' : 'bg-[#f7f2ec] border-[#e8ded1]'}`}>
-              <span className={`font-bold block mb-1 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>{t('welcome.stepSandboxTitle')}</span>
-              {t('welcome.stepSandboxDescription')}
+            <div className={`p-4 sm:p-5 rounded-xl border ${isDark ? 'bg-[#18110e] border-[#36261d]' : 'bg-[#f7f2ec] border-[#e8ded1]'}`}>
+              <span className={`text-base sm:text-lg font-bold block mb-1.5 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>{t('welcome.stepSandboxTitle')}</span>
+              <p className="text-sm sm:text-base leading-relaxed">{t('welcome.stepSandboxDescription')}</p>
             </div>
 
-            <div className={`p-4 rounded-xl border ${isDark ? 'bg-[#18110e] border-[#36261d]' : 'bg-[#f7f2ec] border-[#e8ded1]'}`}>
-              <span className={`font-bold block mb-1 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>{t('welcome.stepControlsTitle')}</span>
-              <ul className="list-disc pl-5 mt-2 space-y-1.5">
+            <div className={`p-4 sm:p-5 rounded-xl border ${isDark ? 'bg-[#18110e] border-[#36261d]' : 'bg-[#f7f2ec] border-[#e8ded1]'}`}>
+              <span className={`text-base sm:text-lg font-bold block mb-1.5 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>{t('welcome.stepControlsTitle')}</span>
+              <ul className="list-disc pl-5 mt-2 space-y-2 text-sm sm:text-base leading-relaxed">
                 <li><strong>{t('sandbox.targetSku')}:</strong> {t('welcome.targetSkuDescription')}</li>
                 <li><strong>{t('sandbox.competitorPrice')}:</strong> {t('welcome.competitorDescription')}</li>
                 <li><strong>{t('sandbox.demandMultiplier')}:</strong> {t('welcome.demandDescription')}</li>
@@ -75,9 +75,9 @@ export default function WelcomeModal({ showWelcome, isFirstVisit, handleCloseWel
               </ul>
             </div>
 
-            <div className={`p-4 rounded-xl border ${isDark ? 'bg-[#18110e] border-[#36261d]' : 'bg-[#f7f2ec] border-[#e8ded1]'}`}>
-              <span className={`font-bold block mb-1 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>{t('welcome.stepInspectorTitle')}</span>
-              {t('welcome.stepInspectorDescription')}
+            <div className={`p-4 sm:p-5 rounded-xl border ${isDark ? 'bg-[#18110e] border-[#36261d]' : 'bg-[#f7f2ec] border-[#e8ded1]'}`}>
+              <span className={`text-base sm:text-lg font-bold block mb-1.5 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>{t('welcome.stepInspectorTitle')}</span>
+              <p className="text-sm sm:text-base leading-relaxed">{t('welcome.stepInspectorDescription')}</p>
             </div>
           </div>
         </div>
@@ -86,7 +86,7 @@ export default function WelcomeModal({ showWelcome, isFirstVisit, handleCloseWel
           {isFirstVisit ? (
             <button 
               onClick={handleCloseWelcome}
-              className={`w-full py-3.5 font-semibold rounded-xl transition-colors shadow-lg text-base cursor-pointer min-h-[48px] ${
+              className={`w-full py-3.5 font-bold rounded-xl transition-colors shadow-lg text-base sm:text-lg cursor-pointer min-h-[48px] ${
                 isDark 
                   ? 'bg-[#b45309] hover:bg-[#d97706] text-white shadow-amber-950/50' 
                   : 'bg-[#c2410c] hover:bg-[#9a3412] text-white shadow-amber-900/20'
@@ -97,7 +97,7 @@ export default function WelcomeModal({ showWelcome, isFirstVisit, handleCloseWel
           ) : (
             <button 
               onClick={() => setShowWelcome(false)}
-              className={`w-full py-3.5 font-semibold rounded-xl transition-colors text-base cursor-pointer min-h-[48px] ${
+              className={`w-full py-3.5 font-bold rounded-xl transition-colors text-base sm:text-lg cursor-pointer min-h-[48px] ${
                 isDark ? 'bg-[#32231c] hover:bg-[#422e25] text-[#f5ebd9]' : 'bg-[#e8ded1] hover:bg-[#ded2c3] text-[#3d2c22]'
               }`}
             >

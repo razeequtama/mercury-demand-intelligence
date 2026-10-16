@@ -67,7 +67,7 @@ export default function Header({
         </h1>
 
         <p
-          className={`text-sm sm:text-base mt-1 max-w-2xl ${
+          className={`text-base sm:text-lg mt-1.5 max-w-2xl ${
             isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'
           }`}
         >
@@ -86,7 +86,7 @@ export default function Header({
             role="tab"
             aria-selected={currentView === 'dashboard'}
             onClick={() => setCurrentView('dashboard')}
-            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition cursor-pointer ${
+            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm sm:text-base font-bold transition cursor-pointer ${
               currentView === 'dashboard'
                 ? isDark
                   ? 'bg-[#d97706] text-white shadow-sm'
@@ -96,7 +96,7 @@ export default function Header({
                   : 'text-[#6b5646] hover:text-[#241a14] hover:bg-black/[0.04]'
             }`}
           >
-            <Layers className="w-4 h-4 shrink-0" />
+            <Layers className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
             <span>{t('header.liveOperations')}</span>
           </button>
 
@@ -104,7 +104,7 @@ export default function Header({
             role="tab"
             aria-selected={currentView === 'sandbox'}
             onClick={() => setCurrentView('sandbox')}
-            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition cursor-pointer ${
+            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm sm:text-base font-bold transition cursor-pointer ${
               currentView === 'sandbox'
                 ? isDark
                   ? 'bg-[#d97706] text-white shadow-sm'
@@ -114,7 +114,7 @@ export default function Header({
                   : 'text-[#6b5646] hover:text-[#241a14] hover:bg-black/[0.04]'
             }`}
           >
-            <Sliders className="w-4 h-4 shrink-0" />
+            <Sliders className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
             <span>{t('header.sandbox')}</span>
           </button>
         </div>
@@ -128,7 +128,7 @@ export default function Header({
           >
             <button
               onClick={fetchDatabaseInspect}
-              className={`flex items-center gap-2 h-8 px-3 rounded-lg text-xs sm:text-sm font-medium transition cursor-pointer ${
+              className={`flex items-center gap-2 h-9 px-3.5 rounded-lg text-sm sm:text-base font-semibold transition cursor-pointer ${
                 isDark
                   ? 'text-amber-300 hover:text-amber-200 hover:bg-white/[0.05]'
                   : 'text-amber-800 hover:text-amber-950 hover:bg-black/[0.04]'
@@ -136,7 +136,7 @@ export default function Header({
               title={t('header.inspectDatabase')}
             >
               <Database
-                className={`w-3.5 h-3.5 shrink-0 ${
+                className={`w-4 h-4 shrink-0 ${
                   inspectLoading ? 'animate-spin' : ''
                 }`}
               />
@@ -144,7 +144,7 @@ export default function Header({
             </button>
 
             <div
-              className={`w-px h-4 mx-0.5 ${
+              className={`w-px h-5 mx-0.5 ${
                 isDark ? 'bg-[#36261d]' : 'bg-[#e8ded1]'
               }`}
             />
@@ -152,7 +152,7 @@ export default function Header({
             <button
               onClick={fetchData}
               disabled={loading}
-              className={`flex items-center gap-2 h-8 px-3 rounded-lg text-xs sm:text-sm font-medium transition cursor-pointer ${
+              className={`flex items-center gap-2 h-9 px-3.5 rounded-lg text-sm sm:text-base font-semibold transition cursor-pointer ${
                 isDark
                   ? 'text-[#f5ebd9] hover:text-white hover:bg-white/[0.05]'
                   : 'text-[#3d2c22] hover:text-black hover:bg-black/[0.04]'
@@ -160,7 +160,7 @@ export default function Header({
               title={t('header.refresh')}
             >
               <RefreshCw
-                className={`w-3.5 h-3.5 shrink-0 ${
+                className={`w-4 h-4 shrink-0 ${
                   loading ? 'animate-spin text-amber-500' : ''
                 }`}
               />
@@ -176,7 +176,7 @@ export default function Header({
             {/* Theme */}
             <button
               onClick={toggleTheme}
-              className={`h-8 w-8 flex items-center justify-center rounded-lg transition cursor-pointer ${
+              className={`h-9 w-9 flex items-center justify-center rounded-lg transition cursor-pointer ${
                 isDark
                   ? 'text-amber-400 hover:text-amber-300 hover:bg-white/[0.05]'
                   : 'text-amber-700 hover:text-amber-900 hover:bg-black/[0.04]'
@@ -193,14 +193,14 @@ export default function Header({
               }
             >
               {isDark ? (
-                <Sun className="w-4 h-4 shrink-0" />
+                <Sun className="w-4.5 h-4.5 shrink-0" />
               ) : (
-                <Moon className="w-4 h-4 shrink-0" />
+                <Moon className="w-4.5 h-4.5 shrink-0" />
               )}
             </button>
 
             <div
-              className={`w-px h-4 mx-0.5 ${
+              className={`w-px h-5 mx-0.5 ${
                 isDark ? 'bg-[#36261d]' : 'bg-[#e8ded1]'
               }`}
             />
@@ -209,7 +209,7 @@ export default function Header({
             <LanguageSwitcher theme={theme} />
 
             <div
-              className={`w-px h-4 mx-0.5 ${
+              className={`w-px h-5 mx-0.5 ${
                 isDark ? 'bg-[#36261d]' : 'bg-[#e8ded1]'
               }`}
             />
@@ -217,7 +217,7 @@ export default function Header({
             {/* Help */}
             <button
               onClick={() => setShowWelcome(true)}
-              className={`h-8 w-8 flex items-center justify-center rounded-lg transition cursor-pointer ${
+              className={`h-9 w-9 flex items-center justify-center rounded-lg transition cursor-pointer ${
                 isDark
                   ? 'text-amber-400 hover:text-amber-300 hover:bg-white/[0.05]'
                   : 'text-amber-700 hover:text-amber-900 hover:bg-black/[0.04]'
@@ -225,7 +225,7 @@ export default function Header({
               title={t('header.userGuide')}
               aria-label={t('header.userGuide')}
             >
-              <HelpCircle className="w-4 h-4 shrink-0" />
+              <HelpCircle className="w-4.5 h-4.5 shrink-0" />
             </button>
           </div>
         </div>

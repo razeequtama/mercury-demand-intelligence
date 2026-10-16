@@ -49,17 +49,17 @@ export default function SandboxView({
         isDark ? 'bg-[#201510]/80 border-[#36261d]' : 'bg-white/80 border-[#e8ded1]'
       }`}>
         <div>
-          <h2 className={`text-lg sm:text-xl font-bold flex items-center gap-2 mb-1 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
-            <Sliders className={`w-5 h-5 ${isDark ? 'text-amber-400' : 'text-amber-700'}`} />
+          <h2 className={`text-xl sm:text-2xl font-bold flex items-center gap-2.5 mb-1.5 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
+            <Sliders className={`w-5 h-5 sm:w-6 sm:h-6 ${isDark ? 'text-amber-400' : 'text-amber-700'}`} />
             <span>{t('sandbox.scenarioLevers')}</span>
           </h2>
-          <p className={`text-xs sm:text-sm ${isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'}`}>
+          <p className={`text-sm sm:text-base ${isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'}`}>
             {t('sandbox.description')}
           </p>
         </div>
 
         <div>
-          <label className={`block text-xs sm:text-sm font-semibold uppercase tracking-wider mb-2 ${isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'}`}>
+          <label className={`block text-sm sm:text-base font-bold uppercase tracking-wider mb-2 ${isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'}`}>
             {t('sandbox.targetSku')}
           </label>
           <select
@@ -78,7 +78,7 @@ export default function SandboxView({
                 setDemandMultiplier(1.0);
               }
             }}
-            className={`w-full border rounded-xl px-4 py-3.5 sm:py-3 text-sm focus:outline-none cursor-pointer min-h-[48px] ${
+            className={`w-full border rounded-xl px-4 py-3.5 sm:py-3 text-sm sm:text-base focus:outline-none cursor-pointer min-h-[48px] ${
               isDark 
                 ? 'bg-[#18110e] border-[#36261d] text-[#fff8f0] focus:border-amber-500' 
                 : 'bg-[#faf6f0] border-[#e8ded1] text-[#241a14] focus:border-amber-700'
@@ -94,7 +94,7 @@ export default function SandboxView({
 
         <div>
           <div className="flex justify-between items-center mb-2">
-            <label className={`text-xs sm:text-sm font-semibold uppercase tracking-wider ${isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'}`}>
+            <label className={`text-sm sm:text-base font-bold uppercase tracking-wider ${isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'}`}>
               {t('sandbox.competitorPrice')}
               <span className={`font-normal ml-1 sm:ml-2 block sm:inline ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>
                 ({t('sandbox.ourPrice')}: ${
@@ -104,7 +104,7 @@ export default function SandboxView({
                 })
               </span>
             </label>
-            <span className={`text-base font-mono font-bold ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>${simCompetitorPrice}</span>
+            <span className={`text-lg font-mono font-bold ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>${simCompetitorPrice}</span>
           </div>
           <input 
             type="range" 
@@ -119,10 +119,10 @@ export default function SandboxView({
 
         <div>
           <div className="flex justify-between items-center mb-2">
-            <label className={`text-xs sm:text-sm font-semibold uppercase tracking-wider ${isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'}`}>
+            <label className={`text-sm sm:text-base font-bold uppercase tracking-wider ${isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'}`}>
               {t('sandbox.demandMultiplier')}
             </label>
-            <span className={`text-base font-mono font-bold ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>{demandMultiplier}x</span>
+            <span className={`text-lg font-mono font-bold ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>{demandMultiplier}x</span>
           </div>
           <input 
             type="range" 
@@ -137,10 +137,10 @@ export default function SandboxView({
 
         <div>
           <div className="flex justify-between items-center mb-2">
-            <label className={`text-xs sm:text-sm font-semibold uppercase tracking-wider ${isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'}`}>
+            <label className={`text-sm sm:text-base font-bold uppercase tracking-wider ${isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'}`}>
               {t('sandbox.inventoryOverride')}
             </label>
-            <span className={`text-base font-mono font-bold ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>{stockOverride} units</span>
+            <span className={`text-lg font-mono font-bold ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>{stockOverride} units</span>
           </div>
           <input 
             type="range" 
@@ -156,7 +156,7 @@ export default function SandboxView({
 
       <div className="lg:col-span-2 space-y-5 sm:space-y-6">
         {simLoading ? (
-          <div className={`border rounded-2xl p-10 sm:p-12 text-center text-sm sm:text-base ${
+          <div className={`border rounded-2xl p-10 sm:p-12 text-center text-base sm:text-lg ${
             isDark ? 'bg-[#201510]/80 border-[#36261d] text-[#b8a394]' : 'bg-white/80 border-[#e8ded1] text-[#6b5646]'
           }`}>
             <RefreshCw className={`w-8 h-8 animate-spin mx-auto mb-3 ${isDark ? 'text-amber-400' : 'text-amber-700'}`} />
@@ -164,37 +164,37 @@ export default function SandboxView({
           </div>
         ) : simulationResult ? (
           <>
-            <div className={`border rounded-2xl p-4 sm:p-6 shadow-xl ${
+            <div className={`border rounded-2xl p-5 sm:p-7 shadow-xl ${
               simulationResult.actionSeverity === 'WARNING_MARGIN_BREACH' 
                 ? (isDark ? 'bg-amber-950/40 border-amber-800/80 text-amber-200' : 'bg-amber-50 border-amber-300 text-amber-900') 
                 : simulationResult.actionSeverity === 'CRITICAL_STOCKOUT'
                 ? (isDark ? 'bg-red-950/40 border-red-800/80 text-red-200' : 'bg-red-50 border-red-300 text-red-900')
                 : (isDark ? 'bg-emerald-950/40 border-emerald-800/80 text-emerald-200' : 'bg-emerald-50 border-emerald-300 text-emerald-900')
             }`}>
-              <div className="flex items-center gap-2 font-bold mb-2 text-sm sm:text-base uppercase tracking-wider">
+              <div className="flex items-center gap-2.5 font-bold mb-2.5 text-base sm:text-lg uppercase tracking-wider">
                 {simulationResult.actionSeverity === 'WARNING_MARGIN_BREACH' ? (
-                  <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
+                  <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500 shrink-0" />
                 ) : simulationResult.actionSeverity === 'CRITICAL_STOCKOUT' ? (
-                  <ShieldAlert className="w-5 h-5 text-red-500 shrink-0" />
+                  <ShieldAlert className="w-5 h-5 sm:w-6 sm:h-6 text-red-500 shrink-0" />
                 ) : (
-                  <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-500 shrink-0" />
                 )}
                 <span>{t('sandbox.recommendationPreview')}</span>
               </div>
-              <p className="text-sm sm:text-base font-medium leading-relaxed">{simulationResult.engineRecommendation}</p>
+              <p className="text-base sm:text-lg font-medium leading-relaxed">{simulationResult.engineRecommendation}</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
               <div className={`border rounded-2xl p-4 sm:p-5 shadow-lg ${
                 isDark ? 'bg-[#201510]/80 border-[#36261d]' : 'bg-white/80 border-[#e8ded1]'
               }`}>
-                <div className={`text-xs sm:text-sm font-semibold uppercase tracking-wider mb-1 ${isDark ? 'text-[#b8a394]' : 'text-[#7a6452]'}`}>
+                <div className={`text-sm sm:text-base font-bold uppercase tracking-wider mb-1.5 ${isDark ? 'text-[#b8a394]' : 'text-[#7a6452]'}`}>
                   {t('sandbox.simulatedDemand')}
                 </div>
-                <div className={`text-2xl sm:text-3xl font-mono font-bold ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>
+                <div className={`text-3xl sm:text-4xl font-mono font-extrabold ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>
                   {simulationResult.simulatedDemand} {t('common.units')}
                 </div>
-                <div className={`text-xs sm:text-sm mt-1 ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>
+                <div className={`text-sm sm:text-base mt-1.5 ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>
                   {t('sandbox.scaledMultiplier', { multiplier: demandMultiplier })}
                 </div>
               </div>
@@ -202,21 +202,21 @@ export default function SandboxView({
               <div className={`border rounded-2xl p-4 sm:p-5 shadow-lg ${
                 isDark ? 'bg-[#201510]/80 border-[#36261d]' : 'bg-white/80 border-[#e8ded1]'
               }`}>
-                <div className={`text-xs sm:text-sm font-semibold uppercase tracking-wider mb-1 ${isDark ? 'text-[#b8a394]' : 'text-[#7a6452]'}`}>
+                <div className={`text-sm sm:text-base font-bold uppercase tracking-wider mb-1.5 ${isDark ? 'text-[#b8a394]' : 'text-[#7a6452]'}`}>
                   {t('sandbox.stockoutTimeline')}
                 </div>
-                <div className="text-2xl sm:text-3xl font-mono font-bold text-amber-500">{simulationResult.daysUntilStockout} Days</div>
-                <div className={`text-xs sm:text-sm mt-1 ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>{simulationResult.stockoutRiskScore}</div>
+                <div className="text-3xl sm:text-4xl font-mono font-extrabold text-amber-500">{simulationResult.daysUntilStockout} Days</div>
+                <div className={`text-sm sm:text-base mt-1.5 ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>{simulationResult.stockoutRiskScore}</div>
               </div>
 
               <div className={`border rounded-2xl p-4 sm:p-5 shadow-lg ${
                 isDark ? 'bg-[#201510]/80 border-[#36261d]' : 'bg-white/80 border-[#e8ded1]'
               }`}>
-                <div className={`text-xs sm:text-sm font-semibold uppercase tracking-wider mb-1 ${isDark ? 'text-[#b8a394]' : 'text-[#7a6452]'}`}>
+                <div className={`text-sm sm:text-base font-bold uppercase tracking-wider mb-1.5 ${isDark ? 'text-[#b8a394]' : 'text-[#7a6452]'}`}>
                   {t('sandbox.projectedMargin')}
                 </div>
-                <div className="text-2xl sm:text-3xl font-mono font-bold text-emerald-500">{simulationResult.projectedMarginPercent}%</div>
-                <div className={`text-xs sm:text-sm mt-1 ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>{t('sandbox.priceMatchTarget')}: ${simulationResult.simulatedOurPrice}</div>
+                <div className="text-3xl sm:text-4xl font-mono font-extrabold text-emerald-500">{simulationResult.projectedMarginPercent}%</div>
+                <div className={`text-sm sm:text-base mt-1.5 ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>{t('sandbox.priceMatchTarget')}: ${simulationResult.simulatedOurPrice}</div>
               </div>
             </div>
           </>

@@ -59,7 +59,7 @@ export default function LanguageSwitcher({ theme }) {
         onClick={() => setLocale('en')}
         aria-pressed={locale === 'en'}
         aria-label={`${t('common.english')} (EN)`}
-        className={`flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+        className={`flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-bold transition cursor-pointer ${
           locale === 'en'
             ? isDark
               ? 'bg-[#d97706] text-white shadow-sm'
@@ -69,7 +69,7 @@ export default function LanguageSwitcher({ theme }) {
               : 'text-[#6b5646] hover:text-[#241a14] hover:bg-black/[0.03]'
         }`}
       >
-        <span className="flex items-center justify-center shrink-0 w-4 h-3 rounded-[2px] overflow-hidden border border-black/20 dark:border-white/20 shadow-xs">
+        <span className="flex items-center justify-center shrink-0 w-[18px] h-[13px] rounded-[2px] overflow-hidden border border-black/20 dark:border-white/20 shadow-xs">
           <EnglishLogo className="w-full h-full" />
         </span>
         <span>EN</span>
@@ -80,7 +80,7 @@ export default function LanguageSwitcher({ theme }) {
         onClick={() => setLocale('id')}
         aria-pressed={locale === 'id'}
         aria-label={`${t('common.indonesian')} (ID)`}
-        className={`flex items-center gap-1.5 h-8 px-2.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+        className={`flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-bold transition cursor-pointer ${
           locale === 'id'
             ? isDark
               ? 'bg-[#d97706] text-white shadow-sm'
@@ -90,7 +90,7 @@ export default function LanguageSwitcher({ theme }) {
               : 'text-[#6b5646] hover:text-[#241a14] hover:bg-black/[0.03]'
         }`}
       >
-        <span className="flex items-center justify-center shrink-0 w-4 h-3 rounded-[2px] overflow-hidden border border-black/20 dark:border-white/20 shadow-xs">
+        <span className="flex items-center justify-center shrink-0 w-[18px] h-[13px] rounded-[2px] overflow-hidden border border-black/20 dark:border-white/20 shadow-xs">
           <IndonesianLogo className="w-full h-full" />
         </span>
         <span>ID</span>

@@ -18,9 +18,9 @@ export default function DatabaseInspectorModal({ isModalOpen, setIsModalOpen, db
           : 'bg-white border-[#e5d8cc] text-[#3d2c22] scrollbar-thumb-[#d1c2b4] scrollbar-track-[#f3eee8]'
       }`}>
         <div className={`flex justify-between items-center p-4 sm:p-6 border-b ${isDark ? 'border-[#3d2a20]' : 'border-[#e5d8cc]'}`}>
-          <div className="flex items-center gap-2">
-            <Database className={`w-5 h-5 ${isDark ? 'text-amber-400' : 'text-amber-700'}`} />
-            <h2 className="text-base sm:text-xl font-bold">{t('inspector.title')}</h2>
+          <div className="flex items-center gap-2.5">
+            <Database className={`w-5 h-5 sm:w-6 sm:h-6 ${isDark ? 'text-amber-400' : 'text-amber-700'}`} />
+            <h2 className="text-lg sm:text-2xl font-bold">{t('inspector.title')}</h2>
           </div>
           <button 
             onClick={() => setIsModalOpen(false)}
@@ -37,7 +37,7 @@ export default function DatabaseInspectorModal({ isModalOpen, setIsModalOpen, db
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`pb-3 text-sm sm:text-base font-semibold capitalize border-b-2 transition cursor-pointer whitespace-nowrap min-h-[40px] px-2 ${
+              className={`pb-3 text-sm sm:text-base font-bold capitalize border-b-2 transition cursor-pointer whitespace-nowrap min-h-[40px] px-2.5 ${
                 activeTab === tab 
                   ? (isDark ? 'border-amber-500 text-amber-400' : 'border-amber-700 text-amber-800') 
                   : (isDark ? 'border-transparent text-[#b8a394] hover:text-[#fff8f0]' : 'border-transparent text-[#7a6452] hover:text-[#241a14]')
@@ -48,13 +48,13 @@ export default function DatabaseInspectorModal({ isModalOpen, setIsModalOpen, db
           ))}
         </div>
 
-        <div className="p-4 sm:p-6 overflow-y-auto flex-1 font-mono text-xs sm:text-sm">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-1 font-mono text-sm sm:text-base">
           <div className="overflow-x-auto">
-            <table className="w-full text-left min-w-[500px]">
-              <thead className={`border-b uppercase text-xs ${isDark ? 'border-[#3d2a20] text-[#b8a394]' : 'border-[#e5d8cc] text-[#7a6452]'}`}>
+            <table className="w-full text-left min-w-[550px]">
+              <thead className={`border-b uppercase text-xs sm:text-sm font-bold tracking-wider ${isDark ? 'border-[#3d2a20] text-[#b8a394]' : 'border-[#e5d8cc] text-[#7a6452]'}`}>
                 <tr>
                   {Object.keys(dbData[activeTab]?.[0] || {}).map(col => (
-                    <th key={col} className="pb-3 pr-4">{col}</th>
+                    <th key={col} className="pb-3.5 pr-4 font-bold">{col}</th>
                   ))}
                 </tr>
               </thead>
