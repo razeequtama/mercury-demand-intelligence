@@ -3,6 +3,7 @@
 import { useRef, useEffect } from 'react';
 import { Sliders, RefreshCw, AlertCircle, ShieldAlert, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '../../i18n/LanguageProvider';
+import { formatRecommendation, formatStockoutRiskScore } from '../../i18n/formatters';
 import MercuryRockSlider from './MercuryRockSlider';
 
 export default function SandboxView({
@@ -21,7 +22,7 @@ export default function SandboxView({
   theme
 }) {
   const isDark = theme === 'dark';
-  const { t } = useLanguage();
+  const { locale, t } = useLanguage();
   const isMounted = useRef(false);
   const runSimulationRef = useRef(runSimulation);
   useEffect(() => {
@@ -43,6 +44,14 @@ export default function SandboxView({
 
     return () => clearTimeout(debounceTimer);
   }, [selectedProductId, simCompetitorPrice, demandMultiplier, stockOverride]);
+
+  const currentProduct = intelligence.find(item => item.id === selectedProductId);
+  const basePrice = currentProduct ? parseFloat(currentProduct.currentPrice) : 50;
+  const minCompPrice = Math.max(1, Math.round(basePrice * 0.1));
+  const maxCompPrice = Math.max(100, Math.ceil((basePrice * 2.5) / 10) * 10);
+
+  const baseStock = currentProduct ? parseInt(currentProduct.currentInventory, 10) : 100;
+  const maxStock = Math.max(500, Math.ceil(Math.max(baseStock * 2.5, Number(stockOverride) || 0) / 50) * 50);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
@@ -97,16 +106,16 @@ export default function SandboxView({
           label={t('sandbox.competitorPrice')}
           subLabel={`(${t('sandbox.ourPrice')}: $${
             simulationResult?.baseOurPrice || 
-            intelligence.find(item => item.id === selectedProductId)?.currentPrice || 
+            currentProduct?.currentPrice || 
             '—'
           })`}
           value={simCompetitorPrice}
           displayValue={`$${Number(simCompetitorPrice).toFixed(2)}`}
-          min={10}
-          max={250}
+          min={minCompPrice}
+          max={maxCompPrice}
           step={1}
-          minLabel="$10"
-          maxLabel="$250"
+          minLabel={`$${minCompPrice}`}
+          maxLabel={`$${maxCompPrice}`}
           onChange={(e) => setSimCompetitorPrice(e.target.value)}
           isDark={isDark}
         />
@@ -127,12 +136,12 @@ export default function SandboxView({
         <MercuryRockSlider
           label={t('sandbox.inventoryOverride')}
           value={stockOverride}
-          displayValue={`${stockOverride} units`}
+          displayValue={`${stockOverride} ${t('common.units')}`}
           min={0}
-          max={500}
+          max={maxStock}
           step={5}
           minLabel="0"
-          maxLabel="500 units"
+          maxLabel={`${maxStock} ${t('common.units')}`}
           onChange={(e) => setStockOverride(e.target.value)}
           isDark={isDark}
         />
@@ -165,7 +174,7 @@ export default function SandboxView({
                 )}
                 <span>{t('sandbox.recommendationPreview')}</span>
               </div>
-              <p className="text-base sm:text-lg font-medium leading-relaxed">{simulationResult.engineRecommendation}</p>
+              <p className="text-base sm:text-lg font-medium leading-relaxed">{formatRecommendation(simulationResult.engineRecommendation, locale)}</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
@@ -189,8 +198,8 @@ export default function SandboxView({
                 <div className={`text-sm sm:text-base font-bold uppercase tracking-wider mb-1.5 ${isDark ? 'text-[#b8a394]' : 'text-[#7a6452]'}`}>
                   {t('sandbox.stockoutTimeline')}
                 </div>
-                <div className="text-3xl sm:text-4xl font-mono font-extrabold text-amber-500">{simulationResult.daysUntilStockout} Days</div>
-                <div className={`text-sm sm:text-base mt-1.5 ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>{simulationResult.stockoutRiskScore}</div>
+                <div className="text-3xl sm:text-4xl font-mono font-extrabold text-amber-500">{simulationResult.daysUntilStockout} {t('common.days')}</div>
+                <div className={`text-sm sm:text-base mt-1.5 ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>{formatStockoutRiskScore(simulationResult.stockoutRiskScore, locale)}</div>
               </div>
 
               <div className={`border rounded-2xl p-4 sm:p-5 shadow-lg ${

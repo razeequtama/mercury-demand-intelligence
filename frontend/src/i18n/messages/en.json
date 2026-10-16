@@ -6,7 +6,8 @@
     "close": "Close",
     "english": "English",
     "indonesian": "Indonesian",
-    "language": "Language"
+    "language": "Language",
+    "days": "Days"
   },
   "header": {
     "brand": "MERCURY",
@@ -59,7 +60,8 @@
     "stable": "Stock Stable",
     "chartTitle": "7-Day Demand vs Inventory",
     "currentStock": "Current Stock",
-    "sevenDayDemand": "7-Day Demand"
+    "sevenDayDemand": "7-Day Demand",
+    "inStock": "in stock"
   },
   "sandbox": {
     "scenarioLevers": "Scenario Controls",

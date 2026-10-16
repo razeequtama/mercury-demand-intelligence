@@ -19,7 +19,8 @@ import {
   formatAuditDescription,
   formatAuditStatus,
   formatRulesMessage,
-  formatRecommendation
+  formatRecommendation,
+  formatOrderFeedback
 } from '../../i18n/formatters';
 
 export default function DashboardView({ 
@@ -76,12 +77,12 @@ export default function DashboardView({
         productId: parseInt(prodId, 10),
         quantity: parseInt(orderQuantity, 10)
       });
-      setOrderFeedback({ type: 'success', text: res.data.message || t('dashboard.orderSuccess') });
+      setOrderFeedback({ type: 'success', text: formatOrderFeedback(res.data.message, locale) || t('dashboard.orderSuccess') });
       if (fetchData) await fetchData();
       setTimeout(() => setOrderFeedback(null), 4000);
     } catch (err) {
       console.error('Failed to simulate order:', err);
-      setOrderFeedback({ type: 'error', text: err.response?.data?.error || 'Simulation failed.' });
+      setOrderFeedback({ type: 'error', text: formatOrderFeedback(err.response?.data?.error, locale) || 'Simulation failed.' });
       setTimeout(() => setOrderFeedback(null), 4000);
     } finally {
       setOrderSubmitting(false);
@@ -252,7 +253,7 @@ export default function DashboardView({
                 >
                   {intelligence.map(item => (
                     <option key={item.id} value={item.id}>
-                      {item.name} ({item.sku}) - {item.currentInventory} in stock
+                      {item.name} ({item.sku}) - {item.currentInventory} {t('dashboard.inStock')}
                     </option>
                   ))}
                 </select>

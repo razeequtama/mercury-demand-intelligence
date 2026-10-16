@@ -6,7 +6,8 @@
     "close": "Tutup",
     "english": "Bahasa Inggris",
     "indonesian": "Bahasa Indonesia",
-    "language": "Bahasa"
+    "language": "Bahasa",
+    "days": "Hari"
   },
   "header": {
     "brand": "MERCURY",
@@ -59,7 +60,8 @@
     "stable": "Stok Stabil",
     "chartTitle": "Permintaan 7 Hari vs Persediaan",
     "currentStock": "Stok Saat Ini",
-    "sevenDayDemand": "Permintaan 7 Hari"
+    "sevenDayDemand": "Permintaan 7 Hari",
+    "inStock": "dalam stok"
   },
   "sandbox": {
     "scenarioLevers": "Kontrol Skenario",

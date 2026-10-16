@@ -149,34 +149,79 @@ export function formatRulesMessage(message, locale) {
   return message;
 }
 
+export function formatStockoutRiskScore(score, locale) {
+  if (!score || locale !== 'id') {
+    return score;
+  }
+
+  if (/Low Risk/i.test(score)) {
+    return 'Risiko Rendah';
+  }
+  if (/Moderate Risk/i.test(score)) {
+    return score.replace(/Moderate Risk/i, 'Risiko Sedang');
+  }
+  if (/High Stockout Risk/i.test(score)) {
+    return score.replace(/High Stockout Risk/i, 'Risiko Kehabisan Stok Tinggi');
+  }
+  if (/Critical Stockout/i.test(score)) {
+    return score.replace(/Critical Stockout/i, 'Kehabisan Stok Kritis');
+  }
+
+  return score;
+}
+
+export function formatOrderFeedback(feedbackText, locale) {
+  if (!feedbackText || locale !== 'id') {
+    return feedbackText;
+  }
+
+  const match = feedbackText.match(/Successfully ingested order event of (\d+) units\.\s*ML forecasting pipeline adjusted\.?/i);
+  if (match) {
+    return `Berhasil memasukkan pesanan sebanyak ${match[1]} unit. Pipeline peramalan ML telah disesuaikan.`;
+  }
+
+  if (/Order simulation failed/i.test(feedbackText)) {
+    return 'Simulasi pesanan gagal.';
+  }
+
+  return feedbackText;
+}
+
 export function formatRecommendation(recommendation, locale) {
   if (!recommendation || locale !== 'id') {
     return recommendation;
   }
 
-  const reorderMatch = recommendation.match(/ML Recommended reorder:\s*(\d+)\s*units?/i);
+  let text = recommendation;
+
+  // 1. Reorder recommendation
+  const reorderMatch = text.match(/ML Recommended reorder:\s*(\d+)\s*units?/i);
   if (reorderMatch) {
     return `Pemesanan ulang rekomendasi ML: ${reorderMatch[1]} unit`;
   }
 
-  if (/Maintain current pricing structure\. Market position stable\.?/i.test(recommendation)) {
-    return 'Pertahankan struktur harga saat ini. Posisi pasar stabil.';
-  }
-
-  const autoMatch = recommendation.match(
-    /AUTONOMOUS MATCH — Competitor undercuts by \$([0-9.,]+)\. Safe margin preserved \(([0-9.,]+%)\)\. Price-match rule execution authorized\.?/i
+  // 2. Base recommendation components (allows compound sentences)
+  text = text.replace(
+    /AUTONOMOUS MATCH — Competitor undercuts by \$([0-9.,]+)\. Safe margin preserved \(([0-9.,]+%)\)\. Price-match rule execution authorized\.?/gi,
+    'PENCOCOKAN OTOMATIS — Pesaing memotong harga sebesar $$1. Margin aman terjaga ($2). Eksekusi aturan pencocokan harga diizinkan.'
   );
-  if (autoMatch) {
-    return `PENCOCOKAN OTOMATIS — Pesaing memotong harga sebesar $${autoMatch[1]}. Margin aman terjaga (${autoMatch[2]}). Eksekusi aturan pencocokan harga diizinkan.`;
-  }
 
-  const exceedMatch = recommendation.match(
-    /EXCEED PRICE MATCH — Competitor undercut \(\$([0-9.,]+)\) drives margin to ([0-9.,]+%) \(below 15% safety floor\)\. Price held; demand drops due to substitution\. Recommend targeted bundling\.?/i
+  text = text.replace(
+    /EXCEED PRICE MATCH — Competitor undercut \(\$([0-9.,]+)\) drives margin to ([0-9.,]+%) \(below 15% safety floor\)\. Price held; demand drops due to substitution\. Recommend targeted bundling\.?/gi,
+    'MELEBIHI PENCOCOKAN HARGA — Pemotongan harga pesaing ($$1) menurunkan margin ke $2 (di bawah batas aman 15%). Harga dipertahankan; permintaan menurun karena substitusi. Rekomendasi paket bundling.'
   );
-  if (exceedMatch) {
-    return `MELEBIHI PENCOCOKAN HARGA — Pemotongan harga pesaing ($${exceedMatch[1]}) menurunkan margin ke ${exceedMatch[2]} (di bawah batas aman 15%). Harga dipertahankan; permintaan menurun karena substitusi. Rekomendasi paket bundling.`;
-  }
 
-  return recommendation;
+  text = text.replace(
+    /Maintain current pricing structure\. Market position stable\.?/gi,
+    'Pertahankan struktur harga saat ini. Posisi pasar stabil.'
+  );
+
+  // 3. Emergency stock depletion appended clause
+  text = text.replace(
+    /EMERGENCY:\s*Stock depletion projected in\s*([0-9.]+)\s*days\.\s*Automated warehouse reorder triggered\.?/gi,
+    'DARURAT: Penipisan stok diproyeksikan dalam $1 hari. Pemesanan ulang gudang otomatis dipicu.'
+  );
+
+  return text;
 }
 
