@@ -54,13 +54,21 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      target: dev
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:5000/api}
     container_name: mercury-frontend
     restart: unless-stopped
     environment:
       PORT: 3000
+      HOSTNAME: "0.0.0.0"
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:5000/api}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
     ports:
       - "3000:3000"
     depends_on:

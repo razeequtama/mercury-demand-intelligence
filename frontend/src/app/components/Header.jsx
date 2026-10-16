@@ -35,45 +35,38 @@ export default function Header({
     : 'text-[#6b5646]';
 
   return (
-    <header
-      className={`flex flex-col lg:flex-row lg:items-start lg:justify-between border-b pb-6 mb-6 sm:mb-8 gap-7 ${
-        isDark ? 'border-[#36261d]' : 'border-[#e8ded1]'
-      }`}
-    >
+    <header className="mb-6 sm:mb-8">
+      {/* Top Navbar: Brand & Subtitle on left, Navigation Tabs & Secondary Actions on right (Hot Reload Verified) */}
+      <div
+        className={`flex flex-col lg:flex-row lg:items-start lg:justify-between border-b pb-6 gap-7 ${
+          isDark ? 'border-[#36261d]' : 'border-[#e8ded1]'
+        }`}
+      >
+        <div className="shrink-0 max-w-2xl">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <img
+              src="/mercury.svg"
+              alt="Mercury Logo"
+              className="w-9 h-9 sm:w-11 sm:h-11 shrink-0"
+            />
 
-      <div className="shrink-0">
-        <div className="flex items-center gap-2.5 sm:gap-3">
-          <img
-            src="/mercury.svg"
-            alt="Mercury Logo"
-            className="w-9 h-9 sm:w-11 sm:h-11 shrink-0"
-          />
+            <span
+              className={`font-rocker text-2xl sm:text-3xl font-bold tracking-wider leading-none ${
+                isDark ? 'text-amber-400' : 'text-amber-700'
+              }`}
+            >
+              MERCURY
+            </span>
+          </div>
 
-          <span
-            className={`font-rocker text-2xl sm:text-3xl font-bold tracking-wider leading-none ${
-              isDark ? 'text-amber-400' : 'text-amber-700'
+          <p
+            className={`text-base sm:text-lg mt-2 ${
+              isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'
             }`}
           >
-            MERCURY
-          </span>
+            {t('header.subtitle')}
+          </p>
         </div>
-
-        <h1
-          className={`text-2xl sm:text-3xl font-extrabold tracking-tight mt-1.5 ${
-            isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'
-          }`}
-        >
-          {t('header.title')}
-        </h1>
-
-        <p
-          className={`text-base sm:text-lg mt-1.5 max-w-2xl ${
-            isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'
-          }`}
-        >
-          {t('header.subtitle')}
-        </p>
-      </div>
 
       <div className="flex flex-col items-stretch lg:items-end gap-2.5 w-full lg:w-auto lg:ml-auto">
         {/* Navigation View Switcher (Core Mode Tabs) */}
@@ -229,6 +222,18 @@ export default function Header({
             </button>
           </div>
         </div>
+      </div>
+    </div>
+
+      {/* Page Title: Commerce Command Center */}
+      <div className="pt-6">
+        <h1
+          className={`text-2xl sm:text-3xl font-extrabold tracking-tight ${
+            isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'
+          }`}
+        >
+          {t('header.title')}
+        </h1>
       </div>
     </header>
   );

@@ -37,3 +37,118 @@ body {
 .font-rocker {
   font-family: 'New Rocker', cursive, sans-serif;
 }
+
+/* ==========================================================================
+   Mercury Planetary Rock Slider Styles
+   ========================================================================== */
+
+.mercury-rock-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 14px;
+  border-radius: 9999px;
+  outline: none;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.75), 0 1px 1px rgba(255, 255, 255, 0.05);
+}
+
+.mercury-rock-slider:focus-visible {
+  outline: 2px solid #f59e0b;
+  outline-offset: 3px;
+}
+
+/* Chrome, Safari, Edge, Opera WebKit Thumb */
+.mercury-rock-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  margin-top: -7px; /* Center thumb over 14px track: (14 - 28) / 2 = -7px */
+  cursor: grab;
+  border: 1.5px solid rgba(254, 240, 138, 0.45);
+  background: 
+    /* Planetary Crater 1 (Upper Right) */
+    radial-gradient(circle at 68% 28%, rgba(55, 20, 4, 0.85) 0%, rgba(55, 20, 4, 0.85) 12%, rgba(245, 158, 11, 0.5) 15%, transparent 20%),
+    /* Planetary Crater 2 (Lower Center) */
+    radial-gradient(circle at 44% 68%, rgba(55, 20, 4, 0.9) 0%, rgba(55, 20, 4, 0.9) 16%, rgba(245, 158, 11, 0.6) 21%, transparent 26%),
+    /* Planetary Crater 3 (Lower Left Tiny) */
+    radial-gradient(circle at 26% 58%, rgba(55, 20, 4, 0.75) 0%, rgba(55, 20, 4, 0.75) 8%, rgba(245, 158, 11, 0.4) 12%, transparent 16%),
+    /* Main Sunlit Mercury Sphere Illumination */
+    radial-gradient(circle at 30% 28%, #fef08a 0%, #f59e0b 24%, #b45309 52%, #78350f 78%, #381404 100%);
+  box-shadow: 
+    0 0 12px rgba(245, 158, 11, 0.55),
+    0 4px 8px rgba(0, 0, 0, 0.75),
+    inset 0 1px 2px rgba(255, 255, 255, 0.6),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.8);
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+}
+
+.mercury-rock-slider:hover::-webkit-slider-thumb {
+  transform: scale(1.14);
+  box-shadow: 
+    0 0 18px rgba(251, 191, 36, 0.8),
+    0 5px 12px rgba(0, 0, 0, 0.85),
+    inset 0 1.5px 3px rgba(255, 255, 255, 0.75),
+    inset 0 -2px 5px rgba(0, 0, 0, 0.85);
+}
+
+.mercury-rock-slider:active::-webkit-slider-thumb {
+  cursor: grabbing;
+  transform: scale(0.96);
+  box-shadow: 
+    0 0 20px rgba(245, 158, 11, 0.95),
+    0 2px 4px rgba(0, 0, 0, 0.9),
+    inset 0 1px 2px rgba(255, 255, 255, 0.7);
+}
+
+/* Firefox Thumb */
+.mercury-rock-slider::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: grab;
+  border: 1.5px solid rgba(254, 240, 138, 0.45);
+  background: 
+    radial-gradient(circle at 68% 28%, rgba(55, 20, 4, 0.85) 0%, rgba(55, 20, 4, 0.85) 12%, rgba(245, 158, 11, 0.5) 15%, transparent 20%),
+    radial-gradient(circle at 44% 68%, rgba(55, 20, 4, 0.9) 0%, rgba(55, 20, 4, 0.9) 16%, rgba(245, 158, 11, 0.6) 21%, transparent 26%),
+    radial-gradient(circle at 26% 58%, rgba(55, 20, 4, 0.75) 0%, rgba(55, 20, 4, 0.75) 8%, rgba(245, 158, 11, 0.4) 12%, transparent 16%),
+    radial-gradient(circle at 30% 28%, #fef08a 0%, #f59e0b 24%, #b45309 52%, #78350f 78%, #381404 100%);
+  box-shadow: 
+    0 0 12px rgba(245, 158, 11, 0.55),
+    0 4px 8px rgba(0, 0, 0, 0.75),
+    inset 0 1px 2px rgba(255, 255, 255, 0.6),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.8);
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+}
+
+.mercury-rock-slider:hover::-moz-range-thumb {
+  transform: scale(1.14);
+  box-shadow: 
+    0 0 18px rgba(251, 191, 36, 0.8),
+    0 5px 12px rgba(0, 0, 0, 0.85),
+    inset 0 1.5px 3px rgba(255, 255, 255, 0.75),
+    inset 0 -2px 5px rgba(0, 0, 0, 0.85);
+}
+
+.mercury-rock-slider:active::-moz-range-thumb {
+  cursor: grabbing;
+  transform: scale(0.96);
+  box-shadow: 
+    0 0 20px rgba(245, 158, 11, 0.95),
+    0 2px 4px rgba(0, 0, 0, 0.9),
+    inset 0 1px 2px rgba(255, 255, 255, 0.7);
+}
+
+.mercury-rock-slider::-webkit-slider-runnable-track {
+  background: transparent;
+  height: 100%;
+}
+
+.mercury-rock-slider::-moz-range-track {
+  background: transparent;
+  height: 100%;
+}

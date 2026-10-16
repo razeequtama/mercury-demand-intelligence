@@ -3,6 +3,7 @@
 import { useRef, useEffect } from 'react';
 import { Sliders, RefreshCw, AlertCircle, ShieldAlert, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '../../i18n/LanguageProvider';
+import MercuryRockSlider from './MercuryRockSlider';
 
 export default function SandboxView({
   intelligence,
@@ -92,66 +93,49 @@ export default function SandboxView({
           </select>
         </div>
 
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <label className={`text-sm sm:text-base font-bold uppercase tracking-wider ${isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'}`}>
-              {t('sandbox.competitorPrice')}
-              <span className={`font-normal ml-1 sm:ml-2 block sm:inline ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>
-                ({t('sandbox.ourPrice')}: ${
-                  simulationResult?.baseOurPrice || 
-                  intelligence.find(item => item.id === selectedProductId)?.currentPrice || 
-                  '—'
-                })
-              </span>
-            </label>
-            <span className={`text-lg font-mono font-bold ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>${simCompetitorPrice}</span>
-          </div>
-          <input 
-            type="range" 
-            min="10" 
-            max="250" 
-            step="1"
-            value={simCompetitorPrice}
-            onChange={(e) => setSimCompetitorPrice(e.target.value)}
-            className={`w-full cursor-pointer py-3 h-3 ${isDark ? 'accent-amber-500 bg-[#18110e]' : 'accent-amber-700 bg-[#faf6f0]'}`}
-          />
-        </div>
+        <MercuryRockSlider
+          label={t('sandbox.competitorPrice')}
+          subLabel={`(${t('sandbox.ourPrice')}: $${
+            simulationResult?.baseOurPrice || 
+            intelligence.find(item => item.id === selectedProductId)?.currentPrice || 
+            '—'
+          })`}
+          value={simCompetitorPrice}
+          displayValue={`$${Number(simCompetitorPrice).toFixed(2)}`}
+          min={10}
+          max={250}
+          step={1}
+          minLabel="$10"
+          maxLabel="$250"
+          onChange={(e) => setSimCompetitorPrice(e.target.value)}
+          isDark={isDark}
+        />
 
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <label className={`text-sm sm:text-base font-bold uppercase tracking-wider ${isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'}`}>
-              {t('sandbox.demandMultiplier')}
-            </label>
-            <span className={`text-lg font-mono font-bold ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>{demandMultiplier}x</span>
-          </div>
-          <input 
-            type="range" 
-            min="0.5" 
-            max="3.0" 
-            step="0.1"
-            value={demandMultiplier}
-            onChange={(e) => setDemandMultiplier(e.target.value)}
-            className={`w-full cursor-pointer py-3 h-3 ${isDark ? 'accent-amber-500 bg-[#18110e]' : 'accent-amber-700 bg-[#faf6f0]'}`}
-          />
-        </div>
+        <MercuryRockSlider
+          label={t('sandbox.demandMultiplier')}
+          value={demandMultiplier}
+          displayValue={`${Number(demandMultiplier).toFixed(1)}x`}
+          min={0.5}
+          max={3.0}
+          step={0.1}
+          minLabel="0.5x"
+          maxLabel="3.0x"
+          onChange={(e) => setDemandMultiplier(e.target.value)}
+          isDark={isDark}
+        />
 
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <label className={`text-sm sm:text-base font-bold uppercase tracking-wider ${isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'}`}>
-              {t('sandbox.inventoryOverride')}
-            </label>
-            <span className={`text-lg font-mono font-bold ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>{stockOverride} units</span>
-          </div>
-          <input 
-            type="range" 
-            min="0" 
-            max="500" 
-            step="5"
-            value={stockOverride}
-            onChange={(e) => setStockOverride(e.target.value)}
-            className={`w-full cursor-pointer py-3 h-3 ${isDark ? 'accent-amber-500 bg-[#18110e]' : 'accent-amber-700 bg-[#faf6f0]'}`}
-          />
-        </div>
+        <MercuryRockSlider
+          label={t('sandbox.inventoryOverride')}
+          value={stockOverride}
+          displayValue={`${stockOverride} units`}
+          min={0}
+          max={500}
+          step={5}
+          minLabel="0"
+          maxLabel="500 units"
+          onChange={(e) => setStockOverride(e.target.value)}
+          isDark={isDark}
+        />
       </div>
 
       <div className="lg:col-span-2 space-y-5 sm:space-y-6">
