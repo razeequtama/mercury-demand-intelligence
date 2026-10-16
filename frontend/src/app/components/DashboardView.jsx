@@ -404,35 +404,35 @@ export default function DashboardView({
             {t('dashboard.inventoryForecasts')}
           </h2>
           <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
-            <table className="w-full text-left text-sm sm:text-base min-w-[620px]">
+            <table className="w-full text-left text-sm sm:text-base min-w-[700px]">
               <thead className={`border-b uppercase text-xs sm:text-sm font-bold tracking-wider ${isDark ? 'border-[#36261d] text-[#b8a394]' : 'border-[#e8ded1] text-[#7a6452]'}`}>
                 <tr>
-                  <th className="pb-3.5 font-bold">{t('common.product')}</th>
-                  <th className="pb-3.5 font-bold">{t('common.stock')}</th>
-                  <th className="pb-3.5 font-bold">{t('dashboard.forecast')}</th>
-                  <th className="pb-3.5 font-bold">{t('dashboard.stockoutRisk')}</th>
-                  <th className="pb-3.5 font-bold">{t('dashboard.action')}</th>
+                  <th className="pb-3.5 pr-4 sm:pr-6 font-bold whitespace-nowrap">{t('common.product')}</th>
+                  <th className="pb-3.5 px-4 sm:px-6 font-bold whitespace-nowrap">{t('common.stock')}</th>
+                  <th className="pb-3.5 px-4 sm:px-6 font-bold whitespace-nowrap">{t('dashboard.forecast')}</th>
+                  <th className="pb-3.5 px-4 sm:px-6 font-bold whitespace-nowrap">{t('dashboard.stockoutRisk')}</th>
+                  <th className="pb-3.5 pl-4 sm:pl-6 font-bold whitespace-nowrap">{t('dashboard.action')}</th>
                 </tr>
               </thead>
               <tbody className={`divide-y ${isDark ? 'divide-[#36261d]/60' : 'divide-[#e8ded1]/60'}`}>
                 {intelligence.map(item => (
                   <tr key={item.id} className={`transition ${isDark ? 'hover:bg-[#2b1e17]/40' : 'hover:bg-[#fcf8f3]'}`}>
-                    <td className="py-4 pr-3">
+                    <td className="py-4 pr-4 sm:pr-6">
                       <div className={`font-bold text-base sm:text-lg ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>{item.name}</div>
                       <div className={`text-sm mt-0.5 ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>{item.sku} • {item.warehouse}</div>
                     </td>
-                    <td className="py-4 font-mono font-bold text-base">{item.currentInventory}</td>
-                    <td className={`py-4 font-mono font-bold text-base ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>{item.forecast7Day} {t('common.units')}</td>
-                    <td className="py-4">
+                    <td className="py-4 px-4 sm:px-6 font-mono font-bold text-base whitespace-nowrap">{item.currentInventory}</td>
+                    <td className={`py-4 px-4 sm:px-6 font-mono font-bold text-base whitespace-nowrap ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>{item.forecast7Day} {t('common.units')}</td>
+                    <td className="py-4 px-4 sm:px-6 whitespace-nowrap">
                       <span className={`px-3 py-1 rounded-full text-sm font-bold border inline-block ${
                         parseInt(item.stockoutProbability) > 70 
                           ? (isDark ? 'bg-red-950 text-red-300 border-red-800' : 'bg-red-100 text-red-800 border-red-300') 
-                          : (isDark ? 'bg-emerald-950 text-emerald-300 border-emerald-800' : 'bg-emerald-100 text-emerald-800 border-emerald-300')
+                          : (isDark ? 'bg-amber-950/80 text-amber-400 border-amber-700' : 'bg-amber-100 text-amber-800 border-amber-300')
                       }`}>
                         {item.stockoutProbability}
                       </span>
                     </td>
-                    <td className="py-4 text-sm sm:text-base">
+                    <td className="py-4 pl-4 sm:pl-6 text-sm sm:text-base">
                       {item.recommendation ? (
                         <span className={`font-semibold ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>{formatRecommendation(item.recommendation, locale)}</span>
                       ) : (
