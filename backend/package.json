@@ -7,7 +7,8 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "db:init": "node src/initDb.js",
-    "db:seed": "node src/seed.js",
+    "db:seed": "node src/initDb.js",
+    "db:reset": "node src/seed.js",
     "test": "node --test src/tests/transaction.test.js src/tests/sessionIsolation.test.js src/tests/rateLimiter.test.js src/tests/errorHandling.test.js src/tests/inputValidation.test.js src/tests/decisionEngineConcurrency.test.js src/tests/cors.test.js src/tests/securityHeaders.test.js src/tests/leastPrivilegeRoles.test.js"
   },
   "repository": {

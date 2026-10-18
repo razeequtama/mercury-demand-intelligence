@@ -130,7 +130,7 @@ Foreign keys connect inventory, orders, competitor events, and action records to
 
 ### What the seed creates
 
-From the `backend` directory, `npm run db:seed` runs [`backend/src/seed.js`](./backend/src/seed.js). It initializes an immediately explorable demo dataset:
+Running `npm run db:init` or `npm run db:seed` from either the root or `backend` directory invokes [`backend/src/initDb.js`](./backend/src/initDb.js). It non-destructively provisions required tables, indexes, and session-sandboxing columns, then populates an immediately explorable demo dataset if the database is empty:
 
 - **Five synthetic products** across electronics, smart home, accessories, and office categories.
 - **One warehouse inventory row per product**, including a deliberately low-stock SKU and a zero-stock SKU to exercise risk and replenishment paths.
@@ -138,9 +138,9 @@ From the `backend` directory, `npm run db:seed` runs [`backend/src/seed.js`](./b
 - **Two competitor price events** describing undercuts for selected products.
 - **A clean action log table**; qualifying automated actions are logged when the gateway's decision engine runs.
 
-> **Important: seeding is destructive.** The script drops and recreates all five tables (using `CASCADE`) before inserting sample rows. Run it only against a disposable local/demo database whose existing data can be erased. It is not an incremental migration or production-safe reset.
+> **Data safety & resets:** `npm run db:init` and `npm run db:seed` are safe and idempotent; existing records are preserved. To perform a clean hard reset that drops and recreates all tables with the session-sandboxed schema, run `npm run db:reset` (which executes [`backend/src/seed.js`](./backend/src/seed.js)).
 
-`schema.sql` documents the table definitions. The seed script also contains its own drop-and-create statements, so running the seed does not require a separate migration command.
+`schema.sql` documents the table definitions. Both `initDb.js` and `seed.js` contain their own DDL statements, so running initialization does not require a separate migration step.
 
 ---
 
@@ -263,11 +263,11 @@ Install the Node dependencies, create the schema and synthetic sample data, then
 ```bash
 cd backend
 npm install
-npm run db:seed
+npm run db:init
 npm run dev
 ```
 
-The seed operation resets the tables; see [Database schema and demo seeding](#database-schema-and-demo-seeding) before running it against any database with data you need to keep.
+`npm run db:init` (or `npm run db:seed`) non-destructively initializes the schema and baseline data if empty; see [Database schema and demo seeding](#database-schema-and-demo-seeding). To force a full destructive schema wipe and reset, use `npm run db:reset`.
 
 ### 4. Configure and start the Python ML service
 
@@ -331,7 +331,9 @@ Check the gateway and its database connection at `http://localhost:5000/api/heal
 | --- | --- | --- |
 | `backend` | `npm run dev` | Start Express with nodemon. |
 | `backend` | `npm start` | Start Express without nodemon. |
-| `backend` | `npm run db:seed` | Destructively recreate and seed demo tables. |
+| `backend` | `npm run db:init` | Safely initialize schema and seed baseline demo data (idempotent). |
+| `backend` | `npm run db:seed` | Safe alias for `db:init` (non-destructive baseline setup). |
+| `backend` | `npm run db:reset` | Destructively recreate and seed demo tables with session schema. |
 | `backend` | `npm test` | Run the Node transaction tests (requires a reachable configured PostgreSQL database and seeded product data). |
 | `frontend` | `npm run dev` | Start the Next.js development server. |
 | `frontend` | `npm run build` | Build the frontend for production. |
