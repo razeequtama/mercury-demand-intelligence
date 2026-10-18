@@ -6,10 +6,13 @@ import { query, getClient } from './db.js';
 import { runDecisionEngine } from './services/decisionEngine.js';
 import { initDatabase } from './initDb.js';
 import { extractSession, requireSession, ensureSessionInventory } from './middleware/session.js';
+import { globalLimiter, mlInferenceLimiter, mutationLimiter } from './middleware/rateLimiter.js';
+import { intelligenceCache } from './utils/cache.js';
 
 dotenv.config();
 
 const app = express();
+app.use(globalLimiter);
 app.use(express.json());
 app.use(cors());
 app.use(extractSession);
@@ -60,8 +63,18 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-// 1. GET: Intelligence Pipeline (Delegated to Python ML Microservice)
-app.get('/api/intelligence', async (req, res) => {
+// 1. GET: Intelligence Pipeline (Delegated to Python ML Microservice with Caching & Rate Limiting)
+app.get('/api/intelligence', mlInferenceLimiter, async (req, res) => {
+  const cacheKey = `intel_${req.sessionId}`;
+  const cachedData = intelligenceCache.get(cacheKey);
+
+  if (cachedData) {
+    return res.json({
+      ...cachedData,
+      _cached: true
+    });
+  }
+
   try {
     const mlResponse = await axios.get(
       `${ML_ENGINE_URL}/predict-demand`,
@@ -70,6 +83,9 @@ app.get('/api/intelligence', async (req, res) => {
         timeout: 10000
       }
     );
+
+    // Cache the fresh ML inference results for this session
+    intelligenceCache.set(cacheKey, mlResponse.data);
 
     res.json(mlResponse.data);
   } catch (err) {
@@ -186,7 +202,7 @@ app.get('/api/insights', async (req, res) => {
 });
 
 // 3. POST: Explicit Endpoint to Trigger Autonomous Actions Safely (Idempotent per Session)
-app.post('/api/insights/execute-actions', requireSession, async (req, res) => {
+app.post('/api/insights/execute-actions', mutationLimiter, requireSession, async (req, res) => {
   try {
     await ensureSessionInventory(query, req.sessionId);
     const executedCount = await runDecisionEngine(req.sessionId);
@@ -209,8 +225,8 @@ app.post('/api/insights/execute-actions', requireSession, async (req, res) => {
   }
 });
 
-// 4. POST: Live Event Ingestion / Simulator Endpoint with Strict Validation & Session Sandboxing
-app.post('/api/simulate-order', requireSession, async (req, res) => {
+// 4. POST: Live Event Ingestion / Simulator Endpoint with Strict Validation, Rate Limiting & Session Sandboxing
+app.post('/api/simulate-order', mutationLimiter, requireSession, async (req, res) => {
   const sessionId = req.sessionId;
   const { productId, quantity } = req.body;
 
@@ -295,6 +311,9 @@ app.post('/api/simulate-order', requireSession, async (req, res) => {
     );
 
     await client.query('COMMIT');
+
+    // Invalidate cached ML forecast for this session so subsequent read is fresh
+    intelligenceCache.delete(`intel_${sessionId}`);
 
     res.json({
       success: true,
@@ -430,6 +449,8 @@ app.post('/api/session/reset', requireSession, async (req, res) => {
     await query('DELETE FROM orders WHERE session_id = $1', [sessionId]);
     await query('DELETE FROM automated_actions_log WHERE session_id = $1', [sessionId]);
 
+    intelligenceCache.delete(`intel_${sessionId}`);
+
     res.json({
       success: true,
       message: 'Visitor sandbox session successfully reset to baseline.'
@@ -443,8 +464,8 @@ app.post('/api/session/reset', requireSession, async (req, res) => {
   }
 });
 
-// 6. POST: What-If Scenario Sandbox Simulation Engine with Strict Validation
-app.post('/api/sandbox/simulate', async (req, res) => {
+// 6. POST: What-If Scenario Sandbox Simulation Engine with Strict Validation & Rate Limiting
+app.post('/api/sandbox/simulate', mlInferenceLimiter, async (req, res) => {
   const {
     productId,
     simulatedCompetitorPrice,
