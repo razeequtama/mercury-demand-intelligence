@@ -72,3 +72,39 @@ test('Input Validation: /api/simulate-order rejects excessive quantity exceeding
   }
 });
 
+test('Inventory Check: /api/simulate-order rejects order when requested quantity exceeds available stock', async () => {
+  const server = app.listen(0);
+  const port = server.address().port;
+  const testSessionId = '00000000-0000-0000-0000-000000000002';
+
+  try {
+    // Attempt to order 900 units when product 1 has only ~45 units in stock
+    const res = await fetch(`http://127.0.0.1:${port}/api/simulate-order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-session-id': testSessionId
+      },
+      body: JSON.stringify({ productId: 1, quantity: 900 })
+    });
+
+    assert.strictEqual(res.status, 400, 'Expected HTTP 400 for insufficient stock');
+    const body = await res.json();
+    assert.strictEqual(body.success, false);
+    assert.ok(body.error.includes('Insufficient stock available'), `Unexpected error message: ${body.error}`);
+
+    // Verify database state: no order was inserted for this session
+    const { query } = await import('../db.js');
+    const orderCheck = await query(
+      'SELECT id FROM orders WHERE session_id = $1',
+      [testSessionId]
+    );
+    assert.strictEqual(orderCheck.rows.length, 0, 'No order record should be inserted on stockout');
+
+    // Clean up test session records
+    await query('DELETE FROM inventory WHERE session_id = $1', [testSessionId]);
+  } finally {
+    server.close();
+  }
+});
+

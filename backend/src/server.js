@@ -289,6 +289,23 @@ app.post('/api/simulate-order', mutationLimiter, requireSession, async (req, res
       });
     }
 
+    // Lock and verify available inventory stock for this session (prevents inventory depletion below 0 and demand model poisoning)
+    const invRes = await client.query(
+      'SELECT stock_quantity FROM inventory WHERE product_id = $1 AND session_id = $2 FOR UPDATE',
+      [sanitizedProductId, sessionId]
+    );
+
+    const availableStock = invRes.rows.length > 0 ? invRes.rows[0].stock_quantity : 0;
+
+    if (invRes.rows.length === 0 || availableStock < sanitizedQuantity) {
+      await client.query('ROLLBACK');
+
+      return res.status(400).json({
+        success: false,
+        error: `Insufficient stock available. Requested: ${sanitizedQuantity}, Available: ${availableStock}.`
+      });
+    }
+
     const totalAmount = parseFloat((price * sanitizedQuantity).toFixed(2));
 
     if (isNaN(totalAmount) || totalAmount > 99999999.99) {
@@ -314,7 +331,7 @@ app.post('/api/simulate-order', mutationLimiter, requireSession, async (req, res
       `
         UPDATE inventory
         SET
-          stock_quantity = GREATEST(0, stock_quantity - $1),
+          stock_quantity = stock_quantity - $1,
           updated_at = NOW()
         WHERE product_id = $2 AND session_id = $3
       `,

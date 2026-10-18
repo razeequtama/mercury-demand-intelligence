@@ -184,6 +184,15 @@ export function formatOrderFeedback(feedbackText, locale) {
     return 'Simulasi pesanan gagal.';
   }
 
+  const stockMatch = feedbackText.match(/Insufficient stock available\.\s*Requested:\s*(\d+),\s*Available:\s*(\d+)\.?/i);
+  if (stockMatch) {
+    return `Stok tidak mencukupi. Diminta: ${stockMatch[1]}, Tersedia: ${stockMatch[2]}.`;
+  }
+
+  if (/Insufficient stock/i.test(feedbackText)) {
+    return 'Stok tidak mencukupi untuk memenuhi pesanan.';
+  }
+
   return feedbackText;
 }
 
