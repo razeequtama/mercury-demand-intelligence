@@ -106,6 +106,10 @@
     "inventoryDescription": "Sesuaikan tingkat stok untuk melihat perkiraan waktu dan risiko kehabisan stok.",
     "stepInspectorTitle": "4. Periksa Data Database",
     "stepInspectorDescription": "Gunakan Lihat Database untuk menelusuri data produk, persediaan, dan peristiwa pesaing.",
+    "languageSectionTitle": "Pilihan Bahasa",
+    "languageSectionDescription": "Mercury mendukung pelokalan penuh dalam Bahasa Inggris dan Bahasa Indonesia. Pilih bahasa yang Anda inginkan di bawah ini (Anda juga dapat menggantinya kapan saja melalui tombol bendera di navigasi kanan atas):",
+    "englishOption": "English (EN)",
+    "indonesianOption": "Bahasa Indonesia (ID)",
     "getStarted": "Mulai menjelajah",
     "closeGuide": "Tutup panduan"
   },

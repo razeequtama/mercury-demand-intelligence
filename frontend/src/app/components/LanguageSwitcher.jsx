@@ -2,25 +2,25 @@
 
 import { useLanguage } from '../../i18n/LanguageProvider';
 
-function EnglishLogo({ className = 'w-4 h-3' }) {
+export function EnglishLogo({ className = 'w-4 h-3', idPrefix = 'uk' }) {
   return (
     <svg
       viewBox="0 0 60 30"
       className={`${className} shrink-0 rounded-[2px] overflow-hidden`}
       aria-hidden="true"
     >
-      <clipPath id="uk-flag-clip-base">
+      <clipPath id={`${idPrefix}-flag-clip-base`}>
         <path d="M0,0 v30 h60 v-30 z" />
       </clipPath>
-      <clipPath id="uk-flag-clip-diag">
+      <clipPath id={`${idPrefix}-flag-clip-diag`}>
         <path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z" />
       </clipPath>
-      <g clipPath="url(#uk-flag-clip-base)">
+      <g clipPath={`url(#${idPrefix}-flag-clip-base)`}>
         <path d="M0,0 v30 h60 v-30 z" fill="#012169" />
         <path d="M0,0 L60,30 M60,0 L0,30" stroke="#FFFFFF" strokeWidth="6" />
         <path
           d="M0,0 L60,30 M60,0 L0,30"
-          clipPath="url(#uk-flag-clip-diag)"
+          clipPath={`url(#${idPrefix}-flag-clip-diag)`}
           stroke="#C8102E"
           strokeWidth="4"
         />
@@ -31,7 +31,7 @@ function EnglishLogo({ className = 'w-4 h-3' }) {
   );
 }
 
-function IndonesianLogo({ className = 'w-4 h-3' }) {
+export function IndonesianLogo({ className = 'w-4 h-3' }) {
   return (
     <svg
       viewBox="0 0 60 40"

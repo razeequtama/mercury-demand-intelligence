@@ -106,6 +106,10 @@
     "inventoryDescription": "Override stock levels to explore stockout timing and risk.",
     "stepInspectorTitle": "4. Inspect Database Records",
     "stepInspectorDescription": "Use Inspect DB to browse product, inventory, and competitor-event records.",
+    "languageSectionTitle": "Language Preference",
+    "languageSectionDescription": "Mercury supports full dual-language localization in English and Indonesian. Choose your preferred language below (you can also switch anytime using the flag buttons in the top-right header):",
+    "englishOption": "English (EN)",
+    "indonesianOption": "Bahasa Indonesia (ID)",
     "getStarted": "Start exploring",
     "closeGuide": "Close guide"
   },
