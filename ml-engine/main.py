@@ -25,7 +25,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5433/mercury_db")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://mercury_ml:mercury_ml_secret@localhost:5433/mercury_db")
 db_pool = None
 
 def get_db_pool():

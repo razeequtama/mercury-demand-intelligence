@@ -6,7 +6,7 @@ dotenv.config();
 const { Pool } = pkg;
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5433/mercury_db',
+  connectionString: process.env.DATABASE_URL || 'postgresql://mercury_app:mercury_app_secret@localhost:5433/mercury_db',
 });
 
 pool.on('connect', () => {

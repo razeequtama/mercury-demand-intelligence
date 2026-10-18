@@ -126,7 +126,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (selectedProductId && intelligence.length > 0) {
-      const currentProd = intelligence.find(item => item.id === selectedProductId);
+      const currentProd = intelligence.find(item => Number(item.id) === Number(selectedProductId));
       if (currentProd) {
         setSimCompetitorPrice(currentProd.competitorPrice || currentProd.currentPrice * 0.9);
         setStockOverride(currentProd.currentInventory);

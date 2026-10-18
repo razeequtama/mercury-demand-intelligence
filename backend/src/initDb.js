@@ -80,7 +80,32 @@ export const initDatabase = async () => {
       CREATE UNIQUE INDEX IF NOT EXISTS uq_action_log_product_desc_session ON automated_actions_log (product_id, description, session_id);
     `);
 
-    // 2. Check if baseline data already exists
+    // 2. Provision least-privilege roles non-destructively if connecting user has administrative privileges
+    try {
+      await query(`
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'mercury_app') THEN
+                CREATE ROLE mercury_app WITH LOGIN PASSWORD 'mercury_app_secret';
+            END IF;
+            IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'mercury_ml') THEN
+                CREATE ROLE mercury_ml WITH LOGIN PASSWORD 'mercury_ml_secret';
+            END IF;
+        END
+        $$;
+
+        GRANT USAGE ON SCHEMA public TO mercury_app, mercury_ml;
+        GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO mercury_app;
+        GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO mercury_app;
+        GRANT SELECT ON products, inventory, orders, competitor_events TO mercury_ml;
+        REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON ALL TABLES IN SCHEMA public FROM mercury_ml;
+      `);
+      console.log('[Database Init] Least-privilege application roles (mercury_app, mercury_ml) configured.');
+    } catch (roleErr) {
+      console.log('[Database Init] Note: Skipping role creation (requires superuser/createrole privileges).');
+    }
+
+    // 3. Check if baseline data already exists
     const countRes = await query('SELECT COUNT(*)::int AS count FROM products');
     const productCount = countRes.rows[0]?.count || 0;
 

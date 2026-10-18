@@ -45,7 +45,7 @@ export default function SandboxView({
     return () => clearTimeout(debounceTimer);
   }, [selectedProductId, simCompetitorPrice, demandMultiplier, stockOverride]);
 
-  const currentProduct = intelligence.find(item => item.id === selectedProductId);
+  const currentProduct = intelligence.find(item => Number(item.id) === Number(selectedProductId));
   const basePrice = currentProduct ? parseFloat(currentProduct.currentPrice) : 50;
   const minCompPrice = Math.max(1, Math.round(basePrice * 0.1));
   const maxCompPrice = Math.max(100, Math.ceil((basePrice * 2.5) / 10) * 10);
@@ -75,10 +75,10 @@ export default function SandboxView({
           <select
             value={selectedProductId}
             onChange={(e) => {
-              const newId = e.target.value;
+              const newId = parseInt(e.target.value, 10);
               setSelectedProductId(newId);
               
-              const prod = intelligence.find(item => item.id === newId);
+              const prod = intelligence.find(item => Number(item.id) === Number(newId));
               if (prod) {
                 const defaultCompPrice = prod.competitorPrice || prod.currentPrice * 0.9;
                 const defaultStock = prod.currentInventory;
