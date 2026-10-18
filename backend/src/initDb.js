@@ -56,7 +56,8 @@ export const initDatabase = async () => {
           description TEXT NOT NULL,
           status VARCHAR(50) DEFAULT 'EXECUTED',
           session_id VARCHAR(64) NOT NULL DEFAULT 'baseline',
-          executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          CONSTRAINT uq_product_action_desc_session UNIQUE (product_id, description, session_id)
       );
 
       -- Safe schema migration for existing databases: ensure session_id column exists
@@ -67,6 +68,16 @@ export const initDatabase = async () => {
       CREATE INDEX IF NOT EXISTS idx_inventory_session ON inventory(session_id);
       CREATE INDEX IF NOT EXISTS idx_orders_session ON orders(session_id);
       CREATE INDEX IF NOT EXISTS idx_actions_session ON automated_actions_log(session_id);
+
+      -- Deduplicate legacy rows before creating unique index
+      DELETE FROM automated_actions_log a
+      USING automated_actions_log b
+      WHERE a.id > b.id
+        AND a.product_id = b.product_id
+        AND a.description = b.description
+        AND a.session_id = b.session_id;
+
+      CREATE UNIQUE INDEX IF NOT EXISTS uq_action_log_product_desc_session ON automated_actions_log (product_id, description, session_id);
     `);
 
     // 2. Check if baseline data already exists

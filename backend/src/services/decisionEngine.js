@@ -27,17 +27,16 @@ export const runDecisionEngine = async (sessionId = 'baseline') => {
       if (priceDifference > 0) {
         const description = `Autonomous Procedure EXECUTED: Dispatched price-matching rule (-$${priceDifference.toFixed(2)}) & queued targeted promotion campaign.`;
 
-        const checkLog = await query(
-          'SELECT id FROM automated_actions_log WHERE product_id = $1 AND description = $2 AND session_id = $3',
-          [event.product_id, description, sessionId]
+        // Atomic upsert: prevents TOCTOU race condition when concurrent requests trigger the engine
+        const insertRes = await query(
+          `INSERT INTO automated_actions_log (product_id, action_type, description, status, session_id)
+           VALUES ($1, $2, $3, $4, $5)
+           ON CONFLICT (product_id, description, session_id) DO NOTHING
+           RETURNING id`,
+          [event.product_id, 'PRICE_MATCH_AUTOMATION', description, 'EXECUTED', sessionId]
         );
 
-        if (checkLog.rows.length === 0) {
-          await query(
-            `INSERT INTO automated_actions_log (product_id, action_type, description, status, session_id)
-             VALUES ($1, $2, $3, $4, $5)`,
-            [event.product_id, 'PRICE_MATCH_AUTOMATION', description, 'EXECUTED', sessionId]
-          );
+        if (insertRes.rows.length > 0) {
           executedCount++;
         }
       }
@@ -55,17 +54,16 @@ export const runDecisionEngine = async (sessionId = 'baseline') => {
     for (const stock of stockRows) {
       const description = `Autonomous Procedure EXECUTED: Dispatched emergency replenishment reorder for zero-stock SKU (${stock.name}).`;
 
-      const checkLog = await query(
-        'SELECT id FROM automated_actions_log WHERE product_id = $1 AND description = $2 AND session_id = $3',
-        [stock.product_id, description, sessionId]
+      // Atomic upsert: prevents TOCTOU race condition when concurrent requests trigger the engine
+      const insertRes = await query(
+        `INSERT INTO automated_actions_log (product_id, action_type, description, status, session_id)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (product_id, description, session_id) DO NOTHING
+         RETURNING id`,
+        [stock.product_id, 'CRITICAL_STOCKOUT_EMERGENCY', description, 'EXECUTED', sessionId]
       );
 
-      if (checkLog.rows.length === 0) {
-        await query(
-          `INSERT INTO automated_actions_log (product_id, action_type, description, status, session_id)
-           VALUES ($1, $2, $3, $4, $5)`,
-          [stock.product_id, 'CRITICAL_STOCKOUT_EMERGENCY', description, 'EXECUTED', sessionId]
-        );
+      if (insertRes.rows.length > 0) {
         executedCount++;
       }
     }

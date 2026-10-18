@@ -47,9 +47,11 @@ CREATE TABLE IF NOT EXISTS automated_actions_log (
     description TEXT NOT NULL,
     status VARCHAR(50) DEFAULT 'EXECUTED',
     session_id VARCHAR(64) NOT NULL DEFAULT 'baseline',
-    executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_product_action_desc_session UNIQUE (product_id, description, session_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_inventory_session ON inventory(session_id);
 CREATE INDEX IF NOT EXISTS idx_orders_session ON orders(session_id);
 CREATE INDEX IF NOT EXISTS idx_actions_session ON automated_actions_log(session_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_action_log_product_desc_session ON automated_actions_log(product_id, description, session_id);
