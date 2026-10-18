@@ -10,15 +10,15 @@ export default function WelcomeModal({ showWelcome, isFirstVisit, handleCloseWel
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-3 sm:p-4">
-      <div className={`border rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-5 sm:p-8 shadow-2xl flex flex-col scrollbar-thin ${
+      <div className={`border rounded-2xl max-w-2xl w-full max-h-[85vh] sm:max-h-[90vh] shadow-2xl flex flex-col overflow-hidden ${
         isDark 
-          ? 'bg-[#201510] border-[#3d2a20] text-[#f5ebd9] scrollbar-thumb-[#4e382b] scrollbar-track-[#18110e]' 
-          : 'bg-[#fffdfa] border-[#e5d8cc] text-[#3d2c22] scrollbar-thumb-[#d1c2b4] scrollbar-track-[#f3eee8]'
+          ? 'bg-[#201510] border-[#3d2a20] text-[#f5ebd9]' 
+          : 'bg-[#fffdfa] border-[#e5d8cc] text-[#3d2c22]'
       }`}>
         
         {isFirstVisit && (
-          <div className={`mb-5 pb-5 border-b shrink-0 ${isDark ? 'border-[#3d2a20]' : 'border-[#e5d8cc]'}`}>
-            <div className="flex items-center gap-3 sm:gap-3.5 mb-3">
+          <div className={`p-5 sm:p-7 pb-4 sm:pb-5 border-b shrink-0 ${isDark ? 'border-[#3d2a20]' : 'border-[#e5d8cc]'}`}>
+            <div className="flex items-center gap-3 sm:gap-3.5 mb-2.5">
               <img src="/mercury.svg" alt="Mercury Logo" className="w-10 h-10 sm:w-12 sm:h-12 shrink-0" />
               <h3 className="text-2xl sm:text-3xl font-bold leading-tight flex items-center flex-wrap gap-x-2">
                 <span>{t('welcome.welcomePrefix')}</span>
@@ -34,7 +34,7 @@ export default function WelcomeModal({ showWelcome, isFirstVisit, handleCloseWel
         )}
 
         {!isFirstVisit && (
-          <div className={`flex justify-between items-center mb-5 pb-4 border-b shrink-0 ${isDark ? 'border-[#3d2a20]' : 'border-[#e5d8cc]'}`}>
+          <div className={`flex justify-between items-center p-5 sm:p-7 pb-4 sm:pb-5 border-b shrink-0 ${isDark ? 'border-[#3d2a20]' : 'border-[#e5d8cc]'}`}>
             <div className="flex items-center gap-2.5 sm:gap-3">
               <img src="/mercury.svg" alt="Mercury Logo" className="w-7 h-7 sm:w-8 sm:h-8 shrink-0" />
               <h3 className="text-xl sm:text-2xl font-bold flex items-center flex-wrap gap-x-1.5">
@@ -51,7 +51,11 @@ export default function WelcomeModal({ showWelcome, isFirstVisit, handleCloseWel
           </div>
         )}
 
-        <div className={`space-y-4 text-base mb-6 flex-1 ${isDark ? 'text-[#d4c2b4]' : 'text-[#594537]'}`}>
+        <div className={`p-5 sm:p-7 overflow-y-auto flex-1 min-h-0 space-y-4 text-base scrollbar-thin ${
+          isDark 
+            ? 'text-[#d4c2b4] scrollbar-thumb-[#4e382b] scrollbar-track-[#18110e]' 
+            : 'text-[#594537] scrollbar-thumb-[#d1c2b4] scrollbar-track-[#f3eee8]'
+        }`}>
           <h4 className={`text-sm sm:text-base font-bold uppercase tracking-wider mb-3 ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>{t('welcome.walkthrough')}</h4>
           
           <div className="space-y-3 sm:space-y-4">
@@ -82,7 +86,7 @@ export default function WelcomeModal({ showWelcome, isFirstVisit, handleCloseWel
           </div>
         </div>
 
-        <div className="shrink-0 pt-2">
+        <div className={`p-5 sm:p-7 pt-4 sm:pt-4 border-t shrink-0 ${isDark ? 'border-[#3d2a20]' : 'border-[#e5d8cc]'}`}>
           {isFirstVisit ? (
             <button 
               onClick={handleCloseWelcome}
