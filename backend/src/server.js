@@ -23,8 +23,11 @@ const ML_ENGINE_URL = process.env.ML_ENGINE_URL || 'http://localhost:8000';
 // Helper validator for positive integers (IDs, quantities)
 const isValidPositiveInt = (val) => {
   const num = Number(val);
-  return Number.isInteger(num) && num > 0;
+  return Number.isInteger(num) && num > 0 && num <= 2147483647;
 };
+
+// Maximum allowed order quantity per simulated transaction (protects against PostgreSQL numeric overflow)
+const MAX_ORDER_QUANTITY = 1000;
 
 // Helper validator for non-negative numbers (prices, multipliers, overrides)
 const isValidNonNegativeNumber = (val) => {
@@ -243,10 +246,10 @@ app.post('/api/simulate-order', mutationLimiter, requireSession, async (req, res
     });
   }
 
-  if (!isValidPositiveInt(quantity)) {
+  if (!isValidPositiveInt(quantity) || Number(quantity) > MAX_ORDER_QUANTITY) {
     return res.status(400).json({
       success: false,
-      error: 'Invalid quantity. Must be a positive integer greater than 0.'
+      error: `Invalid quantity. Must be an integer between 1 and ${MAX_ORDER_QUANTITY}.`
     });
   }
 
@@ -286,7 +289,16 @@ app.post('/api/simulate-order', mutationLimiter, requireSession, async (req, res
       });
     }
 
-    const totalAmount = price * sanitizedQuantity;
+    const totalAmount = parseFloat((price * sanitizedQuantity).toFixed(2));
+
+    if (isNaN(totalAmount) || totalAmount > 99999999.99) {
+      await client.query('ROLLBACK');
+
+      return res.status(400).json({
+        success: false,
+        error: 'Calculated order total exceeds maximum allowable transaction limit.'
+      });
+    }
 
     await client.query(
       `
