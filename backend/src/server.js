@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import dotenv from 'dotenv';
 import axios from 'axios';
 import { query, getClient } from './db.js';
@@ -12,9 +13,40 @@ import { intelligenceCache } from './utils/cache.js';
 dotenv.config();
 
 const app = express();
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
+}));
 app.use(globalLimiter);
 app.use(express.json());
-app.use(cors());
+
+const defaultAllowedOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000'
+];
+
+if (process.env.FRONTEND_URL) {
+  defaultAllowedOrigins.push(...process.env.FRONTEND_URL.split(',').map((o) => o.trim()));
+}
+if (process.env.ALLOWED_ORIGINS) {
+  defaultAllowedOrigins.push(...process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim()));
+}
+
+const allowedOrigins = [...new Set(defaultAllowedOrigins.filter(Boolean))];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g. mobile apps, curl, server-to-server, unit tests)
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`Origin ${origin} not allowed by CORS`));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-session-id'],
+  optionsSuccessStatus: 200
+}));
+
 app.use(extractSession);
 
 const PORT = process.env.PORT || 5000;
@@ -594,6 +626,13 @@ app.post('/api/sandbox/simulate', mlInferenceLimiter, async (req, res) => {
 
 // Centralized fallback error handler to prevent stack trace leaks
 app.use((err, req, res, next) => {
+  if (err.message && err.message.includes('CORS')) {
+    return res.status(403).json({
+      success: false,
+      error: 'Not allowed by CORS policy'
+    });
+  }
+
   console.error('Unhandled server error:', err.message || err);
   if (res.headersSent) {
     return next(err);

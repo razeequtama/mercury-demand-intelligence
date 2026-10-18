@@ -26,6 +26,7 @@ services:
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-mercury_db}
+      ALLOWED_ORIGINS: ${FRONTEND_URL:-http://localhost:3000}
     ports:
       - "127.0.0.1:${ML_PORT:-8000}:8000"
     depends_on:
@@ -42,6 +43,7 @@ services:
       PORT: ${PORT:-5000}
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-mercury_db}
       ML_ENGINE_URL: http://ml-engine:8000
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
     ports:
       - "${PORT:-5000}:5000"
     depends_on:
