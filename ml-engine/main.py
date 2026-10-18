@@ -160,9 +160,11 @@ def predict_demand(session_id: str = "baseline"):
             "data": predictions
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"ML Pipeline Error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal ML forecasting error")
 
 @app.post("/simulate-sandbox")
 def simulate_sandbox(payload: dict):
@@ -323,9 +325,11 @@ def simulate_sandbox(payload: dict):
                 "engineRecommendation": recommendation
             }
         }
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"Sandbox ML Error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Internal ML simulation error")
 
 if __name__ == "__main__":
     import uvicorn

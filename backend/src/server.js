@@ -57,7 +57,7 @@ app.get('/api/health', async (req, res) => {
       uptime: process.uptime(),
       database: {
         status: 'disconnected',
-        error: err.message
+        error: 'Database service unavailable'
       }
     });
   }
@@ -96,8 +96,7 @@ app.get('/api/intelligence', mlInferenceLimiter, async (req, res) => {
 
     res.status(500).json({
       success: false,
-      error: 'ML Analytics Engine Unavailable',
-      details: err.message
+      error: 'ML Analytics Engine Unavailable'
     });
   }
 });
@@ -559,24 +558,40 @@ app.post('/api/sandbox/simulate', mlInferenceLimiter, async (req, res) => {
 
     res.status(500).json({
       success: false,
-      error: 'ML Analytics Engine Unavailable for Sandbox Simulation',
-      details: err.message
+      error: 'ML Analytics Engine Unavailable for Sandbox Simulation'
     });
   }
 });
 
-app.listen(PORT, async () => {
-  console.log(
-    `Mercury Express Gateway running on port ${PORT}`
-  );
-
-  try {
-    await initDatabase();
-    await runDecisionEngine();
-  } catch (err) {
-    console.error(
-      'Failed during server startup initialization:',
-      err.message
-    );
+// Centralized fallback error handler to prevent stack trace leaks
+app.use((err, req, res, next) => {
+  console.error('Unhandled server error:', err.message || err);
+  if (res.headersSent) {
+    return next(err);
   }
+  res.status(err.status || 500).json({
+    success: false,
+    error: err.status === 400 ? 'Bad Request' : 'Internal Server Error'
+  });
 });
+
+const isMainModule = process.argv[1] && /server\.js$/i.test(process.argv[1]);
+if (isMainModule) {
+  app.listen(PORT, async () => {
+    console.log(
+      `Mercury Express Gateway running on port ${PORT}`
+    );
+
+    try {
+      await initDatabase();
+      await runDecisionEngine();
+    } catch (err) {
+      console.error(
+        'Failed during server startup initialization:',
+        err.message
+      );
+    }
+  });
+}
+
+export default app;
