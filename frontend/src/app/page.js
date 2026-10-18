@@ -9,6 +9,7 @@ import DatabaseInspectorModal from './components/DatabaseInspectorModal';
 import DashboardView from './components/DashboardView';
 import SandboxView from './components/SandboxView';
 import { useLanguage } from '../i18n/LanguageProvider';
+import { getSessionHeaders } from './utils/session';
 
 export default function Dashboard() {
   const { t } = useLanguage();
@@ -68,8 +69,8 @@ export default function Dashboard() {
     try {
       setLoading(true);
       const [intelRes, insightsRes] = await Promise.all([
-        axios.get(`${API_URL}/intelligence`),
-        axios.get(`${API_URL}/insights`)
+        axios.get(`${API_URL}/intelligence`, { headers: getSessionHeaders() }),
+        axios.get(`${API_URL}/insights`, { headers: getSessionHeaders() })
       ]);
 
       setIntelligence(intelRes.data.data || []);
@@ -92,7 +93,7 @@ export default function Dashboard() {
     setIsModalOpen(true);
     try {
       setInspectLoading(true);
-      const res = await axios.get(`${API_URL}/database-inspect`);
+      const res = await axios.get(`${API_URL}/database-inspect`, { headers: getSessionHeaders() });
       setDbData(res.data.tables);
     } catch (err) {
       console.error("Failed to fetch database inspection feed:", err);
@@ -110,7 +111,7 @@ export default function Dashboard() {
         simulatedCompetitorPrice: parseFloat(price),
         demandMultiplier: parseFloat(multiplier),
         stockOverride: parseInt(stock)
-      });
+      }, { headers: getSessionHeaders() });
       setSimulationResult(res.data.simulation);
     } catch (err) {
       console.error("Simulation failed:", err);

@@ -22,6 +22,7 @@ import {
   formatRecommendation,
   formatOrderFeedback
 } from '../../i18n/formatters';
+import { getSessionHeaders } from '../utils/session';
 
 export default function DashboardView({ 
   intelligence, 
@@ -52,7 +53,7 @@ export default function DashboardView({
     try {
       setExecutingRules(true);
       setRulesMessage(null);
-      const res = await axios.post(`${API_URL}/insights/execute-actions`);
+      const res = await axios.post(`${API_URL}/insights/execute-actions`, {}, { headers: getSessionHeaders() });
       setRulesMessage(res.data.message || 'Rules evaluated successfully.');
       if (fetchData) await fetchData();
       setTimeout(() => setRulesMessage(null), 4000);
@@ -76,7 +77,7 @@ export default function DashboardView({
       const res = await axios.post(`${API_URL}/simulate-order`, {
         productId: parseInt(prodId, 10),
         quantity: parseInt(orderQuantity, 10)
-      });
+      }, { headers: getSessionHeaders() });
       setOrderFeedback({ type: 'success', text: formatOrderFeedback(res.data.message, locale) || t('dashboard.orderSuccess') });
       if (fetchData) await fetchData();
       setTimeout(() => setOrderFeedback(null), 4000);

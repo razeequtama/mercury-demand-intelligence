@@ -5,12 +5,14 @@ import axios from 'axios';
 import { query, getClient } from './db.js';
 import { runDecisionEngine } from './services/decisionEngine.js';
 import { initDatabase } from './initDb.js';
+import { extractSession, requireSession, ensureSessionInventory } from './middleware/session.js';
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
 app.use(cors());
+app.use(extractSession);
 
 const PORT = process.env.PORT || 5000;
 const ML_ENGINE_URL = process.env.ML_ENGINE_URL || 'http://localhost:8000';
@@ -63,7 +65,10 @@ app.get('/api/intelligence', async (req, res) => {
   try {
     const mlResponse = await axios.get(
       `${ML_ENGINE_URL}/predict-demand`,
-      { timeout: 10000 }
+      {
+        params: { session_id: req.sessionId },
+        timeout: 10000
+      }
     );
 
     res.json(mlResponse.data);
@@ -159,11 +164,13 @@ app.get('/api/insights', async (req, res) => {
         l.executed_at
       FROM automated_actions_log l
       JOIN products p ON l.product_id = p.id
+      WHERE l.session_id IN ('baseline', $1)
       ORDER BY l.executed_at DESC;
-    `);
+    `, [req.sessionId]);
 
     res.json({
       success: true,
+      sessionId: req.sessionId,
       activeAlertsCount: actionableInsights.length,
       insights: actionableInsights,
       autonomousLogs: logsRes.rows
@@ -178,14 +185,16 @@ app.get('/api/insights', async (req, res) => {
   }
 });
 
-// 3. POST: Explicit Endpoint to Trigger Autonomous Actions Safely (Idempotent)
-app.post('/api/insights/execute-actions', async (req, res) => {
+// 3. POST: Explicit Endpoint to Trigger Autonomous Actions Safely (Idempotent per Session)
+app.post('/api/insights/execute-actions', requireSession, async (req, res) => {
   try {
-    const executedCount = await runDecisionEngine();
+    await ensureSessionInventory(query, req.sessionId);
+    const executedCount = await runDecisionEngine(req.sessionId);
 
     res.json({
       success: true,
-      message: `Successfully executed ${executedCount} autonomous actions.`
+      sessionId: req.sessionId,
+      message: `Successfully executed ${executedCount} autonomous actions in your visitor sandbox.`
     });
   } catch (err) {
     console.error(
@@ -200,8 +209,9 @@ app.post('/api/insights/execute-actions', async (req, res) => {
   }
 });
 
-// 4. POST: Live Event Ingestion / Simulator Endpoint with Strict Validation
-app.post('/api/simulate-order', async (req, res) => {
+// 4. POST: Live Event Ingestion / Simulator Endpoint with Strict Validation & Session Sandboxing
+app.post('/api/simulate-order', requireSession, async (req, res) => {
+  const sessionId = req.sessionId;
   const { productId, quantity } = req.body;
 
   if (productId === undefined || quantity === undefined) {
@@ -233,6 +243,9 @@ app.post('/api/simulate-order', async (req, res) => {
   try {
     await client.query('BEGIN');
 
+    // Ensure this visitor session has an isolated copy of the inventory
+    await ensureSessionInventory(client, sessionId);
+
     const prodRes = await client.query(
       'SELECT current_price FROM products WHERE id = $1',
       [sanitizedProductId]
@@ -263,11 +276,11 @@ app.post('/api/simulate-order', async (req, res) => {
     await client.query(
       `
         INSERT INTO orders
-          (product_id, quantity, total_amount, order_date)
+          (product_id, quantity, total_amount, session_id, order_date)
         VALUES
-          ($1, $2, $3, NOW())
+          ($1, $2, $3, $4, NOW())
       `,
-      [sanitizedProductId, sanitizedQuantity, totalAmount]
+      [sanitizedProductId, sanitizedQuantity, totalAmount, sessionId]
     );
 
     await client.query(
@@ -276,18 +289,19 @@ app.post('/api/simulate-order', async (req, res) => {
         SET
           stock_quantity = GREATEST(0, stock_quantity - $1),
           updated_at = NOW()
-        WHERE product_id = $2
+        WHERE product_id = $2 AND session_id = $3
       `,
-      [sanitizedQuantity, sanitizedProductId]
+      [sanitizedQuantity, sanitizedProductId, sessionId]
     );
 
     await client.query('COMMIT');
 
     res.json({
       success: true,
+      sessionId,
       message:
         `Successfully ingested order event of ${sanitizedQuantity} units. ` +
-        'ML forecasting pipeline adjusted.'
+        'ML forecasting pipeline adjusted for your visitor sandbox.'
     });
   } catch (err) {
     try {
@@ -313,22 +327,34 @@ app.post('/api/simulate-order', async (req, res) => {
   }
 });
 
-// 5. GET: Raw Database Inspector Feed
+// 5. GET: Raw Database Inspector Feed (Filtered and Scoped to Visitor Session Sandbox)
 app.get('/api/database-inspect', async (req, res) => {
   try {
+    // Redact proprietary wholesale cost_price from public inspector
     const products = await query(
-      'SELECT * FROM products ORDER BY id ASC'
+      'SELECT id, sku, name, category, current_price, created_at FROM products ORDER BY id ASC'
     );
 
     const inventory = await query(`
       SELECT
-        i.*,
+        i.id,
+        i.product_id,
+        i.warehouse_name,
+        i.stock_quantity,
+        i.reorder_threshold,
+        i.updated_at,
         p.sku,
         p.name
       FROM inventory i
       JOIN products p ON i.product_id = p.id
+      WHERE i.session_id = (
+        CASE
+          WHEN EXISTS (SELECT 1 FROM inventory WHERE session_id = $1) THEN $1
+          ELSE 'baseline'
+        END
+      )
       ORDER BY i.id ASC
-    `);
+    `, [req.sessionId]);
 
     const competitorEvents = await query(`
       SELECT
@@ -351,9 +377,10 @@ app.get('/api/database-inspect', async (req, res) => {
         o.order_date
       FROM orders o
       JOIN products p ON o.product_id = p.id
+      WHERE o.session_id IN ('baseline', $1)
       ORDER BY o.order_date DESC
       LIMIT 50
-    `);
+    `, [req.sessionId]);
 
     const automatedActionsLog = await query(`
       SELECT
@@ -366,12 +393,14 @@ app.get('/api/database-inspect', async (req, res) => {
         l.executed_at
       FROM automated_actions_log l
       JOIN products p ON l.product_id = p.id
+      WHERE l.session_id IN ('baseline', $1)
       ORDER BY l.executed_at DESC
       LIMIT 50
-    `);
+    `, [req.sessionId]);
 
     res.json({
       success: true,
+      sessionId: req.sessionId,
       tables: {
         products: products.rows,
         inventory: inventory.rows,
@@ -389,6 +418,27 @@ app.get('/api/database-inspect', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch database inspection data.'
+    });
+  }
+});
+
+// 5b. POST: Reset visitor session sandbox back to baseline
+app.post('/api/session/reset', requireSession, async (req, res) => {
+  const sessionId = req.sessionId;
+  try {
+    await query('DELETE FROM inventory WHERE session_id = $1', [sessionId]);
+    await query('DELETE FROM orders WHERE session_id = $1', [sessionId]);
+    await query('DELETE FROM automated_actions_log WHERE session_id = $1', [sessionId]);
+
+    res.json({
+      success: true,
+      message: 'Visitor sandbox session successfully reset to baseline.'
+    });
+  } catch (err) {
+    console.error('Session reset failed:', err.message);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to reset session sandbox.'
     });
   }
 });
@@ -419,7 +469,8 @@ app.post('/api/sandbox/simulate', async (req, res) => {
   const sanitizedProductId = parseInt(productId, 10);
 
   const payload = {
-    productId: sanitizedProductId
+    productId: sanitizedProductId,
+    sessionId: req.sessionId
   };
 
   if (

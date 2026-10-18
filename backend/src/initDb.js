@@ -4,13 +4,13 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 /**
- * Idempotent database initialization.
+ * Idempotent database initialization with session sandboxing support.
  * Creates required tables if they do not exist and populates initial demo data
  * ONLY when the products table is empty. Existing data is NEVER dropped or overwritten.
  */
 export const initDatabase = async () => {
   try {
-    // 1. Ensure all required tables exist non-destructively
+    // 1. Ensure all required tables and session columns exist non-destructively
     await query(`
       CREATE TABLE IF NOT EXISTS products (
           id SERIAL PRIMARY KEY,
@@ -28,6 +28,7 @@ export const initDatabase = async () => {
           warehouse_name VARCHAR(100) NOT NULL,
           stock_quantity INT NOT NULL DEFAULT 0,
           reorder_threshold INT NOT NULL DEFAULT 50,
+          session_id VARCHAR(64) NOT NULL DEFAULT 'baseline',
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
@@ -36,6 +37,7 @@ export const initDatabase = async () => {
           product_id INT REFERENCES products(id) ON DELETE CASCADE,
           quantity INT NOT NULL,
           total_amount DECIMAL(10, 2) NOT NULL,
+          session_id VARCHAR(64) NOT NULL DEFAULT 'baseline',
           order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
 
@@ -53,11 +55,21 @@ export const initDatabase = async () => {
           action_type VARCHAR(100) NOT NULL,
           description TEXT NOT NULL,
           status VARCHAR(50) DEFAULT 'EXECUTED',
+          session_id VARCHAR(64) NOT NULL DEFAULT 'baseline',
           executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
+      -- Safe schema migration for existing databases: ensure session_id column exists
+      ALTER TABLE inventory ADD COLUMN IF NOT EXISTS session_id VARCHAR(64) NOT NULL DEFAULT 'baseline';
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS session_id VARCHAR(64) NOT NULL DEFAULT 'baseline';
+      ALTER TABLE automated_actions_log ADD COLUMN IF NOT EXISTS session_id VARCHAR(64) NOT NULL DEFAULT 'baseline';
+
+      CREATE INDEX IF NOT EXISTS idx_inventory_session ON inventory(session_id);
+      CREATE INDEX IF NOT EXISTS idx_orders_session ON orders(session_id);
+      CREATE INDEX IF NOT EXISTS idx_actions_session ON automated_actions_log(session_id);
     `);
 
-    // 2. Check if data already exists
+    // 2. Check if baseline data already exists
     const countRes = await query('SELECT COUNT(*)::int AS count FROM products');
     const productCount = countRes.rows[0]?.count || 0;
 
@@ -84,12 +96,12 @@ export const initDatabase = async () => {
     });
 
     await query(`
-      INSERT INTO inventory (product_id, warehouse_name, stock_quantity, reorder_threshold) VALUES
-      ($1, 'Warehouse North (WH-A)', 182, 50),
-      ($2, 'Warehouse West (WH-B)', 45, 60),
-      ($3, 'Warehouse Central (WH-C)', 310, 100),
-      ($4, 'Warehouse North (WH-A)', 0, 40),
-      ($5, 'Warehouse West (WH-B)', 500, 150);
+      INSERT INTO inventory (product_id, warehouse_name, stock_quantity, reorder_threshold, session_id) VALUES
+      ($1, 'Warehouse North (WH-A)', 182, 50, 'baseline'),
+      ($2, 'Warehouse West (WH-B)', 45, 60, 'baseline'),
+      ($3, 'Warehouse Central (WH-C)', 310, 100, 'baseline'),
+      ($4, 'Warehouse North (WH-A)', 0, 40, 'baseline'),
+      ($5, 'Warehouse West (WH-B)', 500, 150, 'baseline');
     `, [
       productMap['MOU-WIR-01'],
       productMap['PRD-Y-02'],
@@ -99,13 +111,13 @@ export const initDatabase = async () => {
     ]);
 
     await query(`
-      INSERT INTO orders (product_id, quantity, total_amount, order_date) VALUES
-      ($1, 32, 1599.68, NOW() - INTERVAL '1 day'),
-      ($1, 28, 1399.72, NOW() - INTERVAL '2 days'),
-      ($1, 35, 1749.65, NOW() - INTERVAL '3 days'),
-      ($2, 3, 389.97, NOW() - INTERVAL '1 day'),
-      ($3, 10, 899.90, NOW() - INTERVAL '2 days'),
-      ($4, 8, 319.92, NOW() - INTERVAL '1 day')
+      INSERT INTO orders (product_id, quantity, total_amount, session_id, order_date) VALUES
+      ($1, 32, 1599.68, 'baseline', NOW() - INTERVAL '1 day'),
+      ($1, 28, 1399.72, 'baseline', NOW() - INTERVAL '2 days'),
+      ($1, 35, 1749.65, 'baseline', NOW() - INTERVAL '3 days'),
+      ($2, 3, 389.97, 'baseline', NOW() - INTERVAL '1 day'),
+      ($3, 10, 899.90, 'baseline', NOW() - INTERVAL '2 days'),
+      ($4, 8, 319.92, 'baseline', NOW() - INTERVAL '1 day')
     `, [
       productMap['MOU-WIR-01'],
       productMap['PRD-Y-02'],
@@ -136,4 +148,3 @@ if (process.argv[1] && process.argv[1].replace(/\\/g, '/').endsWith('src/initDb.
     .then(() => process.exit(0))
     .catch(() => process.exit(1));
 }
-

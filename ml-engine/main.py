@@ -41,10 +41,11 @@ def get_db_connection():
         pool.putconn(conn)
 
 @app.get("/predict-demand")
-def predict_demand():
+def predict_demand(session_id: str = "baseline"):
     """
     ML Pipeline: Aggregates historical orders by day, reindexes to a continuous date range
     filling missing dates with 0, trains a Linear Regression model, and computes in-sample MAE.
+    Scoped to visitor session sandbox.
     """
     try:
         query = """
@@ -60,11 +61,15 @@ def predict_demand():
                 o.quantity AS order_qty,
                 o.order_date
             FROM products p
-            JOIN inventory i ON p.id = i.product_id
-            LEFT JOIN orders o ON p.id = o.product_id;
+            JOIN inventory i ON p.id = i.product_id AND i.session_id = %s
+            LEFT JOIN orders o ON p.id = o.product_id AND o.session_id IN ('baseline', %s);
         """
         with get_db_connection() as conn:
-            df = pd.read_sql(query, conn)
+            df = pd.read_sql(query, conn, params=(session_id, session_id))
+
+        if df.empty and session_id != 'baseline':
+            with get_db_connection() as conn:
+                df = pd.read_sql(query, conn, params=('baseline', 'baseline'))
 
         if df.empty:
             return {"success": True, "totalTrackedProducts": 0, "data": []}
@@ -167,6 +172,7 @@ def simulate_sandbox(payload: dict):
     """
     try:
         product_id = payload.get("productId", 1)
+        session_id = payload.get("sessionId", "baseline")
         sim_competitor_price = payload.get("simCompetitorPrice")
         demand_multiplier = payload.get("demandMultiplier", 1.0)
         stock_override = payload.get("stockOverride")
@@ -185,12 +191,16 @@ def simulate_sandbox(payload: dict):
                 o.quantity AS order_qty,
                 o.order_date
             FROM products p
-            JOIN inventory i ON p.id = i.product_id
-            LEFT JOIN orders o ON p.id = o.product_id
+            JOIN inventory i ON p.id = i.product_id AND i.session_id = %s
+            LEFT JOIN orders o ON p.id = o.product_id AND o.session_id IN ('baseline', %s)
             WHERE p.id = %s;
         """
         with get_db_connection() as conn:
-            df = pd.read_sql(query, conn, params=(product_id,))
+            df = pd.read_sql(query, conn, params=(session_id, session_id, product_id))
+
+        if df.empty and session_id != 'baseline':
+            with get_db_connection() as conn:
+                df = pd.read_sql(query, conn, params=('baseline', 'baseline', product_id))
 
         if df.empty:
             raise HTTPException(status_code=404, detail="Product not found")
