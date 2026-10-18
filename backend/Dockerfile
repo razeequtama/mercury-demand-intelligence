@@ -11,6 +11,6 @@ COPY . .
 
 EXPOSE 5000
 
-# Runs seed then launches Express server
-CMD ["sh", "-c", "node src/seed.js && node src/server.js"]
+# Launches Express server (non-destructive startup)
+CMD ["node", "src/server.js"]
 

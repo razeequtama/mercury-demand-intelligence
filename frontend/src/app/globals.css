@@ -152,3 +152,45 @@ body {
   background: transparent;
   height: 100%;
 }
+
+/* ==========================================================================
+   Subtle View Transition & Page Entrance Animations
+   ========================================================================== */
+
+@keyframes mercuryPageEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes mercuryViewTransition {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-page-entrance {
+  animation: mercuryPageEntrance 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-view-transition {
+  animation: mercuryViewTransition 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-page-entrance,
+  .animate-view-transition {
+    animation: none !important;
+    transform: none !important;
+  }
+}

@@ -79,7 +79,7 @@ export default function Header({
             role="tab"
             aria-selected={currentView === 'dashboard'}
             onClick={() => setCurrentView('dashboard')}
-            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm sm:text-base font-bold transition cursor-pointer ${
+            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm sm:text-base font-bold transition-all duration-200 ease-out active:scale-[0.98] cursor-pointer ${
               currentView === 'dashboard'
                 ? isDark
                   ? 'bg-[#d97706] text-white shadow-sm'
@@ -97,7 +97,7 @@ export default function Header({
             role="tab"
             aria-selected={currentView === 'sandbox'}
             onClick={() => setCurrentView('sandbox')}
-            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm sm:text-base font-bold transition cursor-pointer ${
+            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm sm:text-base font-bold transition-all duration-200 ease-out active:scale-[0.98] cursor-pointer ${
               currentView === 'sandbox'
                 ? isDark
                   ? 'bg-[#d97706] text-white shadow-sm'

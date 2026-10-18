@@ -1,11 +1,5 @@
-DROP TABLE IF EXISTS automated_actions_log CASCADE;
-DROP TABLE IF EXISTS competitor_events CASCADE;
-DROP TABLE IF EXISTS orders CASCADE;
-DROP TABLE IF EXISTS inventory CASCADE;
-DROP TABLE IF EXISTS products CASCADE;
-
 -- Products Table
-CREATE TABLE products (
+CREATE TABLE IF NOT EXISTS products (
     id SERIAL PRIMARY KEY,
     sku VARCHAR(50) UNIQUE NOT NULL,
     name VARCHAR(255) NOT NULL,
@@ -16,7 +10,7 @@ CREATE TABLE products (
 );
 
 -- Warehouses / Inventory Levels
-CREATE TABLE inventory (
+CREATE TABLE IF NOT EXISTS inventory (
     id SERIAL PRIMARY KEY,
     product_id INT REFERENCES products(id) ON DELETE CASCADE,
     warehouse_name VARCHAR(100) NOT NULL,
@@ -26,7 +20,7 @@ CREATE TABLE inventory (
 );
 
 -- Historical Orders (for demand analysis)
-CREATE TABLE orders (
+CREATE TABLE IF NOT EXISTS orders (
     id SERIAL PRIMARY KEY,
     product_id INT REFERENCES products(id) ON DELETE CASCADE,
     quantity INT NOT NULL,
@@ -35,7 +29,7 @@ CREATE TABLE orders (
 );
 
 -- Competitor Intelligence & Market Events Feed
-CREATE TABLE competitor_events (
+CREATE TABLE IF NOT EXISTS competitor_events (
     id SERIAL PRIMARY KEY,
     product_id INT REFERENCES products(id) ON DELETE CASCADE,
     competitor_price DECIMAL(10, 2) NOT NULL,
@@ -44,7 +38,7 @@ CREATE TABLE competitor_events (
 );
 
 -- Autonomous Actions Log (Decision Engine Audit Trail)
-CREATE TABLE automated_actions_log (
+CREATE TABLE IF NOT EXISTS automated_actions_log (
     id SERIAL PRIMARY KEY,
     product_id INT REFERENCES products(id) ON DELETE CASCADE,
     action_type VARCHAR(100) NOT NULL,

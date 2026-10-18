@@ -1,16 +1,41 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, HelpCircle, Globe, Check } from 'lucide-react';
 import { useLanguage } from '../../i18n/LanguageProvider';
 import { EnglishLogo, IndonesianLogo } from './LanguageSwitcher';
 
 export default function WelcomeModal({ showWelcome, isFirstVisit, handleCloseWelcome, setShowWelcome, theme }) {
+  const [mounted, setMounted] = useState(false);
   const { locale, setLocale, t } = useLanguage();
-  if (!showWelcome) return null;
   const isDark = theme === 'dark';
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-3 sm:p-4">
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && showWelcome && !isFirstVisit) {
+        setShowWelcome(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showWelcome, isFirstVisit, setShowWelcome]);
+
+  if (!showWelcome || !mounted) return null;
+
+  const modalContent = (
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-3 sm:p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && !isFirstVisit) setShowWelcome(false);
+      }}
+      role="dialog"
+      aria-modal="true"
+    >
       <div className={`border rounded-2xl max-w-2xl w-full max-h-[85vh] sm:max-h-[90vh] shadow-2xl flex flex-col overflow-hidden ${
         isDark 
           ? 'bg-[#201510] border-[#3d2a20] text-[#f5ebd9]' 
@@ -176,4 +201,6 @@ export default function WelcomeModal({ showWelcome, isFirstVisit, handleCloseWel
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : null;
 }

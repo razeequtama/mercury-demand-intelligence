@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import axios from 'axios';
 import { query, getClient } from './db.js';
 import { runDecisionEngine } from './services/decisionEngine.js';
+import { initDatabase } from './initDb.js';
 
 dotenv.config();
 
@@ -498,10 +499,11 @@ app.listen(PORT, async () => {
   );
 
   try {
+    await initDatabase();
     await runDecisionEngine();
   } catch (err) {
     console.error(
-      'Failed to run startup decision engine:',
+      'Failed during server startup initialization:',
       err.message
     );
   }

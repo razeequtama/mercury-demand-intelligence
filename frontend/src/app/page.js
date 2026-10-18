@@ -89,11 +89,11 @@ export default function Dashboard() {
   };
 
   const fetchDatabaseInspect = async () => {
+    setIsModalOpen(true);
     try {
       setInspectLoading(true);
       const res = await axios.get(`${API_URL}/database-inspect`);
       setDbData(res.data.tables);
-      setIsModalOpen(true);
     } catch (err) {
       console.error("Failed to fetch database inspection feed:", err);
     } finally {
@@ -146,7 +146,8 @@ export default function Dashboard() {
         ? 'bg-[#18110e] text-[#f5ebd9] scrollbar-thumb-[#4e382b] scrollbar-track-[#18110e]' 
         : 'bg-[#fdfbf7] text-[#3d2c22] scrollbar-thumb-[#d1c2b4] scrollbar-track-[#f3eee8]'
     }`}>
-      <Header
+      <div className="animate-page-entrance">
+        <Header
         currentView={currentView}
         setCurrentView={setCurrentView}
         fetchDatabaseInspect={fetchDatabaseInspect}
@@ -158,14 +159,6 @@ export default function Dashboard() {
         setShowWelcome={setShowWelcome}
       />
 
-      <WelcomeModal
-        showWelcome={showWelcome}
-        isFirstVisit={isFirstVisit}
-        handleCloseWelcome={handleCloseWelcome}
-        setShowWelcome={setShowWelcome}
-        theme={theme}
-      />
-
       {error && (
         <div className={`border p-4 rounded-xl mb-6 sm:mb-8 flex items-center gap-3 ${
           isDark ? 'bg-red-950/40 border-red-900 text-red-200' : 'bg-red-50 border-red-200 text-red-800'
@@ -175,39 +168,52 @@ export default function Dashboard() {
         </div>
       )}
 
-      {currentView === 'dashboard' ? (
-        <DashboardView
-          intelligence={intelligence}
-          insights={insights}
-          autonomousLogs={autonomousLogs}
-          loading={loading}
-          error={error}
-          theme={theme}
-          fetchData={fetchData}
-          API_URL={API_URL}
-        />
-      ) : (
-        <SandboxView
-          intelligence={intelligence}
-          selectedProductId={selectedProductId}
-          setSelectedProductId={setSelectedProductId}
-          simCompetitorPrice={simCompetitorPrice}
-          setSimCompetitorPrice={setSimCompetitorPrice}
-          demandMultiplier={demandMultiplier}
-          setDemandMultiplier={setDemandMultiplier}
-          stockOverride={stockOverride}
-          setStockOverride={setStockOverride}
-          simulationResult={simulationResult}
-          simLoading={simLoading}
-          runSimulation={runSimulation}
-          theme={theme}
-        />
-      )}
+      <div key={currentView} className="animate-view-transition">
+        {currentView === 'dashboard' ? (
+          <DashboardView
+            intelligence={intelligence}
+            insights={insights}
+            autonomousLogs={autonomousLogs}
+            loading={loading}
+            error={error}
+            theme={theme}
+            fetchData={fetchData}
+            API_URL={API_URL}
+          />
+        ) : (
+          <SandboxView
+            intelligence={intelligence}
+            selectedProductId={selectedProductId}
+            setSelectedProductId={setSelectedProductId}
+            simCompetitorPrice={simCompetitorPrice}
+            setSimCompetitorPrice={setSimCompetitorPrice}
+            demandMultiplier={demandMultiplier}
+            setDemandMultiplier={setDemandMultiplier}
+            stockOverride={stockOverride}
+            setStockOverride={setStockOverride}
+            simulationResult={simulationResult}
+            simLoading={simLoading}
+            runSimulation={runSimulation}
+            theme={theme}
+          />
+        )}
+      </div>
+      </div>
+
+      <WelcomeModal
+        showWelcome={showWelcome}
+        isFirstVisit={isFirstVisit}
+        handleCloseWelcome={handleCloseWelcome}
+        setShowWelcome={setShowWelcome}
+        theme={theme}
+      />
 
       <DatabaseInspectorModal
         isModalOpen={isModalOpen}
         setIsModalOpen={setIsModalOpen}
         dbData={dbData}
+        inspectLoading={inspectLoading}
+        fetchDatabaseInspect={fetchDatabaseInspect}
         theme={theme}
       />
     </main>
