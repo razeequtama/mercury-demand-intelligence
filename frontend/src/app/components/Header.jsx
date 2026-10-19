@@ -265,7 +265,7 @@ export default function Header({
       {/* Page Title: Commerce Command Center */}
       <div className="pt-6">
         <h1
-          className={`text-2xl sm:text-3xl font-extrabold tracking-tight ${
+          className={`text-2xl sm:text-3xl font-semibold tracking-tight ${
             isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'
           }`}
         >

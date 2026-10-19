@@ -59,7 +59,7 @@ export default function SandboxView({
         isDark ? 'bg-[#201510]/80 border-[#36261d]' : 'bg-white/80 border-[#e8ded1]'
       }`}>
         <div>
-          <h2 className={`text-xl sm:text-2xl font-bold flex items-center gap-2.5 mb-1.5 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
+          <h2 className={`text-xl sm:text-2xl font-semibold flex items-center gap-2.5 mb-1.5 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
             <Sliders className={`w-5 h-5 sm:w-6 sm:h-6 ${isDark ? 'text-amber-400' : 'text-amber-700'}`} />
             <span>{t('sandbox.scenarioLevers')}</span>
           </h2>
@@ -218,7 +218,7 @@ export default function SandboxView({
             isDark ? 'bg-[#201510]/80 border-[#36261d]' : 'bg-white/80 border-[#e8ded1]'
           }`}>
             <Sliders className={`w-12 h-12 mb-4 opacity-50 ${isDark ? 'text-amber-400' : 'text-amber-700'}`} />
-            <h3 className={`text-lg sm:text-xl font-bold mb-2 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
+            <h3 className={`text-lg sm:text-xl font-semibold mb-2 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
               {intelligence.length === 0 ? t('sandbox.noProductsAvailable') : t('sandbox.noSimulation')}
             </h3>
             <p className={`text-sm sm:text-base max-w-md mb-6 ${isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'}`}>

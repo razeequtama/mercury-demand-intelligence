@@ -59,7 +59,7 @@ export default function DatabaseInspectorModal({
         <div className={`flex justify-between items-center p-4 sm:p-6 border-b shrink-0 ${isDark ? 'border-[#3d2a20]' : 'border-[#e5d8cc]'}`}>
           <div className="flex items-center gap-2.5 sm:gap-3">
             <Database className={`w-5 h-5 sm:w-6 sm:h-6 shrink-0 ${isDark ? 'text-amber-400' : 'text-amber-700'}`} />
-            <h2 className="text-lg sm:text-2xl font-bold">{t('inspector.title')}</h2>
+            <h2 className="text-lg sm:text-2xl font-semibold">{t('inspector.title')}</h2>
             {inspectLoading && (
               <RefreshCw className="w-4 h-4 animate-spin text-amber-500 ml-1 shrink-0" />
             )}

@@ -3,9 +3,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { 
-  Activity, 
   Zap, 
-  ShoppingCart, 
   Send, 
   CheckCircle2, 
   AlertCircle,
@@ -158,9 +156,8 @@ export default function DashboardView({
           isDark ? 'bg-[#201510]/80 border-[#36261d]' : 'bg-white/80 border-[#e8ded1]'
         }`}>
           <div className="flex items-center justify-between mb-2">
-            <h2 className={`text-xl sm:text-2xl font-bold flex items-center gap-2.5 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
-              <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 text-amber-500 shrink-0" />
-              <span>{t('dashboard.marketAlertsTitle')}</span>
+            <h2 className={`text-xl sm:text-2xl font-semibold ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
+              {t('dashboard.marketAlertsTitle')}
             </h2>
             <span className={`text-xs sm:text-sm font-mono font-bold px-3 py-1 rounded-full border ${
               isDark ? 'bg-amber-950/60 text-amber-400 border-amber-800' : 'bg-amber-100 text-amber-800 border-amber-300'
@@ -232,9 +229,8 @@ export default function DashboardView({
           isDark ? 'bg-[#201510]/80 border-[#36261d]' : 'bg-white/80 border-[#e8ded1]'
         }`}>
           <div>
-            <h2 className={`text-xl sm:text-2xl font-bold flex items-center gap-2.5 mb-2 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
-              <ShoppingCart className={`w-5 h-5 sm:w-6 sm:h-6 ${isDark ? 'text-amber-400' : 'text-amber-700'}`} />
-              <span>{t('dashboard.simulateOrderTitle')}</span>
+            <h2 className={`text-xl sm:text-2xl font-semibold mb-2 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
+              {t('dashboard.simulateOrderTitle')}
             </h2>
             <p className={`text-sm sm:text-base mb-4 ${isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'}`}>
               {t('dashboard.simulateOrderDesc')}
@@ -333,9 +329,8 @@ export default function DashboardView({
         isDark ? 'bg-[#201510]/80 border-[#36261d]' : 'bg-white/80 border-[#e8ded1]'
       }`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
-          <h2 className={`text-xl sm:text-2xl font-bold flex items-center gap-2.5 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
-            <Activity className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-500 shrink-0" />
-            <span>{t('dashboard.auditLog')}</span>
+          <h2 className={`text-xl sm:text-2xl font-semibold ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
+            {t('dashboard.auditLog')}
           </h2>
 
           <div className="flex items-center gap-3">
@@ -404,7 +399,7 @@ export default function DashboardView({
         <div className={`lg:col-span-2 border rounded-2xl p-4 sm:p-6 shadow-xl overflow-hidden ${
           isDark ? 'bg-[#201510]/80 border-[#36261d]' : 'bg-white/80 border-[#e8ded1]'
         }`}>
-          <h2 className={`text-xl sm:text-2xl font-bold mb-4 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
+          <h2 className={`text-xl sm:text-2xl font-semibold mb-4 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
             {t('dashboard.inventoryForecasts')}
           </h2>
           <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
@@ -481,7 +476,7 @@ export default function DashboardView({
         <div className={`border rounded-2xl p-4 sm:p-6 shadow-xl flex flex-col ${
           isDark ? 'bg-[#201510]/80 border-[#36261d]' : 'bg-white/80 border-[#e8ded1]'
         }`}>
-          <h2 className={`text-xl sm:text-2xl font-bold mb-4 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
+          <h2 className={`text-xl sm:text-2xl font-semibold mb-4 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
             {t('dashboard.chartTitle')}
           </h2>
           <div className="flex-1 min-h-[300px]">

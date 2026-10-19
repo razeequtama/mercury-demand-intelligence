@@ -45,7 +45,7 @@ export default function WelcomeModal({ showWelcome, isFirstVisit, handleCloseWel
           <div className={`p-5 sm:p-7 pb-4 sm:pb-5 border-b shrink-0 ${isDark ? 'border-[#3d2a20]' : 'border-[#e5d8cc]'}`}>
             <div className="flex items-center gap-3 sm:gap-3.5 mb-2.5">
               <Image src="/mercury.svg" alt="Mercury Logo" width={48} height={48} className="w-10 h-10 sm:w-12 sm:h-12 shrink-0" priority />
-              <h3 className="text-2xl sm:text-3xl font-bold leading-tight flex items-center flex-wrap gap-x-2">
+              <h3 className="text-2xl sm:text-3xl font-semibold leading-tight flex items-center flex-wrap gap-x-2">
                 <span>{t('welcome.welcomePrefix')}</span>
                 <span className={`font-rocker font-bold tracking-wider ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>
                   MERCURY
@@ -62,7 +62,7 @@ export default function WelcomeModal({ showWelcome, isFirstVisit, handleCloseWel
           <div className={`flex justify-between items-center p-5 sm:p-7 pb-4 sm:pb-5 border-b shrink-0 ${isDark ? 'border-[#3d2a20]' : 'border-[#e5d8cc]'}`}>
             <div className="flex items-center gap-2.5 sm:gap-3">
               <Image src="/mercury.svg" alt="Mercury Logo" width={32} height={32} className="w-7 h-7 sm:w-8 sm:h-8 shrink-0" />
-              <h3 className="text-xl sm:text-2xl font-bold flex items-center flex-wrap gap-x-1.5">
+              <h3 className="text-xl sm:text-2xl font-semibold flex items-center flex-wrap gap-x-1.5">
                 <span className={`font-rocker font-bold tracking-wider ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>MERCURY</span>
                 <span>{t('welcome.userGuideSuffix')}</span>
               </h3>
@@ -142,7 +142,7 @@ export default function WelcomeModal({ showWelcome, isFirstVisit, handleCloseWel
           </div>
 
           <div>
-            <h4 className={`text-sm sm:text-base font-bold uppercase tracking-wider mb-3 ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>{t('welcome.walkthrough')}</h4>
+            <h4 className={`text-sm sm:text-base font-semibold uppercase tracking-wider mb-3 ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>{t('welcome.walkthrough')}</h4>
           
           <div className="space-y-3 sm:space-y-4">
             <div className={`p-4 sm:p-5 rounded-xl border ${isDark ? 'bg-[#18110e] border-[#36261d]' : 'bg-[#f7f2ec] border-[#e8ded1]'}`}>
