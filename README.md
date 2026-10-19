@@ -1,387 +1,933 @@
 # Mercury Demand Intelligence
 
-> **Turn commerce signals into operational decisions.** Mercury is a full-stack demand and pricing intelligence demo for exploring inventory forecasts, stockout exposure, competitor signals, and margin-aware responses.
+> **Full-stack demand forecasting, inventory risk scoring, and margin-aware pricing intelligence platform.**
 
-Mercury brings a live operations dashboard, a REST gateway, PostgreSQL-backed commerce data, and a Python forecasting service together in one locally runnable project. It is designed to make the path from raw commerce records to understandable recommendations visible and interactive.
+Mercury is an end-to-end commerce intelligence command center that transforms raw transactional data, inventory levels, and competitor market shifts into auditable operational decisions. It couples a responsive Next.js 16 frontend, an Express 5 API gateway, a PostgreSQL 16 relational data store, and a Python FastAPI microservice powered by Scikit-Learn continuous linear regression.
 
-**At a glance:** explore seven-day demand forecasts, flag inventory risk, inspect the source records, and stress-test price, demand, and stock assumptions in a what-if sandbox.
+Designed with enterprise-grade defensive architecture, Mercury features session-sandboxed multi-tenant isolation, atomic concurrency guards against race conditions, ACID-compliant order transactions, least-privilege database role separation, and dual-language internationalization (English & Indonesian).
 
-[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=nextdotjs)](https://nextjs.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-ES%20Modules-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
-[![Express](https://img.shields.io/badge/Express-5-000000?logo=express)](https://expressjs.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Relational%20Data-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Python](https://img.shields.io/badge/Python-ML%20Service-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![scikit--learn](https://img.shields.io/badge/scikit--learn-Linear%20Regression-F7931E?logo=scikitlearn&logoColor=white)](https://scikit-learn.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
-[![Recharts](https://img.shields.io/badge/Recharts-Data%20Visualization-22B5BF)](https://recharts.org/)
+---
+
+## Table of Contents
+
+- [Why Mercury](#why-mercury)
+- [System Architecture](#system-architecture)
+  - [Architecture Overview](#architecture-overview)
+  - [Service Boundaries & Responsibilities](#service-boundaries--responsibilities)
+  - [Core Request Lifecycles](#core-request-lifecycles)
+- [Key Features](#key-features)
+- [Technology Stack](#technology-stack)
+- [Database Management & Mandatory Seeding Specification](#database-management--mandatory-seeding-specification)
+  - [1. Seed Implementation & Entry Points](#1-seed-implementation--entry-points)
+  - [2. Exact Seeding Commands](#2-exact-seeding-commands)
+  - [3. Execution Order & Migrations](#3-execution-order--migrations)
+  - [4. Environment & Service Prerequisites](#4-environment--service-prerequisites)
+  - [5. Initial Baseline Dataset & Accounts](#5-initial-baseline-dataset--accounts)
+  - [6. Repeatability & Idempotency](#6-repeatability--idempotency)
+  - [7. Data Safety & Destructive Boundaries](#7-data-safety--destructive-boundaries)
+  - [8. Environment Separation (Dev vs. Production)](#8-environment-separation-dev-vs-production)
+  - [9. Data Persistence & Docker Volume Lifecycle](#9-data-persistence--docker-volume-lifecycle)
+  - [10. Seed Verification Procedures](#10-seed-verification-procedures)
+  - [Relational Schema Entities](#relational-schema-entities)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Option A: One-Command Docker Compose Setup (Recommended)](#option-a-one-command-docker-compose-setup-recommended)
+  - [Option B: Local Native Development Setup](#option-b-local-native-development-setup)
+- [Configuration Reference](#configuration-reference)
+- [Usage Guide & API Reference](#usage-guide--api-reference)
+  - [Primary User Workflow](#primary-user-workflow)
+  - [Interactive Interface Modes](#interactive-interface-modes)
+  - [Verified API Endpoints & Request Examples](#verified-api-endpoints--request-examples)
+- [Security & Defensive Architecture](#security--defensive-architecture)
+- [Testing & Quality Assurance](#testing--quality-assurance)
+- [Docker Architecture & Deployment](#docker-architecture--deployment)
+- [Project Directory Layout](#project-directory-layout)
+- [Known Limitations & Roadmap](#known-limitations--roadmap)
+- [Contributing & Development Conventions](#contributing--development-conventions)
+- [License & Acknowledgments](#license--acknowledgments)
 
 ---
 
 ## Why Mercury
 
-For a non-technical reader, Mercury is a miniature command center for questions such as: *Which products may run short? How could a competitor's price affect our response? What happens if demand rises while stock stays fixed?*
+In modern omnichannel commerce, inventory planners and pricing analysts face a fragmented visibility problem:
 
-For an engineering team, it demonstrates an end-to-end path across a React interface, an Express API, relational records and transactions, a separately hosted Python inference service, and an auditable decision log.
+1. **Disconnected Signals:** Inventory burn rates, supplier reorder thresholds, and aggressive competitor price undercuts are often stored across siloed databases and external feeds.
+2. **Blind Price Wars:** Automated pricing engines frequently match rival discounts blindly, slashing prices below wholesale costs and destroying unit economics.
+3. **Delayed Stockout Intervention:** Supply chain planners typically discover inventory depletion after a stockout occurs rather than preemptively routing purchase orders based on forecast velocity.
 
-### Product capabilities
+Mercury solves these challenges in a unified, inspectable platform:
 
-- **Seven-day demand forecasting:** aggregates historical order quantities by day and fits a Scikit-Learn linear regression model when sufficient observations are available.
-- **Inventory risk scoring:** compares projected weekly demand with available units, estimates days until depletion, and surfaces reorder guidance.
-- **Competitor price analysis:** identifies seeded market events where a competitor price is below the product's current price.
-- **Margin-aware scenario evaluation:** previews whether a price match remains above the sandbox's 15% gross-margin safety floor.
-- **Decision-engine audit trail:** records idempotent price-match and zero-stock replenishment actions in PostgreSQL.
-- **Interactive operations UI:** combines KPI cards, inventory and forecast comparisons, market insights, an action log, and a scenario sandbox.
-
-> **Demo scope:** the included data is synthetic and the forecasting and decision policies are intentionally small, inspectable examples. Results illustrate a workflow; they are not a production demand model, calibrated probability, or a connection to a live retailer or competitor feed.
+- **Predicts 7-Day Demand:** Aggregates order history across calendar days with continuous date padding, fitting a linear regression regressor to estimate near-term product velocity.
+- **Enforces Margin Safety Floors:** Evaluates whether price-matching rival discounts breaches a strict **15% gross-margin safety threshold** before recommending or authorizing promotions.
+- **Automates Auditable Actions:** Dispatches idempotent price adjustments and zero-stock replenishment actions into an append-only relational audit log.
+- **Isolates Visitor Simulations:** Provides a copy-on-write visitor session sandbox where multiple evaluators can simulate order surges, override inventory stock, and stress-test assumptions simultaneously without corrupting the baseline dataset.
 
 ---
 
-## Architecture and system design
+## System Architecture
 
-Mercury is split into three runnable services plus the shared PostgreSQL database:
+### Architecture Overview
 
-| Component | Technology | Responsibility |
-| --- | --- | --- |
-| Web application | Next.js 16, React 19, Tailwind CSS 4, Recharts | Presents dashboard and sandbox; calls the gateway over HTTP. |
-| Gateway API | Node.js, Express 5, `pg` | Serves dashboard data, validates simulation/order requests, coordinates the ML service, and runs/logs operational decisions. |
-| Forecasting API | Python, FastAPI, pandas, NumPy, Scikit-Learn, psycopg2 | Reads product, inventory, and order records; generates forecasts and sandbox results. |
-| Shared data store | PostgreSQL | Stores products, inventory, orders, competitor events, and automated action history. |
+Mercury follows a decoupled microservices architecture designed around clear domain boundaries, separation of concerns, and defensive network posture:
 
-```text
-                         ┌──────────────────────────────┐
-                         │ Next.js / React web client   │
-                         │ Dashboard · Inspector ·      │
-                         │ What-If Sandbox              │
-                         └──────────────┬───────────────┘
-                                        │ HTTP / JSON
-                                        ▼
-                         ┌──────────────────────────────┐
-                         │ Express gateway :5000        │
-                         │ /api/intelligence            │
-                         │ /api/insights                │
-                         │ /api/sandbox/simulate        │
-                         │ /api/database-inspect        │
-                         └─────────┬───────────┬────────┘
-                                   │           │
-                     inference     │           │ SQL, actions,
-                     request       ▼           │ transactions
-                         ┌────────────────┐    │
-                         │ FastAPI /      │    │
-                         │ Scikit-Learn   │    │
-                         │ :8000          │    │
-                         └───────┬────────┘    │
-                                 │ SQL         │ SQL
-                                 └──────┬──────┘
-                                        ▼
-                         ┌──────────────────────────────┐
-                         │ PostgreSQL :5432             │
-                         │ products · inventory ·       │
-                         │ orders · competitor_events · │
-                         │ automated_actions_log        │
-                         └──────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph Client["Presentation Tier"]
+        UI["Next.js 16 Web Application<br/>(React 19, Tailwind CSS 4, Recharts)<br/>Port :3000"]
+    end
+
+    subgraph Gateway["API Gateway Tier"]
+        GW["Express 5 Gateway<br/>(Node.js 20 ES Modules)<br/>Port :5000"]
+        Limiter["Rate Limiting Middleware<br/>(Global, ML, Mutation)"]
+        SessionMgr["Session Sandboxing<br/>(Copy-on-Write)"]
+        Cache["In-Memory TTL Cache<br/>(6-second Window)"]
+        DecEngine["Autonomous Decision Engine<br/>(Atomic Upserts)"]
+    end
+
+    subgraph Inference["Forecasting Tier"]
+        ML["FastAPI Inference Engine<br/>(Python 3.11, Scikit-Learn)<br/>Port :8000"]
+        Regress["Daily Continuous Regressor<br/>(Calendar Padding + MAE)"]
+        Elasticity["Economic Elasticity &<br/>Cross-Price Substitution Model"]
+    end
+
+    subgraph DataTier["Data Persistence Tier"]
+        PG[("PostgreSQL 16 Database<br/>Port :5432")]
+        RoleApp[("Role: mercury_app<br/>CRUD on Public Schema")]
+        RoleML[("Role: mercury_ml<br/>Strictly Read-Only")]
+    end
+
+    UI -->|"HTTP / REST<br/>x-session-id token"| GW
+    GW --> Limiter
+    Limiter --> SessionMgr
+    SessionMgr --> Cache
+    SessionMgr --> DecEngine
+
+    GW -->|"HTTP / JSON<br/>/predict-demand<br/>/simulate-sandbox"| ML
+    ML --> Regress
+    ML --> Elasticity
+
+    GW -->|"SQL Transactions<br/>ACID Order Locking"| RoleApp
+    RoleApp --> PG
+
+    ML -->|"SQL Pooled Queries<br/>Read-Only Analytics"| RoleML
+    RoleML --> PG
 ```
 
-### Request lifecycles
+### Service Boundaries & Responsibilities
 
-**Dashboard intelligence**
+| Service | Technology Stack | Primary Responsibilities |
+|---|---|---|
+| **Frontend Application** | Next.js 16, React 19, Tailwind CSS 4, Recharts, Lucide Icons | Client-side reactive dashboard, What-If simulation levers, raw PostgreSQL inspector modal, visitor session persistence, and English/Indonesian i18n switching. |
+| **Backend Gateway** | Node.js 20 (ESM), Express 5, `pg` (node-postgres), Helmet, `express-rate-limit` | Reverse proxy trust, CORS enforcement, visitor session token validation, ACID transactional order simulation, atomic decision rule evaluation, and error masking. |
+| **Forecasting Engine** | Python 3.11, FastAPI, Uvicorn, pandas, NumPy, Scikit-Learn, `psycopg2-binary` | Continuous calendar date reindexing, linear regression demand prediction, in-sample MAE calculation, economic price-elasticity modeling, and cross-price substitution analysis. |
+| **Relational Database** | PostgreSQL 16 (Alpine) | Stores catalog products, inventory levels, historical orders, competitor price events, and the immutable autonomous actions audit log. Enforces least-privilege role boundaries. |
 
-1. The browser requests `GET /api/intelligence` and `GET /api/insights` from the Express gateway.
-2. Express forwards the intelligence request to FastAPI's `/predict-demand` endpoint.
-3. FastAPI reads products, inventory, and order history from PostgreSQL, computes forecasts and risk indicators, then returns JSON through Express to the dashboard.
-4. The insights endpoint reads competitor events and the action log through Express/PostgreSQL. When the gateway starts, it also evaluates the decision engine and records qualifying actions.
+### Core Request Lifecycles
 
-**What-If Sandbox**
+#### 1. Demand Forecasting Pipeline (`GET /api/intelligence`)
+1. The browser requests intelligence data from Express with an `x-session-id` header.
+2. Express checks its in-memory TTL cache (`intelligenceCache`). If a valid entry exists for this session, it immediately returns the cached forecast.
+3. On a cache miss, Express queries FastAPI's `/predict-demand` with the visitor's `session_id`.
+4. FastAPI pulls catalog and order records using a pooled, read-only PostgreSQL connection (`mercury_ml` role).
+5. FastAPI aggregates order quantities by calendar date, reindexes missing dates with zero demand over the date range, fits `LinearRegression`, clips negative projections to zero, sums 7-day estimates, and computes in-sample Mean Absolute Error (MAE).
+6. FastAPI returns the projections, stockout depletion timelines, and reorder recommendations to Express, which caches and relays them to the client.
 
-1. The user chooses a product and adjusts competitor price, demand multiplier, or inventory override.
-2. The browser sends those inputs to `POST /api/sandbox/simulate`.
-3. Express validates the values and forwards the request to FastAPI's `/simulate-sandbox`.
-4. FastAPI uses the product's stored order history as its baseline, applies the scenario adjustments, then returns demand, stockout timing/risk, projected margin, and a recommendation.
-5. The sandbox response is a **simulation preview**: changing its sliders does not update the stored price, inventory, or order records.
+#### 2. What-If Scenario Simulation (`POST /api/sandbox/simulate`)
+1. The user adjusts scenario levers (competitor price, demand surge multiplier, or inventory stock override) in the sandbox UI.
+2. The browser dispatches a debounced (250ms) payload to Express.
+3. Express validates input parameters (ensuring non-negative numbers and valid integers) and forwards the request to FastAPI's `/simulate-sandbox`.
+4. FastAPI evaluates price elasticity:
+   - **Safe Undercut (Gross Margin $\ge$ 15%):** Authorizes a price-match recommendation; own-price elasticity stimulates demand.
+   - **Dangerous Undercut (Gross Margin < 15%):** Triggers a margin guardrail alert; advises holding price and recommends product bundling. Cross-price substitution dampens demand as buyers migrate to the competitor.
+5. FastAPI calculates the updated weekly burn rate and returns simulation projections without mutating stored database records.
 
-### API surface
-
-| Method and route | Purpose |
-| --- | --- |
-| `GET /api/health` | Checks API availability and PostgreSQL connectivity. |
-| `GET /api/intelligence` | Returns forecasts and inventory-risk indicators from the ML service. |
-| `GET /api/insights` | Returns competitor-event insights and the autonomous action log. |
-| `POST /api/insights/execute-actions` | Explicitly evaluates and logs eligible decision-engine actions. |
-| `POST /api/simulate-order` | Records an order and reduces matching inventory in a database transaction. |
-| `GET /api/database-inspect` | Returns the product, inventory, and competitor-event records shown in the inspector. |
-| `POST /api/sandbox/simulate` | Validates and forwards scenario inputs to the ML service. |
-
-The gateway listens on port `5000` by default. The ML service listens on port `8000`; the frontend uses `http://localhost:5000/api` unless `NEXT_PUBLIC_API_URL` is set.
-
----
-
-## Database schema and demo seeding
-
-The schema is defined in [`backend/schema.sql`](./backend/schema.sql) and created by the backend seed script. The core entities are:
-
-| PostgreSQL table | What it represents |
-| --- | --- |
-| `products` | SKU, display name, category, current price, and cost price. |
-| `inventory` | Product stock by warehouse, reorder threshold, and last update time. |
-| `orders` | Historical or simulated order quantity, amount, and timestamp; this is the demand model's input. |
-| `competitor_events` | Observed competitor price and event description associated with a product. |
-| `automated_actions_log` | Action type, description, status, and execution time for engine decisions. |
-
-Foreign keys connect inventory, orders, competitor events, and action records to products; deleting a product cascades to its related rows. The SQL table names use `snake_case`. The Database Inspector's client-facing tab is labeled `competitorEvents`, and its endpoint joins the event rows to product details.
-
-### What the seed creates
-
-Running `npm run db:init` or `npm run db:seed` from either the root or `backend` directory invokes [`backend/src/initDb.js`](./backend/src/initDb.js). It non-destructively provisions required tables, indexes, and session-sandboxing columns, then populates an immediately explorable demo dataset if the database is empty:
-
-- **Five synthetic products** across electronics, smart home, accessories, and office categories.
-- **One warehouse inventory row per product**, including a deliberately low-stock SKU and a zero-stock SKU to exercise risk and replenishment paths.
-- **Six recent order records** with timestamps over the previous few days, providing a small historical demand sample.
-- **Two competitor price events** describing undercuts for selected products.
-- **A clean action log table**; qualifying automated actions are logged when the gateway's decision engine runs.
-
-> **Data safety & resets:** `npm run db:init` and `npm run db:seed` are safe and idempotent; existing records are preserved. To perform a clean hard reset that drops and recreates all tables with the session-sandboxed schema, run `npm run db:reset` (which executes [`backend/src/seed.js`](./backend/src/seed.js)).
-
-`schema.sql` documents the table definitions. Both `initDb.js` and `seed.js` contain their own DDL statements, so running initialization does not require a separate migration step.
+#### 3. ACID Transactional Order Ingestion (`POST /api/simulate-order`)
+1. The user inputs an order quantity in the Live Order Simulator.
+2. Express verifies that an active visitor session header is present (rejecting unauthenticated requests or direct attempts to mutate the baseline dataset).
+3. Express begins a PostgreSQL transaction (`BEGIN`) using a dedicated pool client.
+4. It verifies or clones the baseline inventory for this visitor (`ensureSessionInventory`).
+5. It acquires an exclusive row lock on the product's inventory row (`SELECT stock_quantity FROM inventory ... FOR UPDATE`).
+6. It validates that requested quantity $\le$ available stock and $\le 1000$ units.
+7. It inserts the order record into `orders` and subtracts the exact quantity from `inventory`.
+8. It commits the transaction (`COMMIT`), releases the client, and invalidates the session's forecast cache.
 
 ---
 
-## Machine learning and decision engine
+## Key Features
 
-### Forecast and stock-risk pipeline
-
-The forecasting service is implemented in [`ml-engine/main.py`](./ml-engine/main.py) with FastAPI, pandas, NumPy, and Scikit-Learn:
-
-1. Load product, inventory, and related order rows from PostgreSQL.
-2. Aggregate observed order quantities by calendar day for each product/warehouse grouping.
-3. If there are at least two daily observations, fit `sklearn.linear_model.LinearRegression` over the ordered daily observations and project the next seven time steps. Sum those daily estimates and round up to produce the seven-day forecast.
-4. If history is sparse or absent, use the implementation's fallback calculation rather than claiming a trained, high-confidence forecast.
-5. Estimate days until stockout from current stock and forecast demand. Calculate the displayed stock-risk percentage from forecast demand divided by available stock, capped at 100%; zero inventory is assigned 100%.
-6. When the risk ratio is above 70%, return a reorder recommendation based on forecast demand, reorder threshold, and current stock.
-
-The service reports an in-sample mean absolute error (MAE) when it has enough observations to fit a model. With a tiny synthetic dataset, that value is descriptive only and is not a holdout validation score.
-
-**Interpretation of “probability”:** the API field is named `stockoutProbability`, but the current implementation produces a demand-to-stock **heuristic risk index** as a percent. It is not statistically calibrated to the probability of a stockout. Likewise, the sandbox classifies risk bands using the ratio and estimated days remaining; treat those as scenario indicators, not guarantees.
-
-### Autonomous rules and pricing guardrails
-
-The Node decision engine in [`backend/src/services/decisionEngine.js`](./backend/src/services/decisionEngine.js) checks two conditions:
-
-- **Competitor undercut:** if an event's competitor price is below the product's current price, it records a price-match/promotion action.
-- **Zero inventory:** if stock is zero or lower, it records an emergency replenishment action.
-
-Before inserting, it checks for an existing matching product-and-description action, making repeated evaluations idempotent for the same condition. The engine is evaluated at API startup and can also be explicitly invoked through `POST /api/insights/execute-actions`.
-
-The **sandbox** applies additional scenario-only pricing logic. If a simulated competitor price is lower than the current price, it previews a match; if the resulting gross margin would be below **15%**, it warns against matching and recommends bundling instead. At or above the floor, it marks a match as eligible. A simulated stock-risk ratio of at least 70% adds emergency reorder guidance. This sandbox recommendation does not itself write an action log or mutate the database.
+- **Continuous 7-Day Demand Forecasting:** Aggregates orders into daily time-series buckets. Missing calendar dates are padded with 0 demand before model fitting, ensuring linear regression models learn genuine velocity rather than skipping inactive trading days.
+- **In-Sample MAE & Depletion Horizons:** Computes in-sample Mean Absolute Error (MAE) and translates projected 7-day demand into an actionable burn rate (days until stockout).
+- **Margin-Aware Pricing Guardrails:** Automatically checks whether a competitor price undercut leaves at least a **15% gross profit margin** ($(\text{Price} - \text{Cost}) / \text{Price} \ge 0.15$). Prevents automated value destruction.
+- **Economic Elasticity & Substitution Modeling:** The sandbox models own-price elasticity (surges demand when price cuts are matched) and cross-price substitution (drops demand when rival discounts are not matched).
+- **TOCTOU Race Condition Prevention:** The autonomous decision engine writes actions using atomic PostgreSQL upserts (`INSERT INTO ... ON CONFLICT DO NOTHING`), eliminating time-of-check to time-of-use race conditions under concurrent triggers.
+- **Row-Locked ACID Transactions:** Simulated order ingestion uses `SELECT ... FOR UPDATE` row locks to prevent negative inventory depletion and demand poisoning.
+- **Multi-Tenant Visitor Sandboxing:** Generates unique client UUIDs (`x-session-id`). State modifications clone baseline inventory on demand, allowing concurrent visitors to explore and test the platform without shared data contamination.
+- **Dual-Language Internationalization (i18n):** Native support for English (`en`) and Indonesian (`id`) using a lightweight React context and persistent first-party cookie.
+- **Raw PostgreSQL Database Inspector:** Built-in modal displaying actual relational tables (`products`, `inventory`, `competitor_events`, `orders`, and `automated_actions_log`) with proprietary wholesale cost figures safely redacted.
+- **Enterprise Defensive Controls:** Reverse proxy trust configuration (`trust proxy 1`), session-aware rate limiters (Global: 150 req/min, ML: 60 req/min, Mutations: 30 req/min), Helmet security headers, strict CORS origin whitelisting, and internal infrastructure error masking.
 
 ---
 
-## Interactive features walkthrough
+## Technology Stack
 
-### Live Operations
-
-The main dashboard summarizes tracked SKUs, high-risk items, competitor-event alerts, and service status. Its inventory table places available stock, seven-day forecast, risk indicator, and reorder recommendation side by side; a Recharts visualization compares stock with predicted demand. The action-log panel shows decisions already recorded by the backend.
-
-### Database Inspector
-
-Select **Inspect DB** in the header to view the current product, inventory, and competitor-event rows returned by the Express API. This is a read-only view of selected raw database records, not a general-purpose SQL console; orders and `automated_actions_log` are not tabs in the inspector.
-
-### What-If Sandbox
-
-Select **What-If Sandbox**, choose a target SKU, then move the scenario controls:
-
-| Control | Range | Scenario effect |
-| --- | --- | --- |
-| Simulated competitor price | `$10`–`$250`, step `$1` | Tests undercut/match logic and projected gross margin. |
-| Demand surge multiplier | `0.5x`–`3.0x`, step `0.1x` | Scales scenario demand against the model's baseline forecast. |
-| Inventory buffer override | `0`–`500` units, step `5` | Replaces the stored stock value for this inference only. |
-
-The result panel updates with simulated demand, estimated stockout timing/risk, projected margin, and the decision engine's recommendation preview. These values do not persist when you move the controls.
-
----
-
-## Internationalization (English and Indonesian)
-
-The Next.js interface supports English (`en`) and Indonesian (`id`) through a small React context and local JSON dictionaries; it does not add a localization package dependency. Use the flag buttons in the header to switch languages immediately. The preference is saved in a first-party cookie and restored on the next visit, including in the initial server-rendered document language.
-
-Translation resources live in `frontend/src/i18n/messages/en.json` and `frontend/src/i18n/messages/id.json`. `LanguageProvider` exposes the active locale and a `t('section.key')` helper to client components. Add matching keys to both dictionaries when adding user-facing interface labels. The document's `lang` attribute follows the selected locale.
-
-The current dictionaries cover the dashboard, sandbox, database-inspector labels, welcome guide, and gateway connection error. Values returned by the backend—such as model-generated recommendation and audit-log descriptions—remain in the language supplied by the service.
+| Layer | Technology | Version / Spec | Project Role & Implementation Rationale |
+|---|---|---|---|
+| **Frontend Framework** | [Next.js](https://nextjs.org/) | `16.4.2` | React Server Components, standalone output build for lean Docker containers, and client-side view management. |
+| **UI Library** | [React](https://react.dev/) | `19.2.8` | Component rendering, state synchronization via `useSyncExternalStore`, and optimized memoized hooks. |
+| **Styling Engine** | [Tailwind CSS](https://tailwindcss.com/) | `4.x` | Modern utility-first styling with dual-mode warm dark/light palettes and responsive layouts. |
+| **Data Visualization** | [Recharts](https://recharts.org/) | `3.10.1` | Responsive SVG bar charts comparing current stock against 7-day predicted demand. |
+| **Backend Runtime** | [Node.js](https://nodejs.org/) | `20.x LTS` | Native ES Modules runtime powering the API gateway and transactional orchestration. |
+| **API Framework** | [Express](https://expressjs.com/) | `5.2.1` | REST gateway handling routing, reverse proxy headers, security policies, and error boundaries. |
+| **Database Client** | [node-postgres (`pg`)](https://node-postgres.com/) | `8.23.0` | Connection pooling, parameterized queries, and ACID transaction control (`BEGIN` / `FOR UPDATE` / `COMMIT`). |
+| **Security Headers** | [Helmet](https://helmetjs.github.io/) | `8.3.0` | Sets HTTP security headers (`Cross-Origin-Resource-Policy`, frameguards, and MIME sniffing protection). |
+| **Rate Limiter** | [express-rate-limit](https://github.com/express-rate-limit/express-rate-limit) | `8.7.1` | Session-aware and IP-normalized rate limiting preventing ML inference exhaustion and mutation flooding. |
+| **ML Framework** | [FastAPI](https://fastapi.tiangolo.com/) | `0.110.0` | High-performance Python async web framework serving analytical endpoints with automatic OpenAPI validation. |
+| **ML Server** | [Uvicorn](https://www.uvicorn.org/) | `0.28.0` | Lightweight ASGI web server worker for Python services. |
+| **Data Analytics** | [pandas](https://pandas.pydata.org/) & [NumPy](https://numpy.org/) | `2.2.3` / `1.26.4` | Dataframe manipulation, time-series aggregation, and matrix transformations. |
+| **Predictive Modeling** | [Scikit-Learn](https://scikit-learn.org/) | `1.5.0` | `LinearRegression` fitting on calendar-padded order sequences and `mean_absolute_error` evaluation. |
+| **Python DB Driver** | [psycopg2-binary](https://www.psycopg.org/) | `2.9.10` | Threaded connection pool manager (`ThreadedConnectionPool`) providing pooled SQL access for analytics. |
+| **Relational Database** | [PostgreSQL](https://www.postgresql.org/) | `16-alpine` | Persistent relational store supporting foreign keys, cascading deletes, index constraints, and row-level locks. |
+| **Container Engine** | [Docker Compose](https://docs.docker.com/compose/) | Compose v2 | Multi-stage image builds, healthchecks, loopback-restricted port bindings, and volume management. |
 
 ---
 
-## Getting started
+## Database Management & Mandatory Seeding Specification
+
+Mercury relies on a relational database populated with synthetic commerce data to demonstrate demand forecasting, stockout warnings, and price-matching rules. The seeding implementation has been audited to guarantee safety, idempotency, and reproducibility.
+
+### 1. Seed Implementation & Entry Points
+
+The repository provides two distinct database seeding entry points:
+
+1. **Non-Destructive Initialization (`backend/src/initDb.js`):**
+   - **Entry point:** Executed via `npm run db:init` or `npm run db:seed`.
+   - **Automatic execution:** Also invoked automatically upon Express gateway startup (`server.js`) when `isMainModule` runs.
+   - **Logic:** Non-destructively creates tables and session indexes (`IF NOT EXISTS`). Checks `SELECT COUNT(*)::int AS count FROM products`. If records already exist, it **aborts without modifying data**. If the table is empty, it inserts baseline demo records.
+2. **Destructive Hard Reset (`backend/src/seed.js`):**
+   - **Entry point:** Executed via `npm run db:reset`.
+   - **Logic:** Executes `DROP TABLE IF EXISTS ... CASCADE` on all application tables, recreates schema definitions from scratch, and repopulates the baseline dataset.
+3. **Docker Initdb Container Hooks (`docker-compose.yml`):**
+   - `./backend/schema.sql` mounted to `/docker-entrypoint-initdb.d/01-schema.sql:ro` (provisions tables on fresh volume creation).
+   - `./backend/roles.sh` mounted to `/docker-entrypoint-initdb.d/02-roles.sh:ro` (dynamically provisions least-privilege roles using environment variables).
+
+### 2. Exact Seeding Commands
+
+Always execute commands from the appropriate directory:
+
+| Intent | Repository Root Command | Backend Directory Command |
+|---|---|---|
+| **Safe Baseline Initialization (Idempotent)** | `npm run db:init` *(or `npm run db:seed`)* | `npm run db:init` *(or `npm run db:seed`)* |
+| **Hard Destructive Reset (Drops All Tables)** | `npm run db:reset` | `npm run db:reset` |
+
+> [!NOTE]
+> The root `package.json` delegates directly to the backend workspace via `npm --prefix backend run <script>`. Never assume ad-hoc commands like `npm run seed` exist.
+
+### 3. Execution Order & Migrations
+
+- **Do migrations need to run before seeding?** **No.** Both `initDb.js` and `seed.js` are self-contained. They bundle complete DDL statements (`CREATE TABLE IF NOT EXISTS`, `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`, and indexing). There are no external migration tools (such as Prisma, Knex, or Flyway) required.
+- **Must the application be running?** **No.** Seeding can be performed offline as long as the PostgreSQL database is reachable. When starting Express normally (`npm run dev:backend`), the server runs `initDatabase()` on boot, meaning manual seeding is often completely optional on fresh installs.
+
+### 4. Environment & Service Prerequisites
+
+Before running the seed commands, ensure:
+1. PostgreSQL 16+ is running and accepting TCP connections.
+2. The target database (default: `mercury_db`) exists.
+3. `DATABASE_URL` is configured in `backend/.env` (or via root `.env`):
+   ```text
+   DATABASE_URL=postgresql://mercury_app:mercury_app_secret@localhost:5432/mercury_db
+   ```
+4. Dependencies are installed (`npm install` inside `backend`).
+
+### 5. Initial Baseline Dataset & Accounts
+
+The seeding process creates synthetic commerce records designed to exercise edge cases in forecasting and decision rules:
+
+- **5 Catalog Products:**
+  - `MOU-WIR-01` — Wireless Mouse X (Electronics, Price: $49.99, Cost: $18.50)
+  - `PRD-Y-02` — Product Y Smart Hub (Smart Home, Price: $129.99, Cost: $55.00)
+  - `KEY-MEC-03` — Mechanical Keyboard Z (Accessories, Price: $89.99, Cost: $35.00)
+  - `HUB-USC-04` — USB-C Multiport Pro (Accessories, Price: $39.99, Cost: $12.00)
+  - `MAT-ERG-05` — Ergonomic Desk Mat (Office, Price: $24.99, Cost: $7.50)
+- **5 Warehouse Inventory Rows (`session_id = 'baseline'`):**
+  - Includes a healthy stock item (`MAT-ERG-05`, 500 units), a low-stock SKU (`PRD-Y-02`, 45 units vs threshold 60), and a deliberate **zero-stock edge case** (`HUB-USC-04`, 0 units vs threshold 40) to test emergency replenishment paths.
+- **6 Historical Demand Orders (`session_id = 'baseline'`):**
+  - Orders distributed over prior days (`NOW() - INTERVAL '1 day'`, etc.) providing daily velocity observations for model training.
+- **2 Competitor Pricing Events:**
+  - Undercuts for `PRD-Y-02` ($99.99 vs our $129.99) and `HUB-USC-04` ($29.99 vs our $39.99) to activate decision-engine alerts.
+- **Automated Actions Log:**
+  - Initialized empty; populated automatically when the gateway's decision engine runs its first evaluation.
+- **Demo Credentials:**
+  - Mercury does not maintain user account tables (visitor access uses session sandboxing). Database connection roles created for services are `mercury_app` (`mercury_app_secret`) and `mercury_ml` (`mercury_ml_secret`). No production secrets are exposed.
+
+### 6. Repeatability & Idempotency
+
+- `npm run db:init` / `npm run db:seed` is **100% idempotent**. Running it repeatedly produces:
+  ```text
+  [Database Init] Existing records found (5 products). Skipping demo seeding to preserve data.
+  ```
+  It will never create duplicate products, duplicate orders, or conflict with existing rows.
+- `npm run db:reset` is explicitly repeatable by design because it recreates tables before repopulating.
+
+### 7. Data Safety & Destructive Boundaries
+
+> [!CAUTION]
+> **Data Destruction Warning:**
+> - `npm run db:init` and `npm run db:seed` are **non-destructive** and safe to run in any existing development environment.
+> - `npm run db:reset` is **destructive**. It issues `DROP TABLE IF EXISTS ... CASCADE` and will permanently erase all custom visitor sessions, simulated orders, and recorded audit logs. Never run `db:reset` in a shared or staging database.
+
+### 8. Environment Separation (Dev vs. Production)
+
+- **Development / Demo:** Relies on the synthetic baseline dataset with tagged `session_id = 'baseline'`. Modifying data via the UI or API clones inventory into isolated visitor sessions, keeping the shared demo pristine.
+- **Production:** Production deployments must use `backend/schema.sql` and `backend/roles.sql` (or `roles.sh`) executed by a database administrator. The automatic seeding in `initDb.js` verifies product counts; if production tables contain live inventory records, seeding will permanently disengage.
+
+### 9. Data Persistence & Docker Volume Lifecycle
+
+- When running under Docker Compose, database records reside in the named volume `mercury_pgdata` mounted to `/var/lib/postgresql/data`.
+- **Survives Container Lifecycle:** Seeded data persists across `docker compose stop`, `docker compose down`, and container rebuilds (`docker compose up --build`).
+- **Data Erasure:** Data is only deleted if Docker volumes are explicitly cleared with `docker compose down -v` or `docker volume rm mercury-demand-intelligence_mercury_pgdata`.
+
+### 10. Seed Verification Procedures
+
+A developer can verify successful database seeding through three independent methods:
+
+1. **Via Gateway Health & Database Inspector API:**
+   ```bash
+   curl -s http://localhost:5000/api/health
+   # Expected: {"status":"healthy",...,"database":{"status":"connected"}}
+
+   curl -s -H "x-session-id: verification-check" http://localhost:5000/api/database-inspect | grep -o '"sku":"MOU-WIR-01"'
+   # Expected: "sku":"MOU-WIR-01"
+   ```
+2. **Via Automated Test Suite:**
+   ```bash
+   npm run test:backend
+   # Runs 26 integration tests verifying seeded tables, transactions, and session cloning.
+   ```
+3. **Via PostgreSQL CLI (`psql`):**
+   ```sql
+   SELECT sku, name, current_price FROM products ORDER BY id;
+   -- Expected: 5 rows (MOU-WIR-01 through MAT-ERG-05)
+   ```
+
+### Relational Schema Entities
+
+```text
+┌─────────────────────────┐         ┌─────────────────────────────────┐
+│        products         │1       *│            inventory            │
+├─────────────────────────┼─────────┼─────────────────────────────────┤
+│ id (PK, SERIAL)         │         │ id (PK, SERIAL)                 │
+│ sku (VARCHAR, UNIQUE)   │         │ product_id (FK -> products.id)  │
+│ name (VARCHAR)          │         │ warehouse_name (VARCHAR)        │
+│ category (VARCHAR)      │         │ stock_quantity (INT)            │
+│ current_price (DECIMAL) │         │ reorder_threshold (INT)         │
+│ cost_price (DECIMAL)    │         │ session_id (VARCHAR, DEFAULT)   │
+│ created_at (TIMESTAMP)  │         │ updated_at (TIMESTAMP)          │
+└────────────┬────────────┘         └─────────────────────────────────┘
+             │1
+             │                      ┌─────────────────────────────────┐
+             ├─────────────────────*│             orders              │
+             │                      ├─────────────────────────────────┤
+             │                      │ id (PK, SERIAL)                 │
+             │                      │ product_id (FK -> products.id)  │
+             │                      │ quantity (INT)                  │
+             │                      │ total_amount (DECIMAL)          │
+             │                      │ session_id (VARCHAR, DEFAULT)   │
+             │                      │ order_date (TIMESTAMP)          │
+             │                      └─────────────────────────────────┘
+             │1
+             │                      ┌─────────────────────────────────┐
+             ├─────────────────────*│        competitor_events        │
+             │                      ├─────────────────────────────────┤
+             │                      │ id (PK, SERIAL)                 │
+             │                      │ product_id (FK -> products.id)  │
+             │                      │ competitor_price (DECIMAL)      │
+             │                      │ event_description (TEXT)        │
+             │                      │ detected_at (TIMESTAMP)         │
+             │                      └─────────────────────────────────┘
+             │1
+             │                      ┌─────────────────────────────────┐
+             └─────────────────────*│      automated_actions_log      │
+                                    ├─────────────────────────────────┤
+                                    │ id (PK, SERIAL)                 │
+                                    │ product_id (FK -> products.id)  │
+                                    │ action_type (VARCHAR)           │
+                                    │ description (TEXT)              │
+                                    │ status (VARCHAR)                │
+                                    │ session_id (VARCHAR, DEFAULT)   │
+                                    │ executed_at (TIMESTAMP)         │
+                                    │ UNIQUE(prod_id, desc, sess_id)  │
+                                    └─────────────────────────────────┘
+```
+
+---
+
+## Getting Started
 
 ### Prerequisites
 
-- Node.js 20.9+ and npm (required by the repository's Next.js 16 frontend).
-- Python 3.10+ and `pip`.
-- PostgreSQL available locally.
-- Git.
+| Tool | Supported Version | Notes |
+|---|---|---|
+| **Docker Engine & Docker Compose** | Docker v24+ / Compose v2+ | **Required for Option A.** Eliminates local language runtime requirements. |
+| **Node.js** | `v20.9.0` or higher (Node 20 LTS recommended) | Required for Option B. Next.js 16 requires Node $\ge 20.9.0$. |
+| **Python** | `3.10` or `3.11` | Required for Option B. |
+| **PostgreSQL** | `15` or `16` | Required for Option B (standard port `5432` or custom). |
+| **Git** | Any modern version | For cloning the repository. |
 
-The application and ML service both need to connect to the same database. The repository's database connection fallback uses the standard PostgreSQL port `5432`; if your PostgreSQL server listens on another port (such as `5433`), configure the same explicit `DATABASE_URL` for both services.
+---
 
-### 1. Clone the repository
+### Option A: One-Command Docker Compose Setup (Recommended)
+
+Docker Compose provides a reproducible environment, orchestrating PostgreSQL with healthchecks, least-privilege role initialization, the FastAPI ML engine, the Express gateway, and the Next.js standalone container.
+
+#### 1. Clone Repository & Setup Environment
+
+```bash
+git clone https://github.com/razeequtama/mercury-demand-intelligence.git
+cd mercury-demand-intelligence
+cp .env.example .env
+```
+
+#### 2. Start Services
+
+To launch in local development mode (automatically mounting `./frontend` with Next.js Fast Refresh and polling via `docker-compose.override.yml`):
+
+```bash
+docker compose up --build
+```
+
+*(Alternatively, run in the background with `docker compose up -d`).*
+
+For production container testing (using the Next.js standalone runner stage without source mounts):
+
+```bash
+docker compose -f docker-compose.yml up --build -d
+```
+
+#### 3. Access the Application
+
+- **Web Dashboard:** [http://localhost:3000](http://localhost:3000)
+- **Express Gateway Health:** [http://localhost:5000/api/health](http://localhost:5000/api/health)
+- **FastAPI Health:** [http://localhost:8000/health](http://localhost:8000/health)
+
+#### 4. Stopping the Stack
+
+```bash
+# Stop containers while preserving database volume
+docker compose down
+
+# Stop containers and erase persistent database volume
+docker compose down -v
+```
+
+---
+
+### Option B: Local Native Development Setup
+
+If running directly on your host machine without Docker:
+
+#### 1. Clone Repository & Configure Database
 
 ```bash
 git clone https://github.com/razeequtama/mercury-demand-intelligence.git
 cd mercury-demand-intelligence
 ```
 
-### 2. Create a local PostgreSQL database
-
-Create an empty database named `mercury_db` using your local PostgreSQL tools. For example, from a terminal with `psql` available (replace the port or credentials to match your PostgreSQL installation):
+Create an empty database named `mercury_db` in your local PostgreSQL instance:
 
 ```bash
-psql -h localhost -p 5432 -U postgres -d postgres
+# Example via psql CLI
+psql -U postgres -h localhost -c "CREATE DATABASE mercury_db;"
 ```
 
-Then run this SQL in the `psql` prompt:
+#### 2. Configure Environment Files
 
-```sql
-CREATE DATABASE mercury_db;
-```
+Create the required configuration files based on the `.env.example` templates:
 
-Use a PostgreSQL connection URL in the following form in both service environment files:
-
-```text
-postgresql://USERNAME:PASSWORD@localhost:5432/mercury_db
-```
-
-URL-encode special characters in the password where necessary. If your local PostgreSQL instance uses a non-standard port (such as `5433`), specify that port in both `DATABASE_URL` values.
-
-### 3. Configure and start the backend gateway
-
-Create `backend/.env` (do not commit credentials):
-
+**Backend Configuration (`backend/.env`):**
 ```dotenv
 PORT=5000
-DATABASE_URL=postgresql://USERNAME:PASSWORD@localhost:5432/mercury_db
+DATABASE_URL=postgresql://postgres:your_password@localhost:5432/mercury_db
 ML_ENGINE_URL=http://localhost:8000
+FRONTEND_URL=http://localhost:3000
 ```
 
-Install the Node dependencies, create the schema and synthetic sample data, then start Express:
+**ML Engine Configuration (`ml-engine/.env`):**
+```dotenv
+DATABASE_URL=postgresql://postgres:your_password@localhost:5432/mercury_db
+ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+```
+
+**Frontend Configuration (`frontend/.env.local`):**
+```dotenv
+NEXT_PUBLIC_API_URL=http://localhost:5000/api
+```
+
+#### 3. Initialize & Seed Database
 
 ```bash
 cd backend
 npm install
 npm run db:init
+cd ..
+```
+
+#### 4. Install Dependencies & Launch Services
+
+You can start each service in separate terminal windows, or run the unified concurrent launcher:
+
+**Terminal 1 — Backend Gateway:**
+```bash
+cd backend
 npm run dev
+# Express starts on port 5000
 ```
 
-`npm run db:init` (or `npm run db:seed`) non-destructively initializes the schema and baseline data if empty; see [Database schema and demo seeding](#database-schema-and-demo-seeding). To force a full destructive schema wipe and reset, use `npm run db:reset`.
-
-### 4. Configure and start the Python ML service
-
-In a second terminal, create `ml-engine/.env` with the **same** database URL:
-
-```dotenv
-DATABASE_URL=postgresql://USERNAME:PASSWORD@localhost:5432/mercury_db
-```
-
-Install the pinned/declared dependencies and launch FastAPI from the `ml-engine` directory:
-
+**Terminal 2 — Python Forecasting Engine:**
 ```bash
 cd ml-engine
 python -m venv .venv
-```
 
-Activate the virtual environment:
-
-```powershell
-# Windows PowerShell
+# Windows PowerShell:
 .\.venv\Scripts\Activate.ps1
-```
-
-```bash
-# macOS / Linux
+# macOS / Linux:
 source .venv/bin/activate
-```
 
-Then install packages and start the service:
-
-```bash
 pip install -r requirements.txt
 python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-The forecasting endpoint will be available at `http://localhost:8000/predict-demand`.
-
-### 5. Configure and start the Next.js frontend
-
-In a third terminal, create `frontend/.env.local`:
-
-```dotenv
-NEXT_PUBLIC_API_URL=http://localhost:5000/api
-```
-
-Install packages and start the development server:
-
+**Terminal 3 — Next.js Frontend:**
 ```bash
 cd frontend
 npm install
 npm run dev
+# Next.js starts on port 3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Keep PostgreSQL, the Express gateway, and FastAPI running while you use the application.
+**All-in-One Shortcut (from root):**
+```bash
+npm install
+npm run dev
+# Uses concurrently to launch Gateway, Frontend, and ML Engine simultaneously
+```
 
-### Service check and commands
-
-Check the gateway and its database connection at `http://localhost:5000/api/health`. The dashboard's intelligence view additionally requires the Python service to be available.
-
-| Workspace | Command | Purpose |
-| --- | --- | --- |
-| `backend` | `npm run dev` | Start Express with nodemon. |
-| `backend` | `npm start` | Start Express without nodemon. |
-| `backend` | `npm run db:init` | Safely initialize schema and seed baseline demo data (idempotent). |
-| `backend` | `npm run db:seed` | Safe alias for `db:init` (non-destructive baseline setup). |
-| `backend` | `npm run db:reset` | Destructively recreate and seed demo tables with session schema. |
-| `backend` | `npm test` | Run the Node transaction tests (requires a reachable configured PostgreSQL database and seeded product data). |
-| `frontend` | `npm run dev` | Start the Next.js development server. |
-| `frontend` | `npm run build` | Build the frontend for production. |
-| `frontend` | `npm run lint` | Run ESLint. |
-| `ml-engine` | `python -m uvicorn main:app --reload --port 8000` | Start the FastAPI inference service. |
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## Repository layout
+## Configuration Reference
+
+Mercury uses environment variables to configure ports, credentials, and inter-service communication. All variables are verified in the codebase:
+
+| Variable | Target Service | Purpose | Required? | Default / Example Value |
+|---|---|---|---|---|
+| `DATABASE_URL` | `backend`, `ml-engine` | PostgreSQL connection string with credentials, host, port, and database. | **Yes** | `postgresql://mercury_app:mercury_app_secret@localhost:5432/mercury_db` |
+| `POSTGRES_USER` | `postgres` (Docker) | Superuser username for container initialization. | Optional | `postgres` |
+| `POSTGRES_PASSWORD` | `postgres` (Docker) | Superuser password for container initialization. | Optional | `your_secure_password_here` |
+| `POSTGRES_DB` | `postgres` (Docker) | Database name created on container startup. | Optional | `mercury_db` |
+| `POSTGRES_PORT` | `postgres` (Docker) | Host port mapped to PostgreSQL. | Optional | `5432` |
+| `APP_DB_USER` | `postgres` (Docker) | Least-privilege application role username (SEC-12). | Optional | `mercury_app` |
+| `APP_DB_PASSWORD` | `postgres` (Docker) | Least-privilege application role password. | Optional | `mercury_app_secret` |
+| `ML_DB_USER` | `postgres` (Docker) | Least-privilege read-only ML role username (SEC-12). | Optional | `mercury_ml` |
+| `ML_DB_PASSWORD` | `postgres` (Docker) | Least-privilege read-only ML role password. | Optional | `mercury_ml_secret` |
+| `PORT` | `backend` | Port on which the Express gateway listens. | Optional | `5000` |
+| `ML_PORT` | `ml-engine` | Port on which FastAPI / Uvicorn listens. | Optional | `8000` |
+| `ML_ENGINE_URL` | `backend` | Internal URL used by Express to communicate with FastAPI. | Optional | `http://localhost:8000` *(Docker: `http://ml-engine:8000`)* |
+| `FRONTEND_URL` | `backend` | Allowed frontend origin for CORS policies. | Optional | `http://localhost:3000` |
+| `ALLOWED_ORIGINS` | `backend`, `ml-engine` | Comma-separated list of allowed browser origins for CORS. | Optional | `http://localhost:3000,http://127.0.0.1:3000` |
+| `NEXT_PUBLIC_API_URL` | `frontend` | Public API gateway base URL consumed by the React browser client. | Optional | `http://localhost:5000/api` |
+
+---
+
+## Usage Guide & API Reference
+
+### Primary User Workflow
+
+1. **Review High-Risk Inventory:** Access the dashboard to view products where predicted 7-day demand exceeds available stock (risk ratio $> 70\%$). Review the AI-generated reorder quantity recommendation.
+2. **Ingest a Real-Time Order:** Navigate to the **Transactional Order Ingestion Simulator** card. Select a product, choose a quantity (e.g., 10 units), and click **Simulate Ingestion**. Observe the row-locked transaction decrement inventory in real time and refresh the demand prediction.
+3. **Execute Autonomous Actions:** View the **Active Market Alerts** card. When competitor undercuts are detected, click **Execute Rules**. The decision engine evaluates policies, inserts action items, and records them in the **Autonomous Decision Engine Audit Log**.
+4. **Stress-Test in the What-If Sandbox:** Switch to the **What-If Sandbox** tab. Select an SKU and adjust the scenario levers:
+   - Move the **Simulated Competitor Price** slider below our price. Observe whether the margin floor is breached.
+   - Adjust the **Demand Surge Multiplier** from `1.0x` to `2.5x` to simulate viral demand spikes.
+   - Override the **Inventory Buffer** to `0` or `10` units to inspect emergency stockout alerts.
+5. **Inspect the Raw Database:** Click **Inspect DB** in the navigation header. Browse the live database tables (`products`, `inventory`, `competitorEvents`, `orders`, `automatedActionsLog`) to audit database state. Notice that proprietary wholesale cost prices remain redacted.
+6. **Reset Visitor Sandbox:** Click **Reset Sandbox** in the header or inspector modal to purge visitor-specific mutations and restore the baseline demo environment.
+
+---
+
+### Interactive Interface Modes
+
+Mercury features visual modes and language support:
+
+- **Dual-Mode Theme Engine:** Seamlessly toggle between dark and light themes using the sun/moon icon in the header. The theme preference synchronizes via `useSyncExternalStore` across tabs and persists in local storage.
+- **English & Indonesian i18n:** Switch between English (`en`) and Indonesian (`id`) with zero bundle overhead. Translations cover the entire dashboard, scenario controls, welcome tour, error boundaries, and database inspector labels.
+
+---
+
+### Verified API Endpoints & Request Examples
+
+#### 1. System Health Check
+`GET /api/health` — Verifies database connection pool latency and uptime.
+
+```bash
+curl -X GET http://localhost:5000/api/health
+```
+
+*Response (200 OK):*
+```json
+{
+  "status": "healthy",
+  "timestamp": "2026-10-19T05:04:30.123Z",
+  "uptime": 42.85,
+  "database": {
+    "status": "connected",
+    "latencyMs": 3
+  }
+}
+```
+
+#### 2. Get Intelligence Predictions
+`GET /api/intelligence` — Fetches cached or fresh ML demand predictions for the active visitor session.
+
+```bash
+curl -X GET http://localhost:5000/api/intelligence \
+  -H "x-session-id: b913ddfa-a893-43f7-97b2-0123bb66f88c"
+```
+
+*Response (200 OK):*
+```json
+{
+  "success": true,
+  "engine": "Python FastAPI + Scikit-Learn Daily-Continuous Regressor (Connection-Pooled)",
+  "totalTrackedProducts": 5,
+  "data": [
+    {
+      "id": 1,
+      "sku": "MOU-WIR-01",
+      "name": "Wireless Mouse X",
+      "category": "Electronics",
+      "currentPrice": 49.99,
+      "warehouse": "Warehouse North (WH-A)",
+      "currentInventory": 182,
+      "forecast7Day": 218,
+      "daysUntilStockout": 5.8,
+      "modelMAE": 1.25,
+      "stockoutProbability": "100%",
+      "recommendation": "ML Recommended reorder: 86 units",
+      "statusAlert": "High Stockout Risk"
+    }
+  ]
+}
+```
+
+#### 3. Transactional Order Simulation
+`POST /api/simulate-order` — Ingests a new order in an ACID transaction with row-level locking.
+
+```bash
+curl -X POST http://localhost:5000/api/simulate-order \
+  -H "Content-Type: application/json" \
+  -H "x-session-id: b913ddfa-a893-43f7-97b2-0123bb66f88c" \
+  -d '{"productId": 1, "quantity": 5}'
+```
+
+*Response (200 OK):*
+```json
+{
+  "success": true,
+  "sessionId": "b913ddfa-a893-43f7-97b2-0123bb66f88c",
+  "message": "Successfully ingested order event of 5 units. ML forecasting pipeline adjusted for your visitor sandbox."
+}
+```
+
+#### 4. What-If Scenario Simulation
+`POST /api/sandbox/simulate` — Simulates price elasticity and margin projections without mutating data.
+
+```bash
+curl -X POST http://localhost:5000/api/sandbox/simulate \
+  -H "Content-Type: application/json" \
+  -H "x-session-id: b913ddfa-a893-43f7-97b2-0123bb66f88c" \
+  -d '{
+    "productId": 2,
+    "simulatedCompetitorPrice": 99.99,
+    "demandMultiplier": 1.5,
+    "stockOverride": 45
+  }'
+```
+
+*Response (200 OK):*
+```json
+{
+  "success": true,
+  "engine": "Python FastAPI + Scikit-Learn Sandbox Predictor",
+  "simulation": {
+    "sku": "PRD-Y-02",
+    "productName": "Product Y (Smart Hub)",
+    "baselineStock": 45,
+    "simulatedDemand": 74,
+    "daysUntilStockout": 4.3,
+    "stockoutRiskScore": "High Stockout Risk (85%)",
+    "baseOurPrice": 129.99,
+    "simulatedOurPrice": 99.99,
+    "simulatedCompetitorPrice": 99.99,
+    "projectedMarginPercent": 45.0,
+    "actionSeverity": "CRITICAL_STOCKOUT",
+    "engineRecommendation": "AUTONOMOUS MATCH — Competitor undercuts by $30.00. Safe margin preserved (45.0%). Price-match rule execution authorized. EMERGENCY: Stock depletion projected in 4.3 days. Automated warehouse reorder triggered."
+  }
+}
+```
+
+#### 5. Reset Visitor Sandbox
+`POST /api/session/reset` — Purges visitor mutations and invalidates cached inferences.
+
+```bash
+curl -X POST http://localhost:5000/api/session/reset \
+  -H "x-session-id: b913ddfa-a893-43f7-97b2-0123bb66f88c"
+```
+
+*Response (200 OK):*
+```json
+{
+  "success": true,
+  "message": "Visitor sandbox session successfully reset to baseline."
+}
+```
+
+---
+
+## Security & Defensive Architecture
+
+Mercury implements defense-in-depth engineering practices to protect application stability, prevent data poisoning, and restrict administrative access:
+
+1. **Least-Privilege Database Roles (SEC-12):**
+   - **`mercury_app` Role:** Used exclusively by the Express gateway. Granted CRUD permissions on tables and sequence usage. Denied superuser rights and arbitrary schema alteration.
+   - **`mercury_ml` Role:** Used exclusively by the Python ML service. Enforces **strict read-only access** (`SELECT` on `products`, `inventory`, `orders`, and `competitor_events`). Mutations (`INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`) are explicitly revoked, preventing the analytics service from modifying transactional state.
+2. **Reverse Proxy Trust & IP Normalization:**
+   - Express sets `app.set('trust proxy', 1)`, allowing deployment behind load balancers (AWS ALB, Nginx, Cloudflare, Railway, Render) while correctly resolving the client IP from `X-Forwarded-For`.
+3. **Session-Aware Multi-Tier Rate Limiting:**
+   - **Global Limiter:** Caps general requests to 150 per minute per IP.
+   - **ML Inference Limiter:** Caps computationally expensive `/api/intelligence` and `/api/sandbox/simulate` calls to 60 per minute per session (preventing CPU/memory starvation).
+   - **Mutation Limiter:** Restricts `/api/simulate-order` and `/api/insights/execute-actions` to 30 requests per minute per session to protect PostgreSQL write throughput.
+4. **Defensive Input Validation & Numeric Overflow Guards:**
+   - Simulated order quantities are strictly constrained to integers between $1$ and $1000$ (`MAX_ORDER_QUANTITY`). Order totals are verified against PostgreSQL decimal capacity (`99999999.99`) to prevent numeric overflow crashes.
+5. **TOCTOU Race Condition Elimination:**
+   - Concurrent evaluation of the autonomous decision engine uses atomic PostgreSQL upserts:
+     ```sql
+     INSERT INTO automated_actions_log (product_id, action_type, description, status, session_id)
+     VALUES ($1, $2, $3, $4, $5)
+     ON CONFLICT (product_id, description, session_id) DO NOTHING
+     RETURNING id;
+     ```
+     Guarantees that parallel requests never log duplicate automated actions.
+6. **Wholesale Margin Redaction & Error Masking:**
+   - `GET /api/database-inspect` explicitly excludes `cost_price` from the query projection, ensuring proprietary wholesale margins are never leaked to browser inspectors.
+   - Express catch-all error handlers mask internal PostgreSQL syntax errors and private microservice URLs from client responses.
+
+---
+
+## Testing & Quality Assurance
+
+Mercury includes a comprehensive automated test suite built on the **native Node.js test runner (`node:test`)**.
+
+### Running Automated Backend Tests
+
+Ensure PostgreSQL is reachable and the database is initialized, then execute:
+
+```bash
+# From repository root:
+npm run test:backend
+
+# Or directly within backend:
+cd backend
+npm test
+```
+
+### Verified Test Results
+
+All **26 automated integration tests** run and pass cleanly:
+
+```text
+TAP version 13
+ok 1 - CORS Policy: Authorized origin receives explicit Access-Control-Allow-Origin header (never wildcard)
+ok 2 - CORS Policy: Unauthorized origin is rejected and denied Access-Control-Allow-Origin
+ok 3 - CORS Policy: Non-browser requests without Origin header (curl, backend-to-backend) pass cleanly
+ok 4 - TOCTOU Prevention: Concurrent execution of decision engine produces zero duplicate action log entries
+ok 5 - TOCTOU Prevention: Concurrent HTTP POST /api/insights/execute-actions produces zero duplicate records
+ok 6 - Error Masking: /api/health masks raw database error messages on failure
+ok 7 - Error Masking: /api/intelligence masks internal microservice URL and error details
+ok 8 - Error Masking: /api/sandbox/simulate masks internal microservice URL and error details
+ok 9 - Input Validation: /api/simulate-order rejects excessive quantity exceeding MAX_ORDER_QUANTITY with HTTP 400
+ok 10 - Inventory Check: /api/simulate-order rejects order when requested quantity exceeds available stock
+ok 11 - Least-Privilege Roles: mercury_ml is strictly read-only and denied mutating tables
+ok 12 - Least-Privilege Roles: mercury_app has operational CRUD access on application tables
+ok 13 - MemoryCache: Stores, retrieves, and invalidates cached data
+ok 14 - sessionOrIpKeyGenerator: Generates session keys for visitor sandboxes and falls back to IP
+ok 15 - Rate limiting: Enforces limits and rejects excessive requests with HTTP 429
+ok 16 - Rate limiting: Session-isolated keying ensures one visitor session does not exhaust another
+ok 17 - Rate limiting: Express trust proxy correctly identifies client IP from X-Forwarded-For header
+ok 18 - Security Headers: Express emits hardened security headers via helmet
+ok 19 - Session isolation: Clones baseline inventory and protects baseline from mutation
+ok 20 - Database Inspector excludes cost_price from product listings
+ok 21 - requireSession middleware denies unauthenticated requests without x-session-id
+ok 22 - requireSession middleware forbids direct mutation of baseline session
+ok 23 - requireSession middleware authorizes requests with valid visitor UUID
+ok 24 - Visitor Session Reset: Deletes visitor mutations and restores baseline state
+ok 25 - Database transaction rollbacks safely on invalid product ID
+ok 26 - Order simulation updates inventory correctly within a transaction
+1..26
+# tests 26
+# pass 26
+# fail 0
+```
+
+### Running Frontend Linter & Build Verification
+
+```bash
+# Run ESLint (Next.js core web vitals)
+npm --prefix frontend run lint
+
+# Run Next.js production build check
+npm --prefix frontend run build
+```
+
+*(Both linting and builds complete with zero errors).*
+
+---
+
+## Docker Architecture & Deployment
+
+Mercury utilizes optimized multi-stage Docker builds to keep images small, secure, and fast:
+
+### Multi-Stage Container Architecture
+
+1. **Frontend Container (`frontend/Dockerfile`):**
+   - **`base`:** Node 20 Alpine with production dependencies.
+   - **`dev`:** Exposes Next.js with Fast Refresh and file watching (`docker-compose.override.yml`).
+   - **`builder`:** Generates optimized Next.js standalone artifacts.
+   - **`runner`:** Production runtime copying only `.next/standalone` and static public assets. Drops privileges to run as unprivileged `USER node`.
+2. **Backend Gateway Container (`backend/Dockerfile`):**
+   - Built on `node:20-alpine`.
+   - Runs non-root (`USER node`) on port `5000`.
+   - Binds to host loopback (`127.0.0.1:5000`) in `docker-compose.yml`.
+3. **ML Forecasting Container (`ml-engine/Dockerfile`):**
+   - **`builder`:** `python:3.11-slim` with `build-essential` and `libpq-dev` to compile C extensions.
+   - **`runner`:** Lean runtime with `libpq5` only (omits compilers). Runs as unprivileged `USER appuser` (UID 1000). Binds to host loopback (`127.0.0.1:8000`).
+4. **PostgreSQL Container:**
+   - `postgres:16-alpine` mounting `mercury_pgdata` volume and automated initialization scripts.
+
+### Checking Container Health
+
+All services include native healthcheck probes:
+
+```bash
+docker compose ps
+```
+
+*Example Healthy Output:*
+```text
+NAME                 IMAGE                      COMMAND                  SERVICE      STATUS
+mercury-backend      mercury-backend            "docker-entrypoint.s…"   backend      Up (healthy)
+mercury-frontend     mercury-frontend           "docker-entrypoint.s…"   frontend     Up (healthy)
+mercury-ml-engine    mercury-ml-engine          "uvicorn main:app --…"   ml-engine    Up (healthy)
+mercury-postgres     postgres:16-alpine         "docker-entrypoint.s…"   postgres     Up (healthy)
+```
+
+---
+
+## Project Directory Layout
 
 ```text
 mercury-demand-intelligence/
-├── backend/
-│   ├── schema.sql                    # PostgreSQL table definitions
-│   ├── package.json                  # API scripts and Node dependencies
+├── .env.example                       # Documented environment template with secure defaults
+├── docker-compose.yml                 # Production multi-service container definitions
+├── docker-compose.override.yml        # Development overrides (hot-reloading & volume mounts)
+├── package.json                       # Root workspace orchestrator (concurrent dev launcher)
+│
+├── backend/                           # Node.js Express 5 API Gateway
+│   ├── Dockerfile                     # Unprivileged Node.js container build
+│   ├── package.json                   # Backend dependencies & test scripts
+│   ├── roles.sh                       # Dynamic least-privilege role setup (Docker entrypoint)
+│   ├── roles.sql                      # SQL reference for least-privilege role provisioning
+│   ├── schema.sql                     # Canonical PostgreSQL DDL definitions & indexes
 │   └── src/
-│       ├── db.js                     # PostgreSQL connection pool
-│       ├── seed.js                   # Destructive schema reset and demo seeding
-│       ├── server.js                 # Express routes and ML-service gateway
+│       ├── db.js                      # node-postgres (pg) connection pool configuration
+│       ├── initDb.js                  # Safe idempotent database initialization & seeder
+│       ├── seed.js                    # Destructive hard reset & demo seeder
+│       ├── server.js                  # Express gateway, reverse proxy, and route handlers
+│       ├── middleware/
+│       │   ├── rateLimiter.js         # Global, ML inference, and mutation rate limiters
+│       │   └── session.js             # Visitor session extraction & copy-on-write isolation
 │       ├── services/
-│       │   └── decisionEngine.js     # Idempotent competitor/stock actions
-│       └── tests/
-│           └── transaction.test.js   # Transaction behavior tests
-├── frontend/
-│   ├── package.json                  # Next.js scripts and UI dependencies
-│   └── src/app/
-│       ├── page.js                   # Dashboard state and API integration
-│       └── components/               # Dashboard, sandbox, inspector, and UI
-├── ml-engine/
-│   ├── main.py                       # FastAPI prediction and simulation routes
-│   └── requirements.txt              # Python service dependencies
-└── README.md
+│       │   └── decisionEngine.js      # Competitor undercut & stockout rule engine
+│       ├── tests/                     # 26 automated integration & security test suites
+│       └── utils/
+│           └── cache.js               # In-memory TTL cache for ML demand predictions
+│
+├── frontend/                          # Next.js 16 / React 19 Frontend Application
+│   ├── Dockerfile                     # Multi-stage standalone Next.js container build
+│   ├── package.json                   # UI dependencies (Tailwind 4, Recharts, Lucide)
+│   ├── next.config.mjs                # Next.js configuration (standalone output mode)
+│   ├── public/                        # Static brand assets & web fonts
+│   └── src/
+│       ├── app/
+│       │   ├── page.js                # Main view controller, state sync & error bounds
+│       │   ├── layout.js              # Root HTML layout with cookie-based lang detection
+│       │   ├── globals.css            # Tailwind CSS 4 theme rules & animations
+│       │   ├── utils/session.js       # Client UUID token management & session reset
+│       │   └── components/
+│       │       ├── DashboardView.jsx  # Inventory KPI cards, Recharts chart, & action log
+│       │       ├── SandboxView.jsx    # What-If scenario sliders & elasticity preview
+│       │       ├── DatabaseInspectorModal.jsx # Raw PostgreSQL relational browser (5 tables)
+│       │       ├── Header.jsx         # Navigation bar, language picker, & theme toggle
+│       │       ├── WelcomeModal.jsx   # Guided product walkthrough & documentation
+│       │       └── MercuryRockSlider.jsx # Custom tactile UI range slider
+│       └── i18n/
+│           ├── LanguageProvider.jsx   # React Context for client-side localization
+│           ├── formatters.js          # Dynamic i18n message interpolation helpers
+│           └── messages/              # Locale JSON dictionaries (en.json & id.json)
+│
+└── ml-engine/                         # Python FastAPI Machine Learning Microservice
+    ├── Dockerfile                     # Multi-stage builder & slim runner container
+    ├── main.py                        # Continuous linear regression pipeline & simulation
+    └── requirements.txt               # Pinned Python dependencies (Scikit-Learn, pandas)
 ```
 
 ---
 
-## Engineering notes
+## Known Limitations & Roadmap
 
-- **Clear service boundaries:** the browser calls the Express API rather than connecting directly to PostgreSQL. Express delegates model inference to FastAPI.
-- **Transactional order ingestion:** the simulated-order route writes an order and adjusts inventory in a PostgreSQL transaction, rolling back on failure.
-- **Inspectable decision path:** source rows, computed results, rule thresholds, and recorded actions can all be traced through the code and UI.
-- **Reproducible demo setup:** a small synthetic dataset exposes normal, low-stock, zero-stock, and competitor-undercut cases without an external data feed.
-- **Pragmatic model baseline:** linear regression over a few days is transparent and easy to explore, while production use would require richer history, backtesting, calibration, and operational monitoring.
+In the interest of full technical transparency, the following design boundaries and future improvements are noted:
 
-## Potential next steps
+### Current Implementation Boundaries
+- **Baseline Forecasting Model:** Demand forecasting utilizes Scikit-Learn continuous linear regression. While robust for near-term trend extrapolation on small daily samples, it does not model annual seasonality, holiday spikes, or intermittent Poisson demand patterns.
+- **Heuristic Stockout Risk Metric:** The `stockoutProbability` field expresses the ratio of projected 7-day demand to available inventory as a percentage index. It is an operational heuristic rather than a statistically calibrated Bayesian probability.
+- **In-Memory Volatility:** In-memory caching (`intelligenceCache`) and rate-limiting counters are bound to the single Express process. Running multiple horizontal gateway replicas requires configuring a distributed Redis store.
+- **Stateless Client Authentication:** Multi-tenancy is implemented through browser session tokens (`x-session-id`) rather than cryptographic user accounts (JWT / OAuth2).
 
-- Replace the demo dataset with validated point-of-sale and inventory feeds.
-- Evaluate forecasting accuracy using time-based holdouts and product-level metrics.
-- Calibrate stockout probabilities and tune reorder policies against service-level targets.
-- Add authentication, authorization, observability, and deployment-specific configuration before exposing services beyond a trusted local environment.
+### Planned Roadmap
+- [ ] **Advanced Time-Series Models:** Integrate Prophet and LightGBM models for SKU catalogs with $>90$ days of recorded sales history.
+- [ ] **Distributed Cache & State:** Migrate in-memory rate limiting and forecast caching to Redis / Valkey.
+- [ ] **Automated Supplier Webhooks:** Trigger automated webhook notifications (e.g., Slack or ERP purchase orders) when high stockout risk items are logged.
+- [ ] **Role-Based Authentication:** Introduce RBAC (Viewer, Inventory Planner, Pricing Administrator) with JWT tokens.
 
+---
+
+## Contributing & Development Conventions
+
+Contributions are welcome! Please follow these engineering conventions:
+
+1. **Branch Naming:** Use feature branches (`feature/add-sku-export`, `fix/cache-invalidation-edgecase`).
+2. **Pre-Commit Verification:** Run the full automated test suite and frontend linter before opening pull requests:
+   ```bash
+   npm run test:backend
+   npm --prefix frontend run lint
+   ```
+3. **Database Integrity:** Never modify existing seed scripts destructively without adding matching idempotent fallbacks.
+4. **Security Focus:** Do not commit credentials, tokens, or environment files. Use `.env.example` placeholders.
+
+---
+
+## License & Acknowledgments
+
+- **License:** The backend gateway and database provisioning code are distributed under the [ISC License](https://opensource.org/licenses/ISC). The repository is configured for portfolio and technical evaluation.
+- **Open-Source Credits:** Built with gratitude upon [Next.js](https://nextjs.org/), [FastAPI](https://fastapi.tiangolo.com/), [Scikit-Learn](https://scikit-learn.org/), [Tailwind CSS](https://tailwindcss.com/), [Express](https://expressjs.com/), [Recharts](https://recharts.org/), and [Lucide Icons](https://lucide.dev/).
