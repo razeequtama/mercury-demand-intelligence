@@ -13,10 +13,14 @@ import { intelligenceCache } from './utils/cache.js';
 dotenv.config();
 
 const app = express();
+
+// Enable reverse proxy support (e.g., Vercel, Render, Railway, AWS ALB, Nginx, Cloudflare)
+// Ensures req.ip correctly identifies client IP addresses from X-Forwarded-For headers
+app.set('trust proxy', 1);
+
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' }
 }));
-app.use(globalLimiter);
 app.use(express.json());
 
 const defaultAllowedOrigins = [
@@ -48,6 +52,7 @@ app.use(cors({
 }));
 
 app.use(extractSession);
+app.use(globalLimiter);
 
 const PORT = process.env.PORT || 5000;
 const ML_ENGINE_URL = process.env.ML_ENGINE_URL || 'http://localhost:8000';
