@@ -4,10 +4,23 @@ import pkg from 'pg';
 
 const { Client } = pkg;
 
+const getRoleConnectionString = (user, password) => {
+  const envUrl = process.env.DATABASE_URL;
+  if (envUrl) {
+    try {
+      const parsed = new URL(envUrl);
+      parsed.username = user;
+      parsed.password = password;
+      return parsed.toString();
+    } catch {}
+  }
+  return `postgresql://${user}:${password}@localhost:5432/mercury_db`;
+};
+
 test('Least-Privilege Roles: mercury_ml is strictly read-only and denied mutating tables', async () => {
   // Connect using the provisioned least-privilege ML role
   const mlClient = new Client({
-    connectionString: 'postgresql://mercury_ml:mercury_ml_secret@localhost:5433/mercury_db'
+    connectionString: getRoleConnectionString('mercury_ml', 'mercury_ml_secret')
   });
 
   try {
@@ -70,7 +83,7 @@ test('Least-Privilege Roles: mercury_ml is strictly read-only and denied mutatin
 
 test('Least-Privilege Roles: mercury_app has operational CRUD access on application tables', async () => {
   const appClient = new Client({
-    connectionString: 'postgresql://mercury_app:mercury_app_secret@localhost:5433/mercury_db'
+    connectionString: getRoleConnectionString('mercury_app', 'mercury_app_secret')
   });
 
   try {

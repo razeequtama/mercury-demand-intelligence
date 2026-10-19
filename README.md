@@ -74,7 +74,7 @@ Mercury is split into three runnable services plus the shared PostgreSQL databas
                                  └──────┬──────┘
                                         ▼
                          ┌──────────────────────────────┐
-                         │ PostgreSQL :5433             │
+                         │ PostgreSQL :5432             │
                          │ products · inventory ·       │
                          │ orders · competitor_events · │
                          │ automated_actions_log        │
@@ -217,7 +217,7 @@ The current dictionaries cover the dashboard, sandbox, database-inspector labels
 - PostgreSQL available locally.
 - Git.
 
-The application and ML service both need to connect to the same database. The repository's database connection fallback uses PostgreSQL port `5433`; if your PostgreSQL server listens on another port, configure the same explicit `DATABASE_URL` for both services.
+The application and ML service both need to connect to the same database. The repository's database connection fallback uses the standard PostgreSQL port `5432`; if your PostgreSQL server listens on another port (such as `5433`), configure the same explicit `DATABASE_URL` for both services.
 
 ### 1. Clone the repository
 
@@ -231,7 +231,7 @@ cd mercury-demand-intelligence
 Create an empty database named `mercury_db` using your local PostgreSQL tools. For example, from a terminal with `psql` available (replace the port or credentials to match your PostgreSQL installation):
 
 ```bash
-psql -h localhost -p 5433 -U postgres -d postgres
+psql -h localhost -p 5432 -U postgres -d postgres
 ```
 
 Then run this SQL in the `psql` prompt:
@@ -243,10 +243,10 @@ CREATE DATABASE mercury_db;
 Use a PostgreSQL connection URL in the following form in both service environment files:
 
 ```text
-postgresql://USERNAME:PASSWORD@localhost:5433/mercury_db
+postgresql://USERNAME:PASSWORD@localhost:5432/mercury_db
 ```
 
-URL-encode special characters in the password where necessary. If you use the conventional PostgreSQL port `5432`, set that port in both `DATABASE_URL` values.
+URL-encode special characters in the password where necessary. If your local PostgreSQL instance uses a non-standard port (such as `5433`), specify that port in both `DATABASE_URL` values.
 
 ### 3. Configure and start the backend gateway
 
@@ -254,7 +254,7 @@ Create `backend/.env` (do not commit credentials):
 
 ```dotenv
 PORT=5000
-DATABASE_URL=postgresql://USERNAME:PASSWORD@localhost:5433/mercury_db
+DATABASE_URL=postgresql://USERNAME:PASSWORD@localhost:5432/mercury_db
 ML_ENGINE_URL=http://localhost:8000
 ```
 
@@ -274,7 +274,7 @@ npm run dev
 In a second terminal, create `ml-engine/.env` with the **same** database URL:
 
 ```dotenv
-DATABASE_URL=postgresql://USERNAME:PASSWORD@localhost:5433/mercury_db
+DATABASE_URL=postgresql://USERNAME:PASSWORD@localhost:5432/mercury_db
 ```
 
 Install the pinned/declared dependencies and launch FastAPI from the `ml-engine` directory:
@@ -384,3 +384,4 @@ mercury-demand-intelligence/
 - Evaluate forecasting accuracy using time-based holdouts and product-level metrics.
 - Calibrate stockout probabilities and tune reorder policies against service-level targets.
 - Add authentication, authorization, observability, and deployment-specific configuration before exposing services beyond a trusted local environment.
+

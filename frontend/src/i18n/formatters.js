@@ -133,16 +133,16 @@ export function formatRulesMessage(message, locale) {
     return message;
   }
 
-  const execMatch = message.match(/Successfully executed (\d+) autonomous actions\.?/i);
+  const execMatch = message.match(/Successfully executed (\d+) autonomous actions/i);
   if (execMatch) {
     return `Berhasil menjalankan ${execMatch[1]} tindakan otomatis.`;
   }
 
-  if (/Rules evaluated successfully\.?/i.test(message)) {
+  if (/Rules evaluated successfully/i.test(message)) {
     return 'Aturan berhasil dievaluasi.';
   }
 
-  if (/Failed to execute autonomous actions\.?/i.test(message) || /Failed to execute rules\.?/i.test(message)) {
+  if (/Failed to execute autonomous actions/i.test(message) || /Failed to execute rules/i.test(message)) {
     return 'Gagal menjalankan tindakan otomatis.';
   }
 
@@ -175,7 +175,7 @@ export function formatOrderFeedback(feedbackText, locale) {
     return feedbackText;
   }
 
-  const match = feedbackText.match(/Successfully ingested order event of (\d+) units\.\s*ML forecasting pipeline adjusted\.?/i);
+  const match = feedbackText.match(/Successfully ingested order event of (\d+) units\.\s*ML forecasting pipeline adjusted/i);
   if (match) {
     return `Berhasil memasukkan pesanan sebanyak ${match[1]} unit. Pipeline peramalan ML telah disesuaikan.`;
   }
@@ -184,7 +184,7 @@ export function formatOrderFeedback(feedbackText, locale) {
     return 'Simulasi pesanan gagal.';
   }
 
-  const stockMatch = feedbackText.match(/Insufficient stock available\.\s*Requested:\s*(\d+),\s*Available:\s*(\d+)\.?/i);
+  const stockMatch = feedbackText.match(/Insufficient stock available\.\s*Requested:\s*(\d+),\s*Available:\s*(\d+)/i);
   if (stockMatch) {
     return `Stok tidak mencukupi. Diminta: ${stockMatch[1]}, Tersedia: ${stockMatch[2]}.`;
   }
