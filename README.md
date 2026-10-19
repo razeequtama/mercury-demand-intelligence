@@ -2,6 +2,23 @@
 
 > **Full-stack demand forecasting, inventory risk scoring, and margin-aware pricing intelligence platform.**
 
+<p align="center">
+  <img src="https://skillicons.dev/icons?i=nextjs,react,nodejs,express,postgres,python,fastapi,sklearn,tailwind,docker" alt="Mercury Tech Stack Icons" />
+</p>
+
+<p align="center">
+  <a href="https://nextjs.org/"><img src="https://img.shields.io/badge/Next.js-16.4-black?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js" /></a>
+  <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-19.2-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" /></a>
+  <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-20_LTS-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js" /></a>
+  <a href="https://expressjs.com/"><img src="https://img.shields.io/badge/Express-5.2-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express" /></a>
+  <a href="https://www.postgresql.org/"><img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" /></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" /></a>
+  <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/FastAPI-0.110-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" /></a>
+  <a href="https://scikit-learn.org/"><img src="https://img.shields.io/badge/scikit--learn-1.5-F7931E?style=for-the-badge&logo=scikitlearn&logoColor=white" alt="Scikit-Learn" /></a>
+  <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/Tailwind_CSS-4.x-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" /></a>
+  <a href="https://docs.docker.com/compose/"><img src="https://img.shields.io/badge/Docker-Compose_v2-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker Compose" /></a>
+</p>
+
 Mercury is an end-to-end commerce intelligence command center that transforms raw transactional data, inventory levels, and competitor market shifts into auditable operational decisions. It couples a responsive Next.js 16 frontend, an Express 5 API gateway, a PostgreSQL 16 relational data store, and a Python FastAPI microservice powered by Scikit-Learn continuous linear regression.
 
 Designed with enterprise-grade defensive architecture, Mercury features session-sandboxed multi-tenant isolation, atomic concurrency guards against race conditions, ACID-compliant order transactions, least-privilege database role separation, and dual-language internationalization (English & Indonesian).
@@ -171,24 +188,24 @@ flowchart TD
 
 ## Technology Stack
 
-| Layer | Technology | Version / Spec | Project Role & Implementation Rationale |
+| Layer | Technology & Stack Badge | Version / Spec | Project Role & Implementation Rationale |
 |---|---|---|---|
-| **Frontend Framework** | [Next.js](https://nextjs.org/) | `16.4.2` | React Server Components, standalone output build for lean Docker containers, and client-side view management. |
-| **UI Library** | [React](https://react.dev/) | `19.2.8` | Component rendering, state synchronization via `useSyncExternalStore`, and optimized memoized hooks. |
-| **Styling Engine** | [Tailwind CSS](https://tailwindcss.com/) | `4.x` | Modern utility-first styling with dual-mode warm dark/light palettes and responsive layouts. |
-| **Data Visualization** | [Recharts](https://recharts.org/) | `3.10.1` | Responsive SVG bar charts comparing current stock against 7-day predicted demand. |
-| **Backend Runtime** | [Node.js](https://nodejs.org/) | `20.x LTS` | Native ES Modules runtime powering the API gateway and transactional orchestration. |
-| **API Framework** | [Express](https://expressjs.com/) | `5.2.1` | REST gateway handling routing, reverse proxy headers, security policies, and error boundaries. |
-| **Database Client** | [node-postgres (`pg`)](https://node-postgres.com/) | `8.23.0` | Connection pooling, parameterized queries, and ACID transaction control (`BEGIN` / `FOR UPDATE` / `COMMIT`). |
-| **Security Headers** | [Helmet](https://helmetjs.github.io/) | `8.3.0` | Sets HTTP security headers (`Cross-Origin-Resource-Policy`, frameguards, and MIME sniffing protection). |
-| **Rate Limiter** | [express-rate-limit](https://github.com/express-rate-limit/express-rate-limit) | `8.7.1` | Session-aware and IP-normalized rate limiting preventing ML inference exhaustion and mutation flooding. |
-| **ML Framework** | [FastAPI](https://fastapi.tiangolo.com/) | `0.110.0` | High-performance Python async web framework serving analytical endpoints with automatic OpenAPI validation. |
-| **ML Server** | [Uvicorn](https://www.uvicorn.org/) | `0.28.0` | Lightweight ASGI web server worker for Python services. |
-| **Data Analytics** | [pandas](https://pandas.pydata.org/) & [NumPy](https://numpy.org/) | `2.2.3` / `1.26.4` | Dataframe manipulation, time-series aggregation, and matrix transformations. |
-| **Predictive Modeling** | [Scikit-Learn](https://scikit-learn.org/) | `1.5.0` | `LinearRegression` fitting on calendar-padded order sequences and `mean_absolute_error` evaluation. |
-| **Python DB Driver** | [psycopg2-binary](https://www.psycopg.org/) | `2.9.10` | Threaded connection pool manager (`ThreadedConnectionPool`) providing pooled SQL access for analytics. |
-| **Relational Database** | [PostgreSQL](https://www.postgresql.org/) | `16-alpine` | Persistent relational store supporting foreign keys, cascading deletes, index constraints, and row-level locks. |
-| **Container Engine** | [Docker Compose](https://docs.docker.com/compose/) | Compose v2 | Multi-stage image builds, healthchecks, loopback-restricted port bindings, and volume management. |
+| **Frontend Framework** | [![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white)](https://nextjs.org/) | `16.4.2` | React Server Components, standalone output build for lean Docker containers, and client-side view management. |
+| **UI Library** | [![React](https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB)](https://react.dev/) | `19.2.8` | Component rendering, state synchronization via `useSyncExternalStore`, and optimized memoized hooks. |
+| **Styling Engine** | [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/) | `4.x` | Modern utility-first styling with dual-mode warm dark/light palettes and responsive layouts. |
+| **Data Visualization** | [![Recharts](https://img.shields.io/badge/Recharts-22B5BF?style=flat-square&logo=chartdotjs&logoColor=white)](https://recharts.org/) | `3.10.1` | Responsive SVG bar charts comparing current stock against 7-day predicted demand. |
+| **Backend Runtime** | [![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=nodedotjs&logoColor=white)](https://nodejs.org/) | `20.x LTS` | Native ES Modules runtime powering the API gateway and transactional orchestration. |
+| **API Framework** | [![Express](https://img.shields.io/badge/Express-000000?style=flat-square&logo=express&logoColor=white)](https://expressjs.com/) | `5.2.1` | REST gateway handling routing, reverse proxy headers, security policies, and error boundaries. |
+| **Database Client** | [![PostgreSQL](https://img.shields.io/badge/node--postgres-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://node-postgres.com/) | `8.23.0` | Connection pooling, parameterized queries, and ACID transaction control (`BEGIN` / `FOR UPDATE` / `COMMIT`). |
+| **Security Headers** | [![Helmet](https://img.shields.io/badge/Helmet-FFDA44?style=flat-square&logo=helmet&logoColor=black)](https://helmetjs.github.io/) | `8.3.0` | Sets HTTP security headers (`Cross-Origin-Resource-Policy`, frameguards, and MIME sniffing protection). |
+| **Rate Limiter** | [![Express Rate Limit](https://img.shields.io/badge/Rate_Limiter-gray?style=flat-square)](https://github.com/express-rate-limit/express-rate-limit) | `8.7.1` | Session-aware and IP-normalized rate limiting preventing ML inference exhaustion and mutation flooding. |
+| **ML Framework** | [![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/) | `0.110.0` | High-performance Python async web framework serving analytical endpoints with automatic OpenAPI validation. |
+| **ML Server** | [![Uvicorn](https://img.shields.io/badge/Uvicorn-499848?style=flat-square&logo=gunicorn&logoColor=white)](https://www.uvicorn.org/) | `0.28.0` | Lightweight ASGI web server worker for Python services. |
+| **Data Analytics** | [![pandas](https://img.shields.io/badge/pandas-150458?style=flat-square&logo=pandas&logoColor=white)](https://pandas.pydata.org/) & [![NumPy](https://img.shields.io/badge/NumPy-013243?style=flat-square&logo=numpy&logoColor=white)](https://numpy.org/) | `2.2.3` / `1.26.4` | Dataframe manipulation, time-series aggregation, and matrix transformations. |
+| **Predictive Modeling** | [![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?style=flat-square&logo=scikitlearn&logoColor=white)](https://scikit-learn.org/) | `1.5.0` | `LinearRegression` fitting on calendar-padded order sequences and `mean_absolute_error` evaluation. |
+| **Python DB Driver** | [![psycopg2](https://img.shields.io/badge/psycopg2-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://www.psycopg.org/) | `2.9.10` | Threaded connection pool manager (`ThreadedConnectionPool`) providing pooled SQL access for analytics. |
+| **Relational Database** | [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/) | `16-alpine` | Persistent relational store supporting foreign keys, cascading deletes, index constraints, and row-level locks. |
+| **Container Engine** | [![Docker Compose](https://img.shields.io/badge/Docker_Compose-2496ED?style=flat-square&logo=docker&logoColor=white)](https://docs.docker.com/compose/) | Compose v2 | Multi-stage image builds, healthchecks, loopback-restricted port bindings, and volume management. |
 
 ---
 
