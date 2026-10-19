@@ -48,6 +48,11 @@ def get_db_connection():
             print(f"Error resetting database connection state: {rollback_err}")
         pool.putconn(conn)
 
+@app.get("/health")
+def health_check():
+    """Lightweight health check endpoint for container readiness probes."""
+    return {"status": "healthy", "service": "ml-engine"}
+
 @app.get("/predict-demand")
 def predict_demand(session_id: str = "baseline"):
     """

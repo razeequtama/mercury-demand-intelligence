@@ -1,0 +1,17 @@
+# Docker Compose Development Override
+# This file is automatically loaded and merged with docker-compose.yml during local development
+# (e.g. running `docker compose up`).
+# For production deployments, run: `docker compose -f docker-compose.yml up -d`
+services:
+  frontend:
+    build:
+      target: dev
+    environment:
+      NODE_ENV: development
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+
