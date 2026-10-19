@@ -11,11 +11,25 @@ BEGIN
 END
 $$;
 
-GRANT USAGE ON SCHEMA public TO mercury_app;
+GRANT USAGE, CREATE ON SCHEMA public TO mercury_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO mercury_app;
 GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO mercury_app;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO mercury_app;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO mercury_app;
+
+-- Transfer table and sequence ownership to mercury_app for schema migrations
+DO $$
+DECLARE
+    tbl text;
+BEGIN
+    FOR tbl IN SELECT tablename FROM pg_tables WHERE schemaname = 'public' LOOP
+        EXECUTE format('ALTER TABLE public.%I OWNER TO mercury_app', tbl);
+    END LOOP;
+    FOR tbl IN SELECT sequence_name FROM information_schema.sequences WHERE sequence_schema = 'public' LOOP
+        EXECUTE format('ALTER SEQUENCE public.%I OWNER TO mercury_app', tbl);
+    END LOOP;
+END
+$$;
 
 -- 2. Create ML Forecasting Engine Role (mercury_ml):
 -- Strictly read-only access to products, inventory, orders, and competitor_events.

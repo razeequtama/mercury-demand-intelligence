@@ -11,74 +11,82 @@ dotenv.config();
 export const initDatabase = async () => {
   try {
     // 1. Ensure all required tables and session columns exist non-destructively
-    await query(`
-      CREATE TABLE IF NOT EXISTS products (
-          id SERIAL PRIMARY KEY,
-          sku VARCHAR(50) UNIQUE NOT NULL,
-          name VARCHAR(255) NOT NULL,
-          category VARCHAR(100),
-          current_price DECIMAL(10, 2) NOT NULL,
-          cost_price DECIMAL(10, 2) NOT NULL,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
+    try {
+      await query(`
+        CREATE TABLE IF NOT EXISTS products (
+            id SERIAL PRIMARY KEY,
+            sku VARCHAR(50) UNIQUE NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            category VARCHAR(100),
+            current_price DECIMAL(10, 2) NOT NULL,
+            cost_price DECIMAL(10, 2) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
 
-      CREATE TABLE IF NOT EXISTS inventory (
-          id SERIAL PRIMARY KEY,
-          product_id INT REFERENCES products(id) ON DELETE CASCADE,
-          warehouse_name VARCHAR(100) NOT NULL,
-          stock_quantity INT NOT NULL DEFAULT 0,
-          reorder_threshold INT NOT NULL DEFAULT 50,
-          session_id VARCHAR(64) NOT NULL DEFAULT 'baseline',
-          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
+        CREATE TABLE IF NOT EXISTS inventory (
+            id SERIAL PRIMARY KEY,
+            product_id INT REFERENCES products(id) ON DELETE CASCADE,
+            warehouse_name VARCHAR(100) NOT NULL,
+            stock_quantity INT NOT NULL DEFAULT 0,
+            reorder_threshold INT NOT NULL DEFAULT 50,
+            session_id VARCHAR(64) NOT NULL DEFAULT 'baseline',
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
 
-      CREATE TABLE IF NOT EXISTS orders (
-          id SERIAL PRIMARY KEY,
-          product_id INT REFERENCES products(id) ON DELETE CASCADE,
-          quantity INT NOT NULL,
-          total_amount DECIMAL(10, 2) NOT NULL,
-          session_id VARCHAR(64) NOT NULL DEFAULT 'baseline',
-          order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
+        CREATE TABLE IF NOT EXISTS orders (
+            id SERIAL PRIMARY KEY,
+            product_id INT REFERENCES products(id) ON DELETE CASCADE,
+            quantity INT NOT NULL,
+            total_amount DECIMAL(10, 2) NOT NULL,
+            session_id VARCHAR(64) NOT NULL DEFAULT 'baseline',
+            order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
 
-      CREATE TABLE IF NOT EXISTS competitor_events (
-          id SERIAL PRIMARY KEY,
-          product_id INT REFERENCES products(id) ON DELETE CASCADE,
-          competitor_price DECIMAL(10, 2) NOT NULL,
-          event_description TEXT,
-          detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
+        CREATE TABLE IF NOT EXISTS competitor_events (
+            id SERIAL PRIMARY KEY,
+            product_id INT REFERENCES products(id) ON DELETE CASCADE,
+            competitor_price DECIMAL(10, 2) NOT NULL,
+            event_description TEXT,
+            detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
 
-      CREATE TABLE IF NOT EXISTS automated_actions_log (
-          id SERIAL PRIMARY KEY,
-          product_id INT REFERENCES products(id) ON DELETE CASCADE,
-          action_type VARCHAR(100) NOT NULL,
-          description TEXT NOT NULL,
-          status VARCHAR(50) DEFAULT 'EXECUTED',
-          session_id VARCHAR(64) NOT NULL DEFAULT 'baseline',
-          executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          CONSTRAINT uq_product_action_desc_session UNIQUE (product_id, description, session_id)
-      );
+        CREATE TABLE IF NOT EXISTS automated_actions_log (
+            id SERIAL PRIMARY KEY,
+            product_id INT REFERENCES products(id) ON DELETE CASCADE,
+            action_type VARCHAR(100) NOT NULL,
+            description TEXT NOT NULL,
+            status VARCHAR(50) DEFAULT 'EXECUTED',
+            session_id VARCHAR(64) NOT NULL DEFAULT 'baseline',
+            executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            CONSTRAINT uq_product_action_desc_session UNIQUE (product_id, description, session_id)
+        );
 
-      -- Safe schema migration for existing databases: ensure session_id column exists
-      ALTER TABLE inventory ADD COLUMN IF NOT EXISTS session_id VARCHAR(64) NOT NULL DEFAULT 'baseline';
-      ALTER TABLE orders ADD COLUMN IF NOT EXISTS session_id VARCHAR(64) NOT NULL DEFAULT 'baseline';
-      ALTER TABLE automated_actions_log ADD COLUMN IF NOT EXISTS session_id VARCHAR(64) NOT NULL DEFAULT 'baseline';
+        -- Safe schema migration for existing databases: ensure session_id column exists
+        ALTER TABLE inventory ADD COLUMN IF NOT EXISTS session_id VARCHAR(64) NOT NULL DEFAULT 'baseline';
+        ALTER TABLE orders ADD COLUMN IF NOT EXISTS session_id VARCHAR(64) NOT NULL DEFAULT 'baseline';
+        ALTER TABLE automated_actions_log ADD COLUMN IF NOT EXISTS session_id VARCHAR(64) NOT NULL DEFAULT 'baseline';
 
-      CREATE INDEX IF NOT EXISTS idx_inventory_session ON inventory(session_id);
-      CREATE INDEX IF NOT EXISTS idx_orders_session ON orders(session_id);
-      CREATE INDEX IF NOT EXISTS idx_actions_session ON automated_actions_log(session_id);
+        CREATE INDEX IF NOT EXISTS idx_inventory_session ON inventory(session_id);
+        CREATE INDEX IF NOT EXISTS idx_orders_session ON orders(session_id);
+        CREATE INDEX IF NOT EXISTS idx_actions_session ON automated_actions_log(session_id);
 
-      -- Deduplicate legacy rows before creating unique index
-      DELETE FROM automated_actions_log a
-      USING automated_actions_log b
-      WHERE a.id > b.id
-        AND a.product_id = b.product_id
-        AND a.description = b.description
-        AND a.session_id = b.session_id;
+        -- Deduplicate legacy rows before creating unique index
+        DELETE FROM automated_actions_log a
+        USING automated_actions_log b
+        WHERE a.id > b.id
+          AND a.product_id = b.product_id
+          AND a.description = b.description
+          AND a.session_id = b.session_id;
 
-      CREATE UNIQUE INDEX IF NOT EXISTS uq_action_log_product_desc_session ON automated_actions_log (product_id, description, session_id);
-    `);
+        CREATE UNIQUE INDEX IF NOT EXISTS uq_action_log_product_desc_session ON automated_actions_log (product_id, description, session_id);
+      `);
+    } catch (ddlErr) {
+      if (ddlErr.code === '42501') {
+        console.log('[Database Init] Note: Connecting user lacks DDL/table-ownership privileges; assuming schema is managed by administrator.');
+      } else {
+        throw ddlErr;
+      }
+    }
 
     // 2. Provision least-privilege roles non-destructively if connecting user has administrative privileges
     try {

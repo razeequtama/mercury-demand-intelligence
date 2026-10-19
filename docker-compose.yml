@@ -5,14 +5,18 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-mercury_db}
+      APP_DB_USER: ${APP_DB_USER:-mercury_app}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:-mercury_app_secret}
+      ML_DB_USER: ${ML_DB_USER:-mercury_ml}
+      ML_DB_PASSWORD: ${ML_DB_PASSWORD:-mercury_ml_secret}
     ports:
       - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - mercury_pgdata:/var/lib/postgresql/data
       - ./backend/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
-      - ./backend/roles.sql:/docker-entrypoint-initdb.d/02-roles.sql:ro
+      - ./backend/roles.sh:/docker-entrypoint-initdb.d/02-roles.sh:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-mercury_db}"]
       interval: 5s
