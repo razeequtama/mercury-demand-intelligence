@@ -8,7 +8,9 @@ import {
   ShoppingCart, 
   Send, 
   CheckCircle2, 
-  AlertCircle 
+  AlertCircle,
+  BarChart3,
+  RefreshCw
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { useLanguage } from '../../i18n/LanguageProvider';
@@ -417,32 +419,60 @@ export default function DashboardView({
                 </tr>
               </thead>
               <tbody className={`divide-y ${isDark ? 'divide-[#36261d]/60' : 'divide-[#e8ded1]/60'}`}>
-                {intelligence.map(item => (
-                  <tr key={item.id} className={`transition ${isDark ? 'hover:bg-[#2b1e17]/40' : 'hover:bg-[#fcf8f3]'}`}>
-                    <td className="py-4 pr-4 sm:pr-6">
-                      <div className={`font-bold text-base sm:text-lg ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>{item.name}</div>
-                      <div className={`text-sm mt-0.5 ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>{item.sku} • {item.warehouse}</div>
-                    </td>
-                    <td className="py-4 px-4 sm:px-6 font-mono font-bold text-base whitespace-nowrap">{item.currentInventory}</td>
-                    <td className={`py-4 px-4 sm:px-6 font-mono font-bold text-base whitespace-nowrap ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>{item.forecast7Day} {t('common.units')}</td>
-                    <td className="py-4 px-4 sm:px-6 whitespace-nowrap">
-                      <span className={`px-3 py-1 rounded-full text-sm font-bold border inline-block ${
-                        parseInt(item.stockoutProbability) > 70 
-                          ? (isDark ? 'bg-red-950 text-red-300 border-red-800' : 'bg-red-100 text-red-800 border-red-300') 
-                          : (isDark ? 'bg-amber-950/80 text-amber-400 border-amber-700' : 'bg-amber-100 text-amber-800 border-amber-300')
-                      }`}>
-                        {item.stockoutProbability}
-                      </span>
-                    </td>
-                    <td className="py-4 pl-4 sm:pl-6 text-sm sm:text-base">
-                      {item.recommendation ? (
-                        <span className={`font-semibold ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>{formatRecommendation(item.recommendation, locale)}</span>
-                      ) : (
-                        <span className={isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}>{t('dashboard.stable')}</span>
-                      )}
+                {intelligence.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-12 px-4 text-center">
+                      <div className="flex flex-col items-center justify-center gap-2.5">
+                        <AlertCircle className={`w-8 h-8 opacity-60 ${isDark ? 'text-amber-400' : 'text-amber-700'}`} />
+                        <span className={`text-base font-semibold ${isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'}`}>
+                          {t('dashboard.noIntelligenceData')}
+                        </span>
+                        {fetchData && (
+                          <button
+                            type="button"
+                            onClick={fetchData}
+                            disabled={loading}
+                            className={`mt-2 flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-xl border transition cursor-pointer active:scale-95 ${
+                              isDark
+                                ? 'border-[#36261d] bg-[#2a1d16] text-amber-400 hover:bg-[#34241c]'
+                                : 'border-[#e8ded1] bg-[#fbf8f4] text-amber-800 hover:bg-[#f3ede3]'
+                            }`}
+                          >
+                            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                            <span>{t('header.refresh')}</span>
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  intelligence.map(item => (
+                    <tr key={item.id} className={`transition ${isDark ? 'hover:bg-[#2b1e17]/40' : 'hover:bg-[#fcf8f3]'}`}>
+                      <td className="py-4 pr-4 sm:pr-6">
+                        <div className={`font-bold text-base sm:text-lg ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>{item.name}</div>
+                        <div className={`text-sm mt-0.5 ${isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}`}>{item.sku} • {item.warehouse}</div>
+                      </td>
+                      <td className="py-4 px-4 sm:px-6 font-mono font-bold text-base whitespace-nowrap">{item.currentInventory}</td>
+                      <td className={`py-4 px-4 sm:px-6 font-mono font-bold text-base whitespace-nowrap ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>{item.forecast7Day} {t('common.units')}</td>
+                      <td className="py-4 px-4 sm:px-6 whitespace-nowrap">
+                        <span className={`px-3 py-1 rounded-full text-sm font-bold border inline-block ${
+                          parseInt(item.stockoutProbability) > 70 
+                            ? (isDark ? 'bg-red-950 text-red-300 border-red-800' : 'bg-red-100 text-red-800 border-red-300') 
+                            : (isDark ? 'bg-amber-950/80 text-amber-400 border-amber-700' : 'bg-amber-100 text-amber-800 border-amber-300')
+                        }`}>
+                          {item.stockoutProbability}
+                        </span>
+                      </td>
+                      <td className="py-4 pl-4 sm:pl-6 text-sm sm:text-base">
+                        {item.recommendation ? (
+                          <span className={`font-semibold ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>{formatRecommendation(item.recommendation, locale)}</span>
+                        ) : (
+                          <span className={isDark ? 'text-[#9c8677]' : 'text-[#8c7462]'}>{t('dashboard.stable')}</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -455,25 +485,34 @@ export default function DashboardView({
             {t('dashboard.chartTitle')}
           </h2>
           <div className="flex-1 min-h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={intelligence}>
-                <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#36261d' : '#e8ded1'} />
-                <XAxis dataKey="sku" stroke={isDark ? '#b8a394' : '#7a6452'} fontSize={13} />
-                <YAxis stroke={isDark ? '#b8a394' : '#7a6452'} fontSize={13} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: isDark ? '#18110e' : '#ffffff', 
-                    borderColor: isDark ? '#36261d' : '#e8ded1', 
-                    borderRadius: '8px',
-                    color: isDark ? '#fff8f0' : '#241a14',
-                    fontSize: '14px'
-                  }}
-                  labelStyle={{ color: isDark ? '#fff8f0' : '#241a14', fontWeight: 'bold', fontSize: '14px' }}
-                />
-                <Bar dataKey="currentInventory" name={t('dashboard.currentStock')} fill={isDark ? '#d97706' : '#c2410c'} radius={[4, 4, 0, 0]} />
-                <Bar dataKey="forecast7Day" name={t('dashboard.sevenDayDemand')} fill={isDark ? '#f59e0b' : '#ea580c'} radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            {intelligence.length === 0 ? (
+              <div className="h-full min-h-[260px] flex flex-col items-center justify-center text-center p-6">
+                <BarChart3 className={`w-10 h-10 mb-2.5 opacity-40 ${isDark ? 'text-amber-400' : 'text-amber-700'}`} />
+                <p className={`text-sm sm:text-base font-medium ${isDark ? 'text-[#b8a394]' : 'text-[#7a6452]'}`}>
+                  {t('dashboard.noChartData')}
+                </p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={intelligence}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#36261d' : '#e8ded1'} />
+                  <XAxis dataKey="sku" stroke={isDark ? '#b8a394' : '#7a6452'} fontSize={13} />
+                  <YAxis stroke={isDark ? '#b8a394' : '#7a6452'} fontSize={13} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: isDark ? '#18110e' : '#ffffff', 
+                      borderColor: isDark ? '#36261d' : '#e8ded1', 
+                      borderRadius: '8px',
+                      color: isDark ? '#fff8f0' : '#241a14',
+                      fontSize: '14px'
+                    }}
+                    labelStyle={{ color: isDark ? '#fff8f0' : '#241a14', fontWeight: 'bold', fontSize: '14px' }}
+                  />
+                  <Bar dataKey="currentInventory" name={t('dashboard.currentStock')} fill={isDark ? '#d97706' : '#c2410c'} radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="forecast7Day" name={t('dashboard.sevenDayDemand')} fill={isDark ? '#f59e0b' : '#ea580c'} radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
       </div>

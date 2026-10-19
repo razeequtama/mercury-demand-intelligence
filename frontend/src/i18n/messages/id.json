@@ -17,6 +17,8 @@
     "sandbox": "Simulasi Skenario",
     "inspectDatabase": "Lihat Database",
     "refresh": "Muat Ulang",
+    "resetSandbox": "Reset Simulasi",
+    "resettingSandbox": "Mereset...",
     "switchToLight": "Beralih ke tema terang",
     "switchToDark": "Beralih ke tema gelap",
     "userGuide": "Panduan penggunaan"
@@ -61,7 +63,9 @@
     "chartTitle": "Permintaan 7 Hari vs Persediaan",
     "currentStock": "Stok Saat Ini",
     "sevenDayDemand": "Permintaan 7 Hari",
-    "inStock": "dalam stok"
+    "inStock": "dalam stok",
+    "noIntelligenceData": "Tidak ada data katalog produk atau persediaan. Pastikan database telah diisi data awal.",
+    "noChartData": "Tidak ada metrik persediaan untuk ditampilkan."
   },
   "sandbox": {
     "scenarioLevers": "Kontrol Skenario",
@@ -77,7 +81,11 @@
     "scaledMultiplier": "Dikalikan dengan pengali {multiplier}x",
     "stockoutTimeline": "Perkiraan Waktu Kehabisan Stok",
     "projectedMargin": "Proyeksi Margin Kotor",
-    "priceMatchTarget": "Target harga yang disesuaikan"
+    "priceMatchTarget": "Target harga yang disesuaikan",
+    "noSimulation": "Tidak Ada Simulasi Aktif",
+    "noSimulationDesc": "Pilih produk dan sesuaikan kontrol skenario untuk menghasilkan proyeksi permintaan, kehabisan stok, dan harga secara real-time.",
+    "noProductsAvailable": "Tidak Ada Produk yang Tersedia untuk Disimulasikan",
+    "runSimulationNow": "Jalankan Simulasi"
   },
   "inspector": {
     "title": "Inspektur Database PostgreSQL",

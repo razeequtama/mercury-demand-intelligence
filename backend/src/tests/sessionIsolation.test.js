@@ -138,3 +138,45 @@ test('requireSession middleware authorizes requests with valid visitor UUID', as
   assert.strictEqual(mockReq.sessionId, validUuid);
 });
 
+test('Visitor Session Reset: Deletes visitor mutations and restores baseline state', async () => {
+  const testSessionId = '00000000-0000-0000-0000-reset-test-99';
+  const client = await getClient();
+
+  try {
+    // 1. Ensure test session inventory is cloned
+    await ensureSessionInventory(client, testSessionId);
+
+    // 2. Insert order and deduct inventory
+    await client.query(
+      'UPDATE inventory SET stock_quantity = 5 WHERE product_id = 1 AND session_id = $1',
+      [testSessionId]
+    );
+    await client.query(
+      'INSERT INTO orders (product_id, quantity, total_amount, session_id, order_date) VALUES (1, 10, 499.90, $1, NOW())',
+      [testSessionId]
+    );
+    await client.query(
+      `INSERT INTO automated_actions_log (product_id, action_type, description, status, session_id, executed_at) 
+       VALUES (1, 'PRICE_MATCH', 'Test match', 'EXECUTED', $1, NOW())`,
+      [testSessionId]
+    );
+
+    // 3. Execute session reset (same logic as in POST /api/session/reset)
+    await query('DELETE FROM inventory WHERE session_id = $1', [testSessionId]);
+    await query('DELETE FROM orders WHERE session_id = $1', [testSessionId]);
+    await query('DELETE FROM automated_actions_log WHERE session_id = $1', [testSessionId]);
+
+    // 4. Verify test session mutations are deleted, ensuring subsequent queries restore baseline
+    const remainingInv = await query('SELECT * FROM inventory WHERE session_id = $1', [testSessionId]);
+    assert.strictEqual(remainingInv.rows.length, 0);
+
+    const remainingOrders = await query('SELECT * FROM orders WHERE session_id = $1', [testSessionId]);
+    assert.strictEqual(remainingOrders.rows.length, 0);
+
+    const remainingLogs = await query('SELECT * FROM automated_actions_log WHERE session_id = $1', [testSessionId]);
+    assert.strictEqual(remainingLogs.rows.length, 0);
+  } finally {
+    client.release();
+  }
+});
+

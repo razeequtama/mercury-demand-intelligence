@@ -39,6 +39,10 @@ export const resetVisitorSession = async (apiUrl) => {
       ? crypto.randomUUID()
       : 'sess-' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     localStorage.setItem('mercury_session_id', newSid);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('mercury_session_reset', { detail: { sessionId: newSid } }));
+    }
+    return newSid;
   }
 };
 

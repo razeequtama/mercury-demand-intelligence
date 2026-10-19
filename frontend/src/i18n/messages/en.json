@@ -17,6 +17,8 @@
     "sandbox": "What-If Sandbox",
     "inspectDatabase": "Inspect DB",
     "refresh": "Refresh",
+    "resetSandbox": "Reset Sandbox",
+    "resettingSandbox": "Resetting...",
     "switchToLight": "Switch to Light Mercury",
     "switchToDark": "Switch to Dark Mercury",
     "userGuide": "How to use guide"
@@ -61,7 +63,9 @@
     "chartTitle": "7-Day Demand vs Inventory",
     "currentStock": "Current Stock",
     "sevenDayDemand": "7-Day Demand",
-    "inStock": "in stock"
+    "inStock": "in stock",
+    "noIntelligenceData": "No product catalog or inventory data available. Ensure the database is seeded.",
+    "noChartData": "No inventory metrics to display."
   },
   "sandbox": {
     "scenarioLevers": "Scenario Controls",
@@ -77,7 +81,11 @@
     "scaledMultiplier": "Scaled by {multiplier}x multiplier",
     "stockoutTimeline": "Stockout Timeline",
     "projectedMargin": "Projected Gross Margin",
-    "priceMatchTarget": "Price match target"
+    "priceMatchTarget": "Price match target",
+    "noSimulation": "No Active Simulation",
+    "noSimulationDesc": "Select a product and adjust the scenario controls to generate real-time demand, stockout, and pricing projections.",
+    "noProductsAvailable": "No Products Available for Simulation",
+    "runSimulationNow": "Run Simulation"
   },
   "inspector": {
     "title": "PostgreSQL Database Inspector",

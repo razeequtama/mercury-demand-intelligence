@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
-import { Database, X, RefreshCw, AlertCircle } from 'lucide-react';
+import { Database, X, RefreshCw, AlertCircle, RotateCcw } from 'lucide-react';
 import { useLanguage } from '../../i18n/LanguageProvider';
+
+const emptySubscribe = () => () => {};
 
 export default function DatabaseInspectorModal({ 
   isModalOpen, 
@@ -11,16 +13,14 @@ export default function DatabaseInspectorModal({
   dbData, 
   inspectLoading, 
   fetchDatabaseInspect,
-  theme 
+  theme,
+  handleResetSandbox,
+  resetting
 }) {
   const [activeTab, setActiveTab] = useState('products');
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const { t } = useLanguage();
   const isDark = theme === 'dark';
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Close on Escape key
   useEffect(() => {
@@ -64,15 +64,34 @@ export default function DatabaseInspectorModal({
               <RefreshCw className="w-4 h-4 animate-spin text-amber-500 ml-1 shrink-0" />
             )}
           </div>
-          <button 
-            onClick={() => setIsModalOpen(false)}
-            aria-label={t('common.close') || 'Close'}
-            className={`p-2 rounded-lg transition cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center ${
-              isDark ? 'text-[#b8a394] hover:text-[#fff8f0]' : 'text-[#6b5646] hover:text-[#241a14]'
-            }`}
-          >
-            <X className="w-6 h-6" />
-          </button>
+          <div className="flex items-center gap-2 sm:gap-3">
+            {handleResetSandbox && (
+              <button
+                onClick={handleResetSandbox}
+                disabled={resetting}
+                className={`flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition border cursor-pointer min-h-[36px] ${
+                  isDark
+                    ? 'border-rose-900/60 bg-rose-950/30 text-rose-300 hover:bg-rose-900/40 hover:text-rose-200'
+                    : 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:text-rose-900'
+                }`}
+                title={t('header.resetSandbox')}
+              >
+                <RotateCcw className={`w-3.5 h-3.5 shrink-0 ${resetting ? 'animate-spin text-rose-500' : ''}`} />
+                <span className="hidden sm:inline">
+                  {resetting ? t('header.resettingSandbox') : t('header.resetSandbox')}
+                </span>
+              </button>
+            )}
+            <button 
+              onClick={() => setIsModalOpen(false)}
+              aria-label={t('common.close') || 'Close'}
+              className={`p-2 rounded-lg transition cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center ${
+                isDark ? 'text-[#b8a394] hover:text-[#fff8f0]' : 'text-[#6b5646] hover:text-[#241a14]'
+              }`}
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
         </div>
 
         {/* Navigation Tabs */}

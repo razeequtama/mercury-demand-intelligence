@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useSyncExternalStore } from 'react';
 import axios from 'axios';
 import { ShieldAlert } from 'lucide-react';
 import Header from './components/Header';
@@ -9,40 +9,64 @@ import DatabaseInspectorModal from './components/DatabaseInspectorModal';
 import DashboardView from './components/DashboardView';
 import SandboxView from './components/SandboxView';
 import { useLanguage } from '../i18n/LanguageProvider';
-import { getSessionHeaders } from './utils/session';
+import { getSessionHeaders, resetVisitorSession } from './utils/session';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+const themeSubscribe = (callback) => {
+  window.addEventListener('storage', callback);
+  window.addEventListener('mercury_theme_change', callback);
+  return () => {
+    window.removeEventListener('storage', callback);
+    window.removeEventListener('mercury_theme_change', callback);
+  };
+};
+
+const getThemeSnapshot = () => {
+  return localStorage.getItem('mercury_theme') || 'dark';
+};
+
+const getThemeServerSnapshot = () => 'dark';
+
+const welcomeSubscribe = (callback) => {
+  window.addEventListener('storage', callback);
+  window.addEventListener('mercury_welcomed_change', callback);
+  return () => {
+    window.removeEventListener('storage', callback);
+    window.removeEventListener('mercury_welcomed_change', callback);
+  };
+};
+
+const getHasVisitedSnapshot = () => {
+  return Boolean(localStorage.getItem('mercury_welcomed'));
+};
+
+const getHasVisitedServerSnapshot = () => true;
 
 export default function Dashboard() {
   const { t } = useLanguage();
-  const [theme, setTheme] = useState('dark');
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('mercury_theme') || 'dark';
-    setTheme(savedTheme);
-  }, []);
+  const theme = useSyncExternalStore(themeSubscribe, getThemeSnapshot, getThemeServerSnapshot);
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
     localStorage.setItem('mercury_theme', newTheme);
+    window.dispatchEvent(new Event('mercury_theme_change'));
   };
 
-  const [showWelcome, setShowWelcome] = useState(false);
-  const [isFirstVisit, setIsFirstVisit] = useState(true);
+  const hasVisited = useSyncExternalStore(welcomeSubscribe, getHasVisitedSnapshot, getHasVisitedServerSnapshot);
+  const [welcomeOpenOverride, setWelcomeOpenOverride] = useState(null);
 
-  useEffect(() => {
-    const hasVisited = localStorage.getItem('mercury_welcomed');
-    if (!hasVisited) {
-      setIsFirstVisit(true);
-      setShowWelcome(true);
-    } else {
-      setIsFirstVisit(false);
-    }
-  }, []);
+  const showWelcome = welcomeOpenOverride !== null ? welcomeOpenOverride : !hasVisited;
+  const isFirstVisit = !hasVisited;
 
   const handleCloseWelcome = () => {
     localStorage.setItem('mercury_welcomed', 'true');
-    setIsFirstVisit(false);
-    setShowWelcome(false);
+    window.dispatchEvent(new Event('mercury_welcomed_change'));
+    setWelcomeOpenOverride(false);
+  };
+
+  const setShowWelcome = (value) => {
+    setWelcomeOpenOverride(typeof value === 'function' ? value(showWelcome) : value);
   };
 
   const [currentView, setCurrentView] = useState('dashboard');
@@ -62,10 +86,27 @@ export default function Dashboard() {
   const [stockOverride, setStockOverride] = useState(50);
   const [simulationResult, setSimulationResult] = useState(null);
   const [simLoading, setSimLoading] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+  const runSimulation = useCallback(async (prodId, price, multiplier, stock) => {
+    if (!prodId) return;
+    try {
+      setSimLoading(true);
+      const res = await axios.post(`${API_URL}/sandbox/simulate`, {
+        productId: prodId,
+        simulatedCompetitorPrice: parseFloat(price),
+        demandMultiplier: parseFloat(multiplier),
+        stockOverride: parseInt(stock, 10)
+      }, { headers: getSessionHeaders() });
+      setSimulationResult(res.data.simulation);
+    } catch (err) {
+      console.error("Simulation failed:", err);
+    } finally {
+      setSimLoading(false);
+    }
+  }, []);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const [intelRes, insightsRes] = await Promise.all([
@@ -73,13 +114,23 @@ export default function Dashboard() {
         axios.get(`${API_URL}/insights`, { headers: getSessionHeaders() })
       ]);
 
-      setIntelligence(intelRes.data.data || []);
+      const items = intelRes.data.data || [];
+      setIntelligence(items);
       setInsights(insightsRes.data.insights || []);
       setAutonomousLogs(insightsRes.data.autonomousLogs || []);
       setError(null);
 
-      if (intelRes.data.data && intelRes.data.data.length > 0 && !selectedProductId) {
-        setSelectedProductId(intelRes.data.data[0].id);
+      if (items.length > 0) {
+        const firstProd = items[0];
+        const defaultCompPrice = firstProd.competitorPrice || firstProd.currentPrice * 0.9;
+        const defaultStock = firstProd.currentInventory;
+
+        setSelectedProductId(prev => prev || firstProd.id);
+        setSimCompetitorPrice(prev => (prev === 80 ? defaultCompPrice : prev));
+        setStockOverride(prev => (prev === 50 ? defaultStock : prev));
+        setSimulationResult(prev => prev || {
+          baseOurPrice: firstProd.currentPrice
+        });
       }
     } catch (err) {
       console.error("Failed to fetch Mercury data:", err);
@@ -87,7 +138,54 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  const handleResetSandbox = useCallback(async () => {
+    try {
+      setResetting(true);
+      await resetVisitorSession(API_URL);
+      setDemandMultiplier(1.0);
+      setSimulationResult(null);
+
+      const [intelRes, insightsRes] = await Promise.all([
+        axios.get(`${API_URL}/intelligence`, { headers: getSessionHeaders() }),
+        axios.get(`${API_URL}/insights`, { headers: getSessionHeaders() })
+      ]);
+
+      const items = intelRes.data.data || [];
+      setIntelligence(items);
+      setInsights(insightsRes.data.insights || []);
+      setAutonomousLogs(insightsRes.data.autonomousLogs || []);
+      setError(null);
+
+      if (items.length > 0) {
+        const activeProd = items.find(p => Number(p.id) === Number(selectedProductId)) || items[0];
+        const defaultCompPrice = activeProd.competitorPrice || activeProd.currentPrice * 0.9;
+        const defaultStock = activeProd.currentInventory;
+
+        setSelectedProductId(activeProd.id);
+        setSimCompetitorPrice(defaultCompPrice);
+        setStockOverride(defaultStock);
+        setSimulationResult({
+          baseOurPrice: activeProd.currentPrice
+        });
+        runSimulation(activeProd.id, defaultCompPrice, 1.0, defaultStock);
+      }
+
+      if (isModalOpen) {
+        try {
+          const res = await axios.get(`${API_URL}/database-inspect`, { headers: getSessionHeaders() });
+          setDbData(res.data.tables);
+        } catch (e) {
+          console.error("Failed to refresh database inspector after reset:", e);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to reset sandbox session:', err);
+    } finally {
+      setResetting(false);
+    }
+  }, [selectedProductId, runSimulation, isModalOpen]);
 
   const fetchDatabaseInspect = async () => {
     setIsModalOpen(true);
@@ -102,42 +200,55 @@ export default function Dashboard() {
     }
   };
 
-  const runSimulation = async (prodId, price, multiplier, stock) => {
-    if (!prodId) return;
-    try {
-      setSimLoading(true);
-      const res = await axios.post(`${API_URL}/sandbox/simulate`, {
-        productId: prodId,
-        simulatedCompetitorPrice: parseFloat(price),
-        demandMultiplier: parseFloat(multiplier),
-        stockOverride: parseInt(stock)
-      }, { headers: getSessionHeaders() });
-      setSimulationResult(res.data.simulation);
-    } catch (err) {
-      console.error("Simulation failed:", err);
-    } finally {
-      setSimLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchData();
-  }, []);
+    let ignore = false;
 
-  useEffect(() => {
-    if (selectedProductId && intelligence.length > 0) {
-      const currentProd = intelligence.find(item => Number(item.id) === Number(selectedProductId));
-      if (currentProd) {
-        setSimCompetitorPrice(currentProd.competitorPrice || currentProd.currentPrice * 0.9);
-        setStockOverride(currentProd.currentInventory);
-        setSimulationResult(prev => ({
-          ...prev,
-          baseOurPrice: currentProd.currentPrice
-        }));
-        runSimulation(selectedProductId, currentProd.competitorPrice || currentProd.currentPrice * 0.9, demandMultiplier, currentProd.currentInventory);
+    async function initData() {
+      try {
+        const [intelRes, insightsRes] = await Promise.all([
+          axios.get(`${API_URL}/intelligence`, { headers: getSessionHeaders() }),
+          axios.get(`${API_URL}/insights`, { headers: getSessionHeaders() })
+        ]);
+
+        if (ignore) return;
+
+        const items = intelRes.data.data || [];
+        setIntelligence(items);
+        setInsights(insightsRes.data.insights || []);
+        setAutonomousLogs(insightsRes.data.autonomousLogs || []);
+        setError(null);
+
+        if (items.length > 0) {
+          const firstProd = items[0];
+          const defaultCompPrice = firstProd.competitorPrice || firstProd.currentPrice * 0.9;
+          const defaultStock = firstProd.currentInventory;
+
+          setSelectedProductId(firstProd.id);
+          setSimCompetitorPrice(defaultCompPrice);
+          setStockOverride(defaultStock);
+          setSimulationResult({
+            baseOurPrice: firstProd.currentPrice
+          });
+          runSimulation(firstProd.id, defaultCompPrice, 1.0, defaultStock);
+        }
+      } catch (err) {
+        if (!ignore) {
+          console.error("Failed to fetch Mercury data:", err);
+          setError('errors.backendUnavailable');
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
       }
     }
-  }, [selectedProductId, intelligence]);
+
+    initData();
+
+    return () => {
+      ignore = true;
+    };
+  }, [runSimulation]);
 
   const isDark = theme === 'dark';
 
@@ -158,6 +269,8 @@ export default function Dashboard() {
         theme={theme}
         toggleTheme={toggleTheme}
         setShowWelcome={setShowWelcome}
+        handleResetSandbox={handleResetSandbox}
+        resetting={resetting}
       />
 
       {error && (
@@ -216,6 +329,8 @@ export default function Dashboard() {
         inspectLoading={inspectLoading}
         fetchDatabaseInspect={fetchDatabaseInspect}
         theme={theme}
+        handleResetSandbox={handleResetSandbox}
+        resetting={resetting}
       />
     </main>
   );

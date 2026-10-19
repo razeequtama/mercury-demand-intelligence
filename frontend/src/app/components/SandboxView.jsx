@@ -213,7 +213,33 @@ export default function SandboxView({
               </div>
             </div>
           </>
-        ) : null}
+        ) : (
+          <div className={`border rounded-2xl p-8 sm:p-12 text-center shadow-lg flex flex-col items-center justify-center min-h-[340px] ${
+            isDark ? 'bg-[#201510]/80 border-[#36261d]' : 'bg-white/80 border-[#e8ded1]'
+          }`}>
+            <Sliders className={`w-12 h-12 mb-4 opacity-50 ${isDark ? 'text-amber-400' : 'text-amber-700'}`} />
+            <h3 className={`text-lg sm:text-xl font-bold mb-2 ${isDark ? 'text-[#fff8f0]' : 'text-[#241a14]'}`}>
+              {intelligence.length === 0 ? t('sandbox.noProductsAvailable') : t('sandbox.noSimulation')}
+            </h3>
+            <p className={`text-sm sm:text-base max-w-md mb-6 ${isDark ? 'text-[#b8a394]' : 'text-[#6b5646]'}`}>
+              {intelligence.length === 0 ? t('dashboard.noIntelligenceData') : t('sandbox.noSimulationDesc')}
+            </p>
+            {selectedProductId && (
+              <button
+                type="button"
+                onClick={() => runSimulation(selectedProductId, simCompetitorPrice, demandMultiplier, stockOverride)}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm sm:text-base font-bold shadow-md transition cursor-pointer active:scale-95 ${
+                  isDark
+                    ? 'bg-[#d97706] hover:bg-[#b45309] text-white'
+                    : 'bg-[#c2410c] hover:bg-[#9a3412] text-white'
+                }`}
+              >
+                <RefreshCw className="w-4 h-4" />
+                <span>{t('sandbox.runSimulationNow')}</span>
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -41,6 +41,11 @@ def get_db_connection():
     try:
         yield conn
     finally:
+        try:
+            if conn and not conn.closed:
+                conn.rollback()
+        except Exception as rollback_err:
+            print(f"Error resetting database connection state: {rollback_err}")
         pool.putconn(conn)
 
 @app.get("/predict-demand")
@@ -83,7 +88,7 @@ def predict_demand(session_id: str = "baseline"):
         for name_key, group in grouped:
             prod_id, sku, name, category, current_price, warehouse, stock_qty, reorder_thresh = name_key
             
-            order_group = group[['order_qty', 'order_date']].dropna()
+            order_group = group[['order_qty', 'order_date']].dropna().copy()
             
             model_mae = 0.0
             if not order_group.empty:
@@ -219,7 +224,7 @@ def simulate_sandbox(payload: dict):
         comp_price = float(sim_competitor_price) if sim_competitor_price is not None else current_price
 
         # Run Scikit-Learn Regression on historical orders with continuous date padding
-        order_group = df[['order_qty', 'order_date']].dropna()
+        order_group = df[['order_qty', 'order_date']].dropna().copy()
         forecast_7day = 35  # fallback baseline
 
         if not order_group.empty:

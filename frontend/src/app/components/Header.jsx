@@ -1,10 +1,12 @@
 'use client';
 
+import Image from 'next/image';
 import {
   Layers,
   Sliders,
   Database,
   RefreshCw,
+  RotateCcw,
   Sun,
   Moon,
   HelpCircle
@@ -21,7 +23,9 @@ export default function Header({
   loading,
   theme,
   toggleTheme,
-  setShowWelcome
+  setShowWelcome,
+  handleResetSandbox,
+  resetting
 }) {
   const isDark = theme === 'dark';
   const { t } = useLanguage();
@@ -44,10 +48,13 @@ export default function Header({
       >
         <div className="shrink-0 max-w-2xl">
           <div className="flex items-center gap-2.5 sm:gap-3">
-            <img
+            <Image
               src="/mercury.svg"
               alt="Mercury Logo"
+              width={44}
+              height={44}
               className="w-9 h-9 sm:w-11 sm:h-11 shrink-0"
+              priority
             />
 
             <span
@@ -159,6 +166,36 @@ export default function Header({
               />
               <span>{t('header.refresh')}</span>
             </button>
+
+            {handleResetSandbox && (
+              <>
+                <div
+                  className={`w-px h-5 mx-0.5 ${
+                    isDark ? 'bg-[#36261d]' : 'bg-[#e8ded1]'
+                  }`}
+                />
+
+                <button
+                  onClick={handleResetSandbox}
+                  disabled={resetting || loading}
+                  className={`flex items-center gap-2 h-9 px-3.5 rounded-lg text-sm sm:text-base font-semibold transition cursor-pointer ${
+                    isDark
+                      ? 'text-rose-400 hover:text-rose-300 hover:bg-rose-500/10'
+                      : 'text-rose-700 hover:text-rose-900 hover:bg-rose-50'
+                  }`}
+                  title={t('header.resetSandbox')}
+                >
+                  <RotateCcw
+                    className={`w-4 h-4 shrink-0 ${
+                      resetting ? 'animate-spin text-rose-500' : ''
+                    }`}
+                  />
+                  <span>
+                    {resetting ? t('header.resettingSandbox') : t('header.resetSandbox')}
+                  </span>
+                </button>
+              </>
+            )}
           </div>
 
           {/* Group B: System Preferences & Documentation (Theme, Language, Help) */}
