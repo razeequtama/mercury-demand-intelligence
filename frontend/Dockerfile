@@ -2,16 +2,18 @@ FROM node:20-alpine AS base
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY --chown=node:node package*.json ./
 RUN npm ci
 
-COPY . .
+COPY --chown=node:node . .
+RUN chown -R node:node /app
 
 EXPOSE 3000
 
 # Development stage with Next.js Fast Refresh / Hot Reloading
 FROM base AS dev
 ENV NODE_ENV=development
+USER node
 CMD ["npm", "run", "dev"]
 
 # Production builder stage
@@ -25,12 +27,16 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package*.json ./
+COPY --from=builder --chown=node:node /app/public ./public
+COPY --from=builder --chown=node:node /app/.next/standalone ./
+COPY --from=builder --chown=node:node /app/.next/static ./.next/static
+
+USER node
 
 EXPOSE 3000
 
-CMD ["npm", "start"]
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+CMD ["node", "server.js"]
 
