@@ -1,4 +1,4 @@
-# Mercury Demand Intelligence
+# MERUCY: Real-Time Demand Intelligence
 
 > **Full-stack demand forecasting, inventory risk scoring, and margin-aware pricing intelligence platform.**
 
