@@ -46,7 +46,7 @@ Designed with enterprise-grade defensive architecture, Mercury features session-
   - [9. Data Persistence & Docker Volume Lifecycle](#9-data-persistence--docker-volume-lifecycle)
   - [10. Seed Verification Procedures](#10-seed-verification-procedures)
   - [Relational Schema Entities](#relational-schema-entities)
-- [Getting Started](#getting-started)
+- [Run This Project Locally!](#run-this-project-locally)
   - [Prerequisites](#prerequisites)
   - [Option A: One-Command Docker Compose Setup (Recommended)](#option-a-one-command-docker-compose-setup-recommended)
   - [Option B: Local Native Development Setup](#option-b-local-native-development-setup)
@@ -379,7 +379,7 @@ A developer can verify successful database seeding through three independent met
 
 ---
 
-## Getting Started
+## Run This Project Locally!
 
 ### Prerequisites
 
